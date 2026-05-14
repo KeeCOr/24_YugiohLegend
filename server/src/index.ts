@@ -10,4 +10,9 @@ wss.on('connection', (ws) => {
   manager.handleConnection(ws);
 });
 
+wss.on('error', (err) => {
+  console.error('[server] WebSocket server error:', err);
+  process.exit(1);
+});
+
 console.log(`[server] WebSocket server running on ws://localhost:${PORT}`);

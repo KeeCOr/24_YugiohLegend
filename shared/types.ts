@@ -65,4 +65,5 @@ export type ServerMessage =
   | { type: 'reveal'; yourAction: TurnAction; opponentAction: TurnAction }
   | { type: 'battle_result'; events: BattleEvent[]; lps: [number, number] }
   | { type: 'game_over'; winner: PlayerIndex | 'draw'; finalLPs: [number, number] }
-  | { type: 'error'; message: string };
+  | { type: 'error'; message: string }
+  | { type: 'waiting'; message: string };
