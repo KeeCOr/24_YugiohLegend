@@ -16,10 +16,12 @@ export function randomAction(player: PlayerState): TurnAction {
   const trapCards = hand.filter(c => c.type === 'trap');
 
   // 소환 (랜덤 몬스터, 랜덤 빈 레인)
+  let summonedLane: LaneIndex | null = null;
   if (monsters.length > 0 && emptyLanes.length > 0) {
     const card = monsters[Math.floor(Math.random() * monsters.length)];
     const laneIndex = emptyLanes[Math.floor(Math.random() * emptyLanes.length)];
     summon = { card, laneIndex };
+    summonedLane = laneIndex;
   }
 
   // 마법 (50% 확률로 사용)
@@ -27,8 +29,8 @@ export function randomAction(player: PlayerState): TurnAction {
     if (Math.random() < 0.5) spells.push(spell);
   }
 
-  // 함정 (빈 레인에 랜덤 세트)
-  const availableLanes = [...emptyLanes];
+  // 함정 (소환 레인 제외한 빈 레인에 랜덤 세트)
+  const availableLanes = emptyLanes.filter(l => l !== summonedLane);
   for (const trap of trapCards) {
     if (availableLanes.length === 0) break;
     const idx = Math.floor(Math.random() * availableLanes.length);
@@ -50,18 +52,21 @@ export function greedyAction(player: PlayerState): TurnAction {
   const trapCards = hand.filter(c => c.type === 'trap');
 
   // ATK 가장 높은 몬스터를 첫 번째 빈 레인에 소환
+  let summonedLane: LaneIndex | null = null;
   if (monsters.length > 0 && emptyLanes.length > 0) {
     summon = { card: monsters[0], laneIndex: emptyLanes[0] };
+    summonedLane = emptyLanes[0];
   }
 
   // 마법 전부 사용
   spells.push(...spellCards);
 
-  // 함정 세트 (빈 레인에 순서대로)
+  // 함정 세트 (소환 레인 제외한 빈 레인에 순서대로)
+  const lanesForTraps = emptyLanes.filter(l => l !== summonedLane);
   let lanePtr = 0;
   for (const trap of trapCards) {
-    if (lanePtr >= emptyLanes.length) break;
-    traps.push({ card: trap, laneIndex: emptyLanes[lanePtr++] });
+    if (lanePtr >= lanesForTraps.length) break;
+    traps.push({ card: trap, laneIndex: lanesForTraps[lanePtr++] });
   }
 
   return { summon, spells, traps };
