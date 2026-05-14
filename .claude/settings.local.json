@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node:*)",
+      "Bash(npx vitest:*)",
+      "Bash(timeout 8 npx ts-node-dev --transpile-only -r tsconfig-paths/register src/index.ts)"
+    ]
+  }
+}
