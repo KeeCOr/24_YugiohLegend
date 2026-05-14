@@ -96,7 +96,7 @@ export class GameScene extends Phaser.Scene {
     for (let i = 0; i < 3; i++) {
       const laneIndex = i as LaneIndex;
       const hitArea = this.add.rectangle(
-        this.myField.getLaneWorldX(laneIndex), height * 0.6,
+        this.myField.getLaneWorldX(laneIndex), this.myField.y,
         100, 150, 0x000000, 0
       ).setInteractive();
       hitArea.on('pointerdown', () => this.onLaneClick(laneIndex));

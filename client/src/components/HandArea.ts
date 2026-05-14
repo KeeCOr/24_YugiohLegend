@@ -27,7 +27,6 @@ export class HandArea extends Phaser.GameObjects.Container {
     for (let i = 0; i < total; i++) {
       const sx = startX + i * (CardSprite.W + 10);
       const sprite = new CardSprite(this.scene, sx, 0, hand[i]);
-      this.scene.add.existing(sprite);
       sprite.setInteractive();
       sprite.on('pointerdown', () => this.selectCard(hand[i], sprite));
       sprite.on('pointerover', () => sprite.highlight(true));
