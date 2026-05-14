@@ -32,8 +32,6 @@ export class GameRoom {
   id: string;
   private state: GameState;
   private playerIds: [string | null, string | null] = [null, null];
-  // Buffer for the first player's pending messages — pushed to when game starts
-  private pendingMsgBuffer: OutgoingMessage[] | null = null;
 
   constructor(id: string) {
     this.id = id;
@@ -50,7 +48,7 @@ export class GameRoom {
     };
   }
 
-  getState(): GameState { return this.state; }
+  getState(): Readonly<GameState> { return this.state; }
 
   addPlayer(playerId: string, deck: Card[]): OutgoingMessage[] {
     if (deck.length < 8 || deck.length > 12) {
@@ -64,32 +62,16 @@ export class GameRoom {
     this.state.players[index].deck = shuffled;
     this.state.players[index].hand = hand;
 
-    if (index === 0) {
-      // First player: return a mutable buffer that will be populated when game starts
-      const buf: OutgoingMessage[] = [];
-      this.pendingMsgBuffer = buf;
-      return buf;
+    if (this.playerIds[0] && this.playerIds[1]) {
+      this.state.phase = 'action';
+      // 두 플레이어 모두 준비됐을 때 양쪽 메시지를 한 번에 반환
+      // 호출자(RoomManager)가 playerIndex 필드를 보고 각 WebSocket에 라우팅
+      return [
+        { playerIndex: 0, message: { type: 'game_start', yourIndex: 0, yourHand: this.state.players[0].hand, opponentHandCount: INITIAL_HAND_SIZE, turn: 1 } },
+        { playerIndex: 1, message: { type: 'game_start', yourIndex: 1, yourHand: this.state.players[1].hand, opponentHandCount: INITIAL_HAND_SIZE, turn: 1 } },
+      ];
     }
-
-    // Second player: game starts now
-    this.state.phase = 'action';
-
-    const p0Start: OutgoingMessage = {
-      playerIndex: 0,
-      message: { type: 'game_start', yourIndex: 0, yourHand: this.state.players[0].hand, opponentHandCount: INITIAL_HAND_SIZE, turn: 1 },
-    };
-    const p1Start: OutgoingMessage = {
-      playerIndex: 1,
-      message: { type: 'game_start', yourIndex: 1, yourHand: this.state.players[1].hand, opponentHandCount: INITIAL_HAND_SIZE, turn: 1 },
-    };
-
-    // Push p0's game_start into the buffer that was returned to the first addPlayer caller
-    if (this.pendingMsgBuffer) {
-      this.pendingMsgBuffer.push(p0Start);
-    }
-
-    // Return p1's game_start (plus p0's for completeness, so both messages are accessible)
-    return [p0Start, p1Start];
+    return [];
   }
 
   submitAction(playerIndex: PlayerIndex, action: TurnAction): OutgoingMessage[] {
