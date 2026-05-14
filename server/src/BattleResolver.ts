@@ -52,7 +52,23 @@ function resolveLane(
     const destroyedCards: BattleEvent['destroyedCards'] = [];
     let damage = 0;
 
+    if (p0AttackNegated && p1AttackNegated) {
+      // 양쪽 공격 모두 무효화 — LP 변화 없음, 파괴 없음
+      events.push({
+        laneIndex,
+        type: 'monster_vs_monster',
+        attackerIndex: 0, // arbitrary when both are negated
+        damage: 0,
+        destroyedCards: [],
+        trapTriggered: undefined,
+        negated: true,
+      });
+      return { events, p0LpDelta, p1LpDelta };
+    }
+
     if (!p0AttackNegated && !p1AttackNegated) {
+      // Neither attack negated — higher ATK is the attacker
+      const attackerIndex: PlayerIndex = p0Atk >= p1Atk ? 0 : 1;
       if (p0Atk > p1Atk) {
         destroyedCards.push({ playerIndex: 1 as PlayerIndex, card: p1Mon });
         damage = p0Atk - p1Atk;
@@ -65,14 +81,14 @@ function resolveLane(
         destroyedCards.push({ playerIndex: 0 as PlayerIndex, card: p0Mon });
         destroyedCards.push({ playerIndex: 1 as PlayerIndex, card: p1Mon });
       }
-      events.push({ laneIndex, type: 'monster_vs_monster', attackerIndex: 0, damage, destroyedCards, negated: false });
+      events.push({ laneIndex, type: 'monster_vs_monster', attackerIndex, damage, destroyedCards, negated: false });
     } else {
-      // At least one attack is negated — only process the non-negated side's attack
+      // Exactly one attack is negated — only process the non-negated side's attack
       const trapOwner: PlayerIndex = p0AttackNegated ? 1 : 0;
       const trapCard = p0AttackNegated ? p1Lane.trap! : p0Lane.trap!;
 
       if (p0AttackNegated && !p1AttackNegated) {
-        // p0 attack negated; only p1's counter-attack on p0 resolves
+        // p0 attack negated; p1 is the attacker
         // p1 attacks p0: if p1Atk > p0Atk → p0 destroyed + LP damage
         //                if p1Atk <= p0Atk → p1 destroyed (blocked), no LP damage
         if (p1Atk > p0Atk) {
@@ -87,8 +103,17 @@ function resolveLane(
           destroyedCards.push({ playerIndex: 0 as PlayerIndex, card: p0Mon });
           destroyedCards.push({ playerIndex: 1 as PlayerIndex, card: p1Mon });
         }
-      } else if (!p0AttackNegated && p1AttackNegated) {
-        // p1 attack negated; only p0's attack on p1 resolves
+        events.push({
+          laneIndex,
+          type: 'monster_vs_monster',
+          attackerIndex: 1 as PlayerIndex, // p1 is the attacker (p0's attack was negated)
+          damage,
+          destroyedCards,
+          trapTriggered: { playerIndex: trapOwner, card: trapCard },
+          negated: true,
+        });
+      } else {
+        // p1 attack negated; p0 is the attacker
         // p0 attacks p1: if p0Atk > p1Atk → p1 destroyed + LP damage
         //                if p0Atk <= p1Atk → p0 destroyed (blocked), no LP damage
         if (p0Atk > p1Atk) {
@@ -103,18 +128,16 @@ function resolveLane(
           destroyedCards.push({ playerIndex: 0 as PlayerIndex, card: p0Mon });
           destroyedCards.push({ playerIndex: 1 as PlayerIndex, card: p1Mon });
         }
+        events.push({
+          laneIndex,
+          type: 'monster_vs_monster',
+          attackerIndex: 0 as PlayerIndex, // p0 is the attacker (p1's attack was negated)
+          damage,
+          destroyedCards,
+          trapTriggered: { playerIndex: trapOwner, card: trapCard },
+          negated: true,
+        });
       }
-      // Both negated: no damage, no destruction
-
-      events.push({
-        laneIndex,
-        type: 'monster_vs_monster',
-        attackerIndex: 0,
-        damage,
-        destroyedCards,
-        trapTriggered: { playerIndex: trapOwner, card: trapCard },
-        negated: true,
-      });
     }
     return { events, p0LpDelta, p1LpDelta };
   }
