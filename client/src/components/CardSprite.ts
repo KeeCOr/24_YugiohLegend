@@ -35,7 +35,6 @@ export class CardSprite extends Phaser.GameObjects.Container {
       this.add(this.nameText);
     }
 
-    scene.add.existing(this);
   }
 
   highlight(on: boolean): void {
