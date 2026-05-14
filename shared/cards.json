@@ -1,0 +1,17 @@
+[
+  { "id": "goblin_warrior",  "type": "monster", "name": "고블린 전사",  "atk": 1000 },
+  { "id": "dark_knight",     "type": "monster", "name": "어둠의 기사",  "atk": 1500 },
+  { "id": "iron_golem",      "type": "monster", "name": "강철 골렘",    "atk": 2000 },
+  { "id": "swift_thief",     "type": "monster", "name": "날쌘 도적",    "atk": 800  },
+  { "id": "hero_warrior",    "type": "monster", "name": "영웅 전사",    "atk": 2500 },
+  { "id": "village_guard",   "type": "monster", "name": "마을 수비대",  "atk": 500  },
+  { "id": "dragon_mage",     "type": "monster", "name": "용 마법사",    "atk": 1800 },
+  { "id": "flame_wizard",    "type": "monster", "name": "불꽃 마법사",  "atk": 1200 },
+  { "id": "healing_light",   "type": "spell",   "name": "치유의 빛",    "effect": "heal_1000"     },
+  { "id": "power_boost",     "type": "spell",   "name": "파워 부스트",  "effect": "power_boost"   },
+  { "id": "monster_smash",   "type": "spell",   "name": "몬스터 분쇄",  "effect": "monster_smash" },
+  { "id": "counter_trap",    "type": "trap",    "name": "반격의 함정",
+    "trapCondition": "on_attacked",     "trapEffect": "negate_attack"    },
+  { "id": "direct_shield",   "type": "trap",    "name": "다이렉트 실드",
+    "trapCondition": "on_direct_attack","trapEffect": "reduce_damage_500" }
+]
