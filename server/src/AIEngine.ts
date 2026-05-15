@@ -20,6 +20,21 @@ function filterUnlocked(lanes: LaneIndex[], turn: number): LaneIndex[] {
   return lanes.filter(lane => unlocked.includes(lane));
 }
 
+function getTributeLaneIndices(player: PlayerState, cost: number): LaneIndex[] {
+  if (cost <= 0) return [];
+  return ([0, 1, 2, 3] as LaneIndex[])
+    .filter(i => player.lanes[i].monster)
+    .sort((a, b) => (player.lanes[a].monster?.atk ?? 0) - (player.lanes[b].monster?.atk ?? 0))
+    .slice(0, cost);
+}
+
+function buildSummon(card: Card, laneIndex: LaneIndex, player: PlayerState): TurnAction['summon'] | undefined {
+  const tributeCost = card.tributeCost ?? 0;
+  const tributeLaneIndices = getTributeLaneIndices(player, tributeCost);
+  if (tributeLaneIndices.length < tributeCost) return undefined;
+  return tributeCost > 0 ? { card, laneIndex, tributeLaneIndices } : { card, laneIndex };
+}
+
 export function randomAction(player: PlayerState, turn = 3): TurnAction {
   const hand = [...player.hand];
   const spells: TurnAction['spells'] = [];
@@ -36,8 +51,8 @@ export function randomAction(player: PlayerState, turn = 3): TurnAction {
   if (monsters.length > 0 && emptyLanes.length > 0) {
     const card = monsters[Math.floor(Math.random() * monsters.length)];
     const laneIndex = emptyLanes[Math.floor(Math.random() * emptyLanes.length)];
-    summon = { card, laneIndex };
-    summonedLane = laneIndex;
+    summon = buildSummon(card, laneIndex, player);
+    if (summon) summonedLane = laneIndex;
   }
 
   // 마법 (50% 확률로 사용)
@@ -74,9 +89,14 @@ export function greedyAction(player: PlayerState, turn = 3): TurnAction {
 
   // ATK 가장 높은 몬스터를 첫 번째 빈 레인에 소환
   let summonedLane: LaneIndex | null = null;
-  if (monsters.length > 0 && emptyLanes.length > 0) {
-    summon = { card: monsters[0], laneIndex: emptyLanes[0] };
-    summonedLane = emptyLanes[0];
+  if (emptyLanes.length > 0) {
+    for (const monster of monsters) {
+      summon = buildSummon(monster, emptyLanes[0], player);
+      if (summon) {
+        summonedLane = emptyLanes[0];
+        break;
+      }
+    }
   }
 
   // 마법 전부 사용

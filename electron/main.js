@@ -28,8 +28,8 @@ function startServer() {
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 720,
+    width: 900,
+    height: 1600,
     resizable: false,
     title: 'YugiohLegend',
     webPreferences: {

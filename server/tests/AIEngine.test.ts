@@ -138,4 +138,26 @@ describe('greedyAction', () => {
     const action = greedyAction(p, 4);
     expect(action.summon?.laneIndex).toBe(3);
   });
+
+  it('greedyAction includes tribute materials for tribute monsters', () => {
+    const tributeMonster: Card = { id: 'boss', type: 'monster', name: 'Boss', atk: 2400, tributeCost: 1 };
+    const material = monster('mat', 400);
+    const p: PlayerState = {
+      index: 0,
+      lp: 4000,
+      deck: [],
+      hand: [tributeMonster],
+      lanes: [
+        { monster: material, spell: null, trap: null, tempAtkBoost: 0 },
+        { monster: null, spell: null, trap: null, tempAtkBoost: 0 },
+        { monster: null, spell: null, trap: null, tempAtkBoost: 0 },
+        { monster: null, spell: null, trap: null, tempAtkBoost: 0 },
+      ],
+    };
+
+    const action = greedyAction(p, 2);
+
+    expect(action.summon?.card.id).toBe(tributeMonster.id);
+    expect(action.summon?.tributeLaneIndices).toEqual([0]);
+  });
 });

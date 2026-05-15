@@ -54,7 +54,7 @@ export interface PlayerState {
 }
 
 export interface TurnAction {
-  summon?: { card: Card; laneIndex: LaneIndex };
+  summon?: { card: Card; laneIndex: LaneIndex; tributeLaneIndices?: LaneIndex[] };
   spells: { card: Card; laneIndex: LaneIndex }[];
   traps: { card: Card; laneIndex: LaneIndex }[];
 }

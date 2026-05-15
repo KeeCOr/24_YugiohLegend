@@ -16,6 +16,8 @@ const UNLOCKED_LANES_BY_TURN: Record<number, LaneIndex[]> = {
   3: [0, 1, 2],
   4: [0, 1, 2, 3],
 };
+const HIDDEN_SPELL_CARD: Card = { id: 'hidden_spell', type: 'spell', name: 'Hidden Spell' };
+const HIDDEN_TRAP_CARD: Card = { id: 'hidden_trap', type: 'trap', name: 'Hidden Trap' };
 
 export interface OutgoingMessage {
   playerIndex: PlayerIndex | 'both';
@@ -48,6 +50,14 @@ function cloneLanes(state: GameState): [PlayerState['lanes'], PlayerState['lanes
 
 function isLaneUnlocked(turn: number, laneIndex: LaneIndex): boolean {
   return (UNLOCKED_LANES_BY_TURN[turn] ?? UNLOCKED_LANES_BY_TURN[4]).includes(laneIndex);
+}
+
+function maskActionForOpponent(action: TurnAction): TurnAction {
+  return {
+    summon: action.summon,
+    spells: action.spells.map(spell => ({ ...spell, card: HIDDEN_SPELL_CARD })),
+    traps: action.traps.map(trap => ({ ...trap, card: HIDDEN_TRAP_CARD })),
+  };
 }
 
 export class GameRoom {
@@ -112,8 +122,8 @@ export class GameRoom {
     const [a0, a1] = this.state.pendingActions as [TurnAction, TurnAction];
 
     // reveal
-    msgs.push({ playerIndex: 0, message: { type: 'reveal', yourAction: a0, opponentAction: a1 } });
-    msgs.push({ playerIndex: 1, message: { type: 'reveal', yourAction: a1, opponentAction: a0 } });
+    msgs.push({ playerIndex: 0, message: { type: 'reveal', yourAction: a0, opponentAction: maskActionForOpponent(a1) } });
+    msgs.push({ playerIndex: 1, message: { type: 'reveal', yourAction: a1, opponentAction: maskActionForOpponent(a0) } });
 
     this.resolveDelayedSpells();
 
@@ -224,8 +234,19 @@ export class GameRoom {
 
     // 소환
     if (action.summon) {
-      const { card, laneIndex } = action.summon;
-      if (isLaneUnlocked(this.state.turn, laneIndex) && !player.lanes[laneIndex].monster) {
+      const { card, laneIndex, tributeLaneIndices = [] } = action.summon;
+      const tributeCost = card.tributeCost ?? 0;
+      const uniqueTributes = [...new Set(tributeLaneIndices)];
+      const validTributes = uniqueTributes.filter(tributeLane =>
+        tributeLane !== laneIndex &&
+        player.lanes[tributeLane]?.monster
+      );
+      const canPayTribute = tributeCost === 0 || validTributes.length >= tributeCost;
+
+      if (isLaneUnlocked(this.state.turn, laneIndex) && !player.lanes[laneIndex].monster && canPayTribute) {
+        for (const tributeLane of validTributes.slice(0, tributeCost)) {
+          player.lanes[tributeLane].monster = null;
+        }
         player.lanes[laneIndex].monster = card;
         player.hand = player.hand.filter(c => c.id !== card.id);
       }

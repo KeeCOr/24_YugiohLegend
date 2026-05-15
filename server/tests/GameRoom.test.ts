@@ -196,12 +196,58 @@ describe('GameRoom', () => {
     expect(room.getState().players[0].lanes[1].monster?.id).toBe(monsterCard.id);
   });
 
+  it('tribute summon requires and consumes tribute monsters', () => {
+    const room = new GameRoom('room1');
+    room.addPlayer('p0', makeDeck());
+    room.addPlayer('p1', makeDeck());
+    const tributeMonster = allCards.find(c => c.id === 'iron_golem')!;
+    const material = allCards.find(c => c.id === 'village_guard')!;
+
+    (room.getState() as GameState).players[0].lanes[1].monster = material;
+    (room.getState() as GameState).players[0].hand.push(tributeMonster);
+
+    room.submitAction(0, { summon: { card: tributeMonster, laneIndex: 0 }, spells: [], traps: [] });
+    room.submitAction(1, emptyAction());
+    expect(room.getState().players[0].lanes[0].monster).toBeNull();
+    expect(room.getState().players[0].lanes[1].monster?.id).toBe(material.id);
+
+    room.submitAction(0, { summon: { card: tributeMonster, laneIndex: 0, tributeLaneIndices: [1] }, spells: [], traps: [] });
+    room.submitAction(1, emptyAction());
+    expect(room.getState().players[0].lanes[0].monster?.id).toBe(tributeMonster.id);
+    expect(room.getState().players[0].lanes[1].monster).toBeNull();
+  });
+
+  it('reveal hides opponent delayed spells and traps', () => {
+    const room = new GameRoom('room1');
+    room.addPlayer('p0', makeDeck());
+    room.addPlayer('p1', makeDeck());
+    const spell = allCards.find(c => c.id === 'healing_light')!;
+    const trap = allCards.find(c => c.id === 'counter_trap')!;
+
+    room.submitAction(0, emptyAction());
+    const msgs = room.submitAction(1, {
+      spells: [{ card: spell, laneIndex: 1 }],
+      traps: [{ card: trap, laneIndex: 1 }],
+    });
+    const revealForP0 = msgs.find(m => m.playerIndex === 0 && m.message.type === 'reveal')?.message;
+    const revealForP1 = msgs.find(m => m.playerIndex === 1 && m.message.type === 'reveal')?.message;
+
+    expect(revealForP0?.type).toBe('reveal');
+    expect(revealForP1?.type).toBe('reveal');
+    if (revealForP0?.type === 'reveal' && revealForP1?.type === 'reveal') {
+      expect(revealForP0.opponentAction.spells[0].card.id).toBe('hidden_spell');
+      expect(revealForP0.opponentAction.traps[0].card.id).toBe('hidden_trap');
+      expect(revealForP1.yourAction.spells[0].card.id).toBe(spell.id);
+      expect(revealForP1.yourAction.traps[0].card.id).toBe(trap.id);
+    }
+  });
+
   it('battle_result includes both players lane state after summons', () => {
     const room = new GameRoom('room1');
     room.addPlayer('p0', makeDeck());
     room.addPlayer('p1', makeDeck());
     const p0Monster = allCards.find(c => c.id === 'goblin_warrior')!;
-    const p1Monster = allCards.find(c => c.id === 'dark_knight')!;
+    const p1Monster = allCards.find(c => c.id === 'dragon_mage')!;
 
     room.submitAction(0, emptyAction());
     room.submitAction(1, emptyAction());

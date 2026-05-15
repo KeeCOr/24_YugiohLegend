@@ -35,14 +35,14 @@ export class DeckBuilderScene extends Phaser.Scene {
     }).setOrigin(1, 0).setInteractive()
       .on('pointerdown', () => this.scene.start('MenuScene'));
 
-    this.add.image(width - 175, height / 2, ART_KEYS.panel).setDisplaySize(300, 560);
+    this.add.image(width / 2, height - 245, ART_KEYS.panel).setDisplaySize(820, 360);
     this.add.text(28, 68, 'Card Archive', { fontSize: '16px', color: '#b8c7e8', fontStyle: 'bold' });
 
     ALL_CARDS.forEach((card, i) => {
-      const col = Math.floor(i / 4);
-      const row = i % 4;
-      const x = 78 + col * 108;
-      const y = 150 + row * 142;
+      const col = i % 3;
+      const row = Math.floor(i / 3);
+      const x = 160 + col * 200;
+      const y = 165 + row * 150;
       const sprite = new CardSprite(this, x, y, card);
       this.add.existing(sprite);
       sprite.setInteractive();
@@ -51,11 +51,11 @@ export class DeckBuilderScene extends Phaser.Scene {
       sprite.on('pointerout', () => sprite.highlight(false));
     });
 
-    this.add.text(width - 295, 78, 'Current Deck', { fontSize: '17px', color: '#f2c86a', fontStyle: 'bold' });
-    this.countText = this.add.text(width - 295, 105, '', { fontSize: '14px', color: '#ffffff' });
+    this.add.text(70, height - 395, 'Current Deck', { fontSize: '22px', color: '#f2c86a', fontStyle: 'bold' });
+    this.countText = this.add.text(70, height - 360, '', { fontSize: '17px', color: '#ffffff' });
 
-    this.saveBtn = this.add.image(width - 175, height - 58, ART_KEYS.button).setDisplaySize(230, 48).setInteractive();
-    this.add.text(width - 175, height - 58, 'SAVE AND DUEL', {
+    this.saveBtn = this.add.image(width - 170, height - 70, ART_KEYS.button).setDisplaySize(260, 56).setInteractive();
+    this.add.text(width - 170, height - 70, 'SAVE AND DUEL', {
       fontSize: '14px',
       color: '#ffffff',
       fontStyle: 'bold',
@@ -81,12 +81,14 @@ export class DeckBuilderScene extends Phaser.Scene {
     for (const t of this.deckTexts) t.destroy();
     this.deckTexts = [];
 
-    const { width } = this.scale;
+    const { height } = this.scale;
     this.countText.setText(`${this.deck.length} / 8-12 cards`);
 
     this.deck.forEach((card, i) => {
-      const t = this.add.text(width - 292, 138 + i * 26, `${i + 1}. ${card.name}`, {
-        fontSize: '13px',
+      const col = Math.floor(i / 6);
+      const row = i % 6;
+      const t = this.add.text(70 + col * 300, height - 325 + row * 34, `${i + 1}. ${card.name}`, {
+        fontSize: '16px',
         color: '#d8e7ff',
       }).setInteractive();
       t.on('pointerdown', () => this.removeFromDeck(i));

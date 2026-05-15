@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Current rules update (2026-05-15):** The implemented game now uses 4 total turns. Turn 1 applies summons, traps, and delayed spell placement but skips combat; turns 2-4 resolve battles, then final battle decides the result. Spells are no longer instant: they are placed into a lane, count down, and fizzle if destroyed before resolving. Lanes unlock one by one: turn 1 center only, turn 2 left + center, turn 3 onward all lanes. Hand cards now use larger type, summon-condition, and ATK/HP presentation.
+**Current rules update (2026-05-15):** The implemented game now uses 4 total turns and 4 total lanes. Turn 1 applies summons, traps, and delayed spell placement but skips combat; turns 2-4 resolve battles, then final battle decides the result. Spells are no longer instant: they are placed into a lane, count down, and fizzle if destroyed before resolving; opponent spell/trap reservations are shown face-down. Tribute monsters now require real tribute materials through `tributeLaneIndices`, with client/AI auto-selecting low-ATK materials. Lanes unlock one by one: turn 1 has 1 lane, turn 2 has 2 lanes, turn 3 has 3 lanes, and turn 4 has 4 lanes. Hand cards now use larger type, summon-condition, and ATK/HP presentation. The app targets a 900 x 1600 portrait window/canvas.
 
 **Goal:** 유희왕 단순화 카드 대전 게임 — 3레인, 4턴, 1턴 준비턴, 동시 행동 공개, Phaser 3 + Node.js WebSocket
 
