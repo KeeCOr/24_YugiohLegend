@@ -10,8 +10,9 @@ export function resolveBattle(p0: PlayerState, p1: PlayerState): BattleResult {
   const events: BattleEvent[] = [];
   let p0LpDelta = 0;
   let p1LpDelta = 0;
+  const laneCount = Math.max(p0.lanes.length, p1.lanes.length);
 
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < laneCount; i++) {
     const laneIndex = i as LaneIndex;
     const result = resolveLane(laneIndex, p0.lanes[laneIndex], p1.lanes[laneIndex]);
     events.push(...result.events);

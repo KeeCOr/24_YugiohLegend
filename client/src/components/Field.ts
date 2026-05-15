@@ -3,15 +3,16 @@ import { ART_KEYS } from '../art/ProceduralArt';
 import { CardSprite } from './CardSprite';
 import type { Card, LaneIndex, LaneState, PlayerIndex } from '../data/CardTypes';
 
-const LANE_W = 136;
+const LANE_COUNT = 4;
+const LANE_W = 118;
 const LANE_H = 176;
-const LANE_GAP = 24;
+const LANE_GAP = 16;
 
 export class Field extends Phaser.GameObjects.Container {
   private laneImages: Phaser.GameObjects.Image[] = [];
   private laneGlows: Phaser.GameObjects.Image[] = [];
-  private monsterSprites: (CardSprite | null)[] = [null, null, null];
-  private pendingSprites: (CardSprite | null)[] = [null, null, null];
+  private monsterSprites: (CardSprite | null)[] = Array(LANE_COUNT).fill(null);
+  private pendingSprites: (CardSprite | null)[] = Array(LANE_COUNT).fill(null);
   private lockedOverlays: Phaser.GameObjects.Container[] = [];
   private spellIndicators: Phaser.GameObjects.Container[] = [];
   private trapIndicators: Phaser.GameObjects.Container[] = [];
@@ -23,8 +24,8 @@ export class Field extends Phaser.GameObjects.Container {
   }
 
   private buildLanes(scene: Phaser.Scene): void {
-    for (let i = 0; i < 3; i++) {
-      const lx = (i - 1) * (LANE_W + LANE_GAP);
+    for (let i = 0; i < LANE_COUNT; i++) {
+      const lx = this.getLaneLocalX(i);
       const glow = scene.add.image(lx, 0, ART_KEYS.glow).setDisplaySize(164, 204).setAlpha(0);
       const lane = scene.add.image(lx, 0, this.playerIndex === 0 ? ART_KEYS.lane : ART_KEYS.laneEnemy);
       lane.setDisplaySize(LANE_W, LANE_H);
@@ -55,8 +56,8 @@ export class Field extends Phaser.GameObjects.Container {
     }
   }
 
-  updateLanes(lanes: [LaneState, LaneState, LaneState]): void {
-    for (let i = 0; i < 3; i++) {
+  updateLanes(lanes: LaneState[]): void {
+    for (let i = 0; i < LANE_COUNT; i++) {
       const lane = lanes[i];
 
       if (this.monsterSprites[i]) {
@@ -69,7 +70,7 @@ export class Field extends Phaser.GameObjects.Container {
       }
 
       if (lane.monster) {
-        const lx = (i - 1) * (LANE_W + LANE_GAP);
+        const lx = this.getLaneLocalX(i);
         const sprite = new CardSprite(this.scene, lx, -4, lane.monster);
         this.add(sprite);
         this.monsterSprites[i] = sprite;
@@ -82,8 +83,8 @@ export class Field extends Phaser.GameObjects.Container {
     }
   }
 
-  getLaneWorldX(laneIndex: 0 | 1 | 2): number {
-    return this.x + (laneIndex - 1) * (LANE_W + LANE_GAP);
+  getLaneWorldX(laneIndex: LaneIndex): number {
+    return this.x + this.getLaneLocalX(laneIndex);
   }
 
   hasPending(laneIndex: LaneIndex): boolean {
@@ -91,7 +92,7 @@ export class Field extends Phaser.GameObjects.Container {
   }
 
   setUnlockedLanes(unlocked: LaneIndex[]): void {
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < LANE_COUNT; i++) {
       this.lockedOverlays[i].setVisible(!unlocked.includes(i as LaneIndex));
       this.laneImages[i].setAlpha(unlocked.includes(i as LaneIndex) ? 1 : 0.45);
     }
@@ -99,7 +100,7 @@ export class Field extends Phaser.GameObjects.Container {
 
   setPendingCard(laneIndex: LaneIndex, card: Card, faceDown = false): void {
     this.clearPending(laneIndex);
-    const lx = (laneIndex - 1) * (LANE_W + LANE_GAP);
+    const lx = this.getLaneLocalX(laneIndex);
     const sprite = new CardSprite(this.scene, lx, -4, card, faceDown);
     sprite.setPreview(true);
     this.add(sprite);
@@ -107,7 +108,7 @@ export class Field extends Phaser.GameObjects.Container {
   }
 
   clearPending(laneIndex?: LaneIndex): void {
-    const indexes = laneIndex === undefined ? [0, 1, 2] : [laneIndex];
+    const indexes = laneIndex === undefined ? [0, 1, 2, 3] : [laneIndex];
     for (const i of indexes) {
       if (this.pendingSprites[i]) {
         this.pendingSprites[i]!.destroy();
@@ -153,7 +154,7 @@ export class Field extends Phaser.GameObjects.Container {
     const c = scene.add.container(x, 0);
     const veil = scene.add.rectangle(0, 0, LANE_W, LANE_H, 0x05070c, 0.62);
     veil.setStrokeStyle(2, 0x5d667a, 0.65);
-    const unlockTurn = laneIndex === 0 ? 2 : laneIndex === 1 ? 1 : 3;
+    const unlockTurn = laneIndex === 0 ? 2 : laneIndex === 1 ? 1 : laneIndex === 2 ? 3 : 4;
     const label = scene.add.text(0, -6, `LOCKED\nT${unlockTurn}`, {
       fontSize: '13px',
       color: '#aab6ca',
@@ -164,5 +165,9 @@ export class Field extends Phaser.GameObjects.Container {
     }).setOrigin(0.5);
     c.add([veil, label]);
     return c;
+  }
+
+  private getLaneLocalX(laneIndex: number): number {
+    return (laneIndex - (LANE_COUNT - 1) / 2) * (LANE_W + LANE_GAP);
   }
 }

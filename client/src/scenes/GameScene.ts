@@ -19,7 +19,8 @@ export class GameScene extends Phaser.Scene {
   private static getUnlockedLanes(turn: number): LaneIndex[] {
     if (turn <= 1) return [1];
     if (turn === 2) return [0, 1];
-    return [0, 1, 2];
+    if (turn === 3) return [0, 1, 2];
+    return [0, 1, 2, 3];
   }
 
   private socket!: SocketManager;
@@ -27,8 +28,8 @@ export class GameScene extends Phaser.Scene {
   private turn = 1;
 
   private myHand: Card[] = [];
-  private myLanes: [LaneState, LaneState, LaneState] | null = null;
-  private opLanes: [LaneState, LaneState, LaneState] | null = null;
+  private myLanes: LaneState[] | null = null;
+  private opLanes: LaneState[] | null = null;
   private pendingAction: TurnAction = { spells: [], traps: [] };
   private selectedCard: Card | null = null;
   private submitted = false;
@@ -115,7 +116,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private setupLaneInteraction(): void {
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 4; i++) {
       const laneIndex = i as LaneIndex;
       const hitArea = this.add.rectangle(
         this.myField.getLaneWorldX(laneIndex),
@@ -267,8 +268,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   private applyLaneState(lanes: [LaneState[], LaneState[]]): void {
-    const my = lanes[this.myIndex] as [LaneState, LaneState, LaneState];
-    const op = lanes[this.myIndex === 0 ? 1 : 0] as [LaneState, LaneState, LaneState];
+    const my = lanes[this.myIndex];
+    const op = lanes[this.myIndex === 0 ? 1 : 0];
     this.myLanes = my;
     this.opLanes = op;
     this.myField.updateLanes(my);

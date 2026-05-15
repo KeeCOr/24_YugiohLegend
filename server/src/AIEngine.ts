@@ -1,17 +1,18 @@
 import type { Card, PlayerState, TurnAction, LaneIndex } from '../../shared/types';
 
 function getEmptyLaneIndices(player: PlayerState): LaneIndex[] {
-  return ([0, 1, 2] as LaneIndex[]).filter(i => !player.lanes[i].monster);
+  return ([0, 1, 2, 3] as LaneIndex[]).filter(i => !player.lanes[i].monster);
 }
 
 function getEmptySpellLaneIndices(player: PlayerState): LaneIndex[] {
-  return ([0, 1, 2] as LaneIndex[]).filter(i => !player.lanes[i].spell);
+  return ([0, 1, 2, 3] as LaneIndex[]).filter(i => !player.lanes[i].spell);
 }
 
 function getUnlockedLaneIndices(turn: number): LaneIndex[] {
   if (turn <= 1) return [1];
   if (turn === 2) return [0, 1];
-  return [0, 1, 2];
+  if (turn === 3) return [0, 1, 2];
+  return [0, 1, 2, 3];
 }
 
 function filterUnlocked(lanes: LaneIndex[], turn: number): LaneIndex[] {

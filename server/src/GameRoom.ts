@@ -14,7 +14,7 @@ const UNLOCKED_LANES_BY_TURN: Record<number, LaneIndex[]> = {
   1: [1],
   2: [0, 1],
   3: [0, 1, 2],
-  4: [0, 1, 2],
+  4: [0, 1, 2, 3],
 };
 
 export interface OutgoingMessage {
@@ -61,8 +61,8 @@ export class GameRoom {
       turn: 1,
       phase: 'waiting',
       players: [
-        { index: 0, lp: INITIAL_LP, hand: [], deck: [], lanes: [emptyLane(), emptyLane(), emptyLane()] },
-        { index: 1, lp: INITIAL_LP, hand: [], deck: [], lanes: [emptyLane(), emptyLane(), emptyLane()] },
+        { index: 0, lp: INITIAL_LP, hand: [], deck: [], lanes: [emptyLane(), emptyLane(), emptyLane(), emptyLane()] },
+        { index: 1, lp: INITIAL_LP, hand: [], deck: [], lanes: [emptyLane(), emptyLane(), emptyLane(), emptyLane()] },
       ],
       submitted: [false, false],
       pendingActions: [null, null],
@@ -268,14 +268,14 @@ export class GameRoom {
         // 상대 필드에서 ATK 가장 높은 몬스터 파괴
         let maxAtk = -1;
         let maxLaneIdx = -1;
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < opponent.lanes.length; i++) {
           const m = opponent.lanes[i].monster;
           if (m && (m.atk ?? 0) > maxAtk) {
             maxAtk = m.atk ?? 0;
             maxLaneIdx = i;
           }
         }
-        if (maxLaneIdx >= 0) opponent.lanes[maxLaneIdx as 0 | 1 | 2].monster = null;
+        if (maxLaneIdx >= 0) opponent.lanes[maxLaneIdx].monster = null;
         break;
       }
     }

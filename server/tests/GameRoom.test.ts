@@ -104,6 +104,12 @@ describe('GameRoom', () => {
     room.submitAction(1, { summon: { card: lockedTurn2, laneIndex: 2 }, spells: [], traps: [] });
     expect(room.getState().players[0].lanes[1].monster?.id).toBe(centerTurn1.id);
     expect(room.getState().players[1].lanes[2].monster).toBeNull();
+
+    room.submitAction(0, emptyAction());
+    room.submitAction(1, emptyAction());
+    room.submitAction(0, emptyAction());
+    room.submitAction(1, { summon: { card: lockedTurn2, laneIndex: 3 }, spells: [], traps: [] });
+    expect(room.getState().players[1].lanes[3].monster?.id).toBe(lockedTurn2.id);
   });
 
   it('spell is set on a lane first and resolves on the next turn', () => {

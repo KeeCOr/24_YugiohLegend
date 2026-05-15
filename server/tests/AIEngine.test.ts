@@ -11,7 +11,7 @@ function emptyLane(): LaneState {
 }
 
 function player(hand: Card[]): PlayerState {
-  return { index: 0, lp: 4000, hand, deck: [], lanes: [emptyLane(), emptyLane(), emptyLane()] };
+  return { index: 0, lp: 4000, hand, deck: [], lanes: [emptyLane(), emptyLane(), emptyLane(), emptyLane()] };
 }
 
 describe('randomAction', () => {
@@ -19,7 +19,7 @@ describe('randomAction', () => {
     const p = player([monster('a', 1000), monster('b', 1500)]);
     const action = randomAction(p);
     expect(action.summon).toBeDefined();
-    expect([0, 1, 2]).toContain(action.summon!.laneIndex);
+    expect([0, 1, 2, 3]).toContain(action.summon!.laneIndex);
     expect(action.spells).toBeDefined();
     expect(action.traps).toBeDefined();
   });
@@ -42,6 +42,7 @@ describe('randomAction', () => {
         { monster: monster('a', 500), spell: null, trap: null, tempAtkBoost: 0 },
         { monster: monster('b', 500), spell: null, trap: null, tempAtkBoost: 0 },
         { monster: monster('c', 500), spell: null, trap: null, tempAtkBoost: 0 },
+        { monster: monster('d', 500), spell: null, trap: null, tempAtkBoost: 0 },
       ],
     };
     const action = randomAction(fullPlayer);
@@ -59,6 +60,7 @@ describe('randomAction', () => {
         { monster: null, spell: null, trap: null, tempAtkBoost: 0 },
         { monster: monster('x', 500), spell: null, trap: null, tempAtkBoost: 0 },
         { monster: monster('y', 500), spell: null, trap: null, tempAtkBoost: 0 },
+        { monster: monster('z', 500), spell: null, trap: null, tempAtkBoost: 0 },
       ],
     };
     const action = randomAction(p);
@@ -101,6 +103,7 @@ describe('greedyAction', () => {
         { monster: null, spell: null, trap: null, tempAtkBoost: 0 },
         { monster: monster('x', 500), spell: null, trap: null, tempAtkBoost: 0 },
         { monster: monster('y', 500), spell: null, trap: null, tempAtkBoost: 0 },
+        { monster: monster('z', 500), spell: null, trap: null, tempAtkBoost: 0 },
       ],
     };
     const action = greedyAction(p);
@@ -117,5 +120,22 @@ describe('greedyAction', () => {
     expect(action.summon?.laneIndex).toBe(1);
     expect(action.spells.every(s => s.laneIndex === 1)).toBe(true);
     expect(action.traps.every(t => t.laneIndex === 1)).toBe(true);
+  });
+
+  it('turn 4 AI can use the fourth lane', () => {
+    const p: PlayerState = {
+      index: 0,
+      lp: 4000,
+      deck: [],
+      hand: [monster('m', 1000)],
+      lanes: [
+        { monster: monster('a', 500), spell: null, trap: null, tempAtkBoost: 0 },
+        { monster: monster('b', 500), spell: null, trap: null, tempAtkBoost: 0 },
+        { monster: monster('c', 500), spell: null, trap: null, tempAtkBoost: 0 },
+        { monster: null, spell: null, trap: null, tempAtkBoost: 0 },
+      ],
+    };
+    const action = greedyAction(p, 4);
+    expect(action.summon?.laneIndex).toBe(3);
   });
 });
