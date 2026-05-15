@@ -4,6 +4,7 @@ import type { Card } from '../../shared/types';
 
 const allCards = cards as Card[];
 const monsters = allCards.filter(card => card.type === 'monster');
+const spells = allCards.filter(card => card.type === 'spell');
 const basicMonsters = monsters.filter(card => (card.tributeCost ?? 0) === 0);
 
 describe('monster card catalog', () => {
@@ -71,6 +72,29 @@ describe('monster card catalog', () => {
     for (const card of bruisers) {
       expect(card.atk ?? 0).toBeGreaterThanOrEqual(2200);
       expect(card.hp ?? 0).toBeGreaterThanOrEqual(4);
+    }
+  });
+
+  it('keeps only monster and face-up/face-down spell cards in the catalog', () => {
+    expect(allCards.map(card => card.type)).not.toContain('trap');
+    expect(spells.length).toBeGreaterThanOrEqual(4);
+    expect(spells.map(card => card.effect)).not.toContain('heal_1000');
+
+    const faceUpEffects = new Set(spells.filter(card => card.spellMode !== 'face_down').map(card => card.effect));
+    expect(faceUpEffects).toEqual(new Set([
+      'power_boost',
+      'monster_smash',
+      'backrow_break',
+    ]));
+
+    for (const spell of spells) {
+      expect(spell.spellMode).toMatch(/^(face_up|face_down)$/);
+      if (spell.spellMode === 'face_down') {
+        expect(spell.triggerCondition).toMatch(/^(on_attacked|on_direct_attack)$/);
+        expect(['negate_attack', 'reduce_damage_500']).toContain(spell.effect);
+      } else {
+        expect(spell.spellDelayTurns).toBeGreaterThanOrEqual(1);
+      }
     }
   });
 });

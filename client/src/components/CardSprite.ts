@@ -109,15 +109,17 @@ export class CardSprite extends Phaser.GameObjects.Container {
       const tributeCost = card.tributeCost ?? 0;
       return tributeCost > 0 ? `TRIBUTE x${tributeCost}` : 'FREE SUMMON';
     }
-    if (card.type === 'spell') return `DELAY ${card.spellDelayTurns ?? 1}T`;
-    return 'SET TRAP';
+    if (card.type === 'spell') {
+      return card.spellMode === 'face_down' ? 'SET FACE-DOWN' : `DELAY ${card.spellDelayTurns ?? 1}T`;
+    }
+    return '';
   }
 
   private getTypeLabel(card: Card): string {
     if (card.type === 'monster') {
       return (card.tributeCost ?? 0) > 0 ? 'MONSTER - TRIBUTE' : 'MONSTER - FREE';
     }
-    return card.type === 'spell' ? 'SPELL' : 'TRAP';
+    return card.spellMode === 'face_down' ? 'FACE-DOWN SPELL' : 'FACE-UP SPELL';
   }
 
   private getRoleColor(card: Card): number {

@@ -1,7 +1,7 @@
-export type CardType = 'monster' | 'spell' | 'trap';
-export type EffectId = 'heal_1000' | 'power_boost' | 'monster_smash';
-export type TrapConditionId = 'on_attacked' | 'on_direct_attack';
-export type TrapEffectId = 'negate_attack' | 'reduce_damage_500';
+export type CardType = 'monster' | 'spell';
+export type SpellMode = 'face_up' | 'face_down';
+export type EffectId = 'power_boost' | 'monster_smash' | 'backrow_break' | 'negate_attack' | 'reduce_damage_500';
+export type TriggerConditionId = 'on_attacked' | 'on_direct_attack';
 export type MonsterRole = 'striker' | 'guardian' | 'utility';
 export type TributeRole = 'bruiser' | 'ally_booster' | 'field_booster' | 'mobile' | 'tribute_scaler';
 export type MonsterAbilityId =
@@ -27,9 +27,9 @@ export interface Card {
   tributeRole?: TributeRole;
   monsterAbility?: MonsterAbilityId;
   abilityText?: string;
+  spellMode?: SpellMode;
   effect?: EffectId;
-  trapCondition?: TrapConditionId;
-  trapEffect?: TrapEffectId;
+  triggerCondition?: TriggerConditionId;
   spellDelayTurns?: number;
 }
 
@@ -41,8 +41,8 @@ export interface SpellSlot {
 export interface LaneState {
   monster: Card | null;
   spell: SpellSlot | null;
-  trap: Card | null;
-  tempAtkBoost: number; // power_boost 적용 시 이번 전투에서만 유효
+  faceDownSpell: Card | null;
+  tempAtkBoost: number;
 }
 
 export interface PlayerState {
@@ -56,7 +56,6 @@ export interface PlayerState {
 export interface TurnAction {
   summon?: { card: Card; laneIndex: LaneIndex; tributeLaneIndices?: LaneIndex[] };
   spells: { card: Card; laneIndex: LaneIndex }[];
-  traps: { card: Card; laneIndex: LaneIndex }[];
 }
 
 export interface BattleEvent {
@@ -65,12 +64,12 @@ export interface BattleEvent {
   attackerIndex: PlayerIndex;
   damage: number;
   destroyedCards: { playerIndex: PlayerIndex; card: Card }[];
-  trapTriggered?: { playerIndex: PlayerIndex; card: Card };
+  triggeredSpell?: { playerIndex: PlayerIndex; card: Card };
   negated: boolean;
 }
 
 export interface GameState {
-  turn: number; // 1~4
+  turn: number;
   phase: 'waiting' | 'action' | 'reveal' | 'battle' | 'final_battle' | 'game_over';
   players: [PlayerState, PlayerState];
   submitted: [boolean, boolean];
@@ -78,7 +77,6 @@ export interface GameState {
   winner: PlayerIndex | 'draw' | null;
 }
 
-// ── WebSocket 메시지 ──────────────────────────────────────────
 export type ClientMessage =
   | { type: 'join_room'; mode: 'single' | 'multi'; deck: Card[] }
   | { type: 'submit_action'; action: TurnAction };

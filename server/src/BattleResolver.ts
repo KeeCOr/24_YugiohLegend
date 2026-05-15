@@ -1,9 +1,14 @@
-import type { BattleEvent, LaneState, PlayerState, PlayerIndex, LaneIndex } from '../../shared/types';
+import type { BattleEvent, Card, LaneState, PlayerState, PlayerIndex, LaneIndex } from '../../shared/types';
 
 export interface BattleResult {
   events: BattleEvent[];
   p0LpDelta: number;
   p1LpDelta: number;
+}
+
+function triggeredSpell(lane: LaneState, condition: Card['triggerCondition']): Card | null {
+  const spell = lane.faceDownSpell;
+  return spell?.triggerCondition === condition ? spell : null;
 }
 
 export function resolveBattle(p0: PlayerState, p1: PlayerState): BattleResult {
@@ -43,125 +48,87 @@ function resolveLane(
   }
 
   if (p0Mon && p1Mon) {
-    // p0 attacks p1Lane → check p1Lane trap (on_attacked)
-    // p1 attacks p0Lane → check p0Lane trap (on_attacked)
-    const p0AttackNegated =
-      p1Lane.trap?.trapCondition === 'on_attacked' && p1Lane.trap.trapEffect === 'negate_attack';
-    const p1AttackNegated =
-      p0Lane.trap?.trapCondition === 'on_attacked' && p0Lane.trap.trapEffect === 'negate_attack';
-
+    const p0Counter = triggeredSpell(p1Lane, 'on_attacked');
+    const p1Counter = triggeredSpell(p0Lane, 'on_attacked');
+    const p0AttackNegated = p0Counter?.effect === 'negate_attack';
+    const p1AttackNegated = p1Counter?.effect === 'negate_attack';
     const destroyedCards: BattleEvent['destroyedCards'] = [];
     let damage = 0;
 
     if (p0AttackNegated && p1AttackNegated) {
-      // 양쪽 공격 모두 무효화 — LP 변화 없음, 파괴 없음
       events.push({
         laneIndex,
         type: 'monster_vs_monster',
-        attackerIndex: 0, // arbitrary when both are negated
+        attackerIndex: 0,
         damage: 0,
         destroyedCards: [],
-        trapTriggered: undefined,
+        triggeredSpell: { playerIndex: 1, card: p0Counter },
         negated: true,
       });
       return { events, p0LpDelta, p1LpDelta };
     }
 
     if (!p0AttackNegated && !p1AttackNegated) {
-      // Neither attack negated — higher ATK is the attacker
       const attackerIndex: PlayerIndex = p0Atk >= p1Atk ? 0 : 1;
       if (p0Atk > p1Atk) {
-        destroyedCards.push({ playerIndex: 1 as PlayerIndex, card: p1Mon });
+        destroyedCards.push({ playerIndex: 1, card: p1Mon });
         damage = p0Atk - p1Atk;
         p1LpDelta -= damage;
       } else if (p1Atk > p0Atk) {
-        destroyedCards.push({ playerIndex: 0 as PlayerIndex, card: p0Mon });
+        destroyedCards.push({ playerIndex: 0, card: p0Mon });
         damage = p1Atk - p0Atk;
         p0LpDelta -= damage;
       } else {
-        destroyedCards.push({ playerIndex: 0 as PlayerIndex, card: p0Mon });
-        destroyedCards.push({ playerIndex: 1 as PlayerIndex, card: p1Mon });
+        destroyedCards.push({ playerIndex: 0, card: p0Mon });
+        destroyedCards.push({ playerIndex: 1, card: p1Mon });
       }
       events.push({ laneIndex, type: 'monster_vs_monster', attackerIndex, damage, destroyedCards, negated: false });
-    } else {
-      // Exactly one attack is negated — only process the non-negated side's attack
-      const trapOwner: PlayerIndex = p0AttackNegated ? 1 : 0;
-      const trapCard = p0AttackNegated ? p1Lane.trap! : p0Lane.trap!;
+      return { events, p0LpDelta, p1LpDelta };
+    }
 
-      if (p0AttackNegated && !p1AttackNegated) {
-        // p0 attack negated; p1 is the attacker
-        // p1 attacks p0: if p1Atk > p0Atk → p0 destroyed + LP damage
-        //                if p1Atk <= p0Atk → p1 destroyed (blocked), no LP damage
-        if (p1Atk > p0Atk) {
-          destroyedCards.push({ playerIndex: 0 as PlayerIndex, card: p0Mon });
-          damage = p1Atk - p0Atk;
-          p0LpDelta -= damage;
-        } else if (p1Atk < p0Atk) {
-          destroyedCards.push({ playerIndex: 1 as PlayerIndex, card: p1Mon });
-          // no LP damage — p0's attack was negated, p1 just loses its monster
-        } else {
-          // equal ATK: both destroyed, no LP damage
-          destroyedCards.push({ playerIndex: 0 as PlayerIndex, card: p0Mon });
-          destroyedCards.push({ playerIndex: 1 as PlayerIndex, card: p1Mon });
-        }
-        events.push({
-          laneIndex,
-          type: 'monster_vs_monster',
-          attackerIndex: 1 as PlayerIndex, // p1 is the attacker (p0's attack was negated)
-          damage,
-          destroyedCards,
-          trapTriggered: { playerIndex: trapOwner, card: trapCard },
-          negated: true,
-        });
+    const spellOwner: PlayerIndex = p0AttackNegated ? 1 : 0;
+    const spellCard = p0AttackNegated ? p0Counter! : p1Counter!;
+
+    if (p0AttackNegated) {
+      if (p1Atk > p0Atk) {
+        destroyedCards.push({ playerIndex: 0, card: p0Mon });
+        damage = p1Atk - p0Atk;
+        p0LpDelta -= damage;
+      } else if (p1Atk < p0Atk) {
+        destroyedCards.push({ playerIndex: 1, card: p1Mon });
       } else {
-        // p1 attack negated; p0 is the attacker
-        // p0 attacks p1: if p0Atk > p1Atk → p1 destroyed + LP damage
-        //                if p0Atk <= p1Atk → p0 destroyed (blocked), no LP damage
-        if (p0Atk > p1Atk) {
-          destroyedCards.push({ playerIndex: 1 as PlayerIndex, card: p1Mon });
-          damage = p0Atk - p1Atk;
-          p1LpDelta -= damage;
-        } else if (p0Atk < p1Atk) {
-          destroyedCards.push({ playerIndex: 0 as PlayerIndex, card: p0Mon });
-          // no LP damage — p1's attack was negated, p0 just loses its monster
-        } else {
-          // equal ATK: both destroyed, no LP damage
-          destroyedCards.push({ playerIndex: 0 as PlayerIndex, card: p0Mon });
-          destroyedCards.push({ playerIndex: 1 as PlayerIndex, card: p1Mon });
-        }
-        events.push({
-          laneIndex,
-          type: 'monster_vs_monster',
-          attackerIndex: 0 as PlayerIndex, // p0 is the attacker (p1's attack was negated)
-          damage,
-          destroyedCards,
-          trapTriggered: { playerIndex: trapOwner, card: trapCard },
-          negated: true,
-        });
+        destroyedCards.push({ playerIndex: 0, card: p0Mon });
+        destroyedCards.push({ playerIndex: 1, card: p1Mon });
       }
+      events.push({ laneIndex, type: 'monster_vs_monster', attackerIndex: 1, damage, destroyedCards, triggeredSpell: { playerIndex: spellOwner, card: spellCard }, negated: true });
+    } else {
+      if (p0Atk > p1Atk) {
+        destroyedCards.push({ playerIndex: 1, card: p1Mon });
+        damage = p0Atk - p1Atk;
+        p1LpDelta -= damage;
+      } else if (p0Atk < p1Atk) {
+        destroyedCards.push({ playerIndex: 0, card: p0Mon });
+      } else {
+        destroyedCards.push({ playerIndex: 0, card: p0Mon });
+        destroyedCards.push({ playerIndex: 1, card: p1Mon });
+      }
+      events.push({ laneIndex, type: 'monster_vs_monster', attackerIndex: 0, damage, destroyedCards, triggeredSpell: { playerIndex: spellOwner, card: spellCard }, negated: true });
     }
     return { events, p0LpDelta, p1LpDelta };
   }
 
-  // One side only → direct attack
   if (p0Mon && !p1Mon) {
     let damage = p0Atk;
-    let trapTriggered: BattleEvent['trapTriggered'];
-    if (p1Lane.trap?.trapCondition === 'on_direct_attack' && p1Lane.trap.trapEffect === 'reduce_damage_500') {
-      damage = Math.max(0, damage - 500);
-      trapTriggered = { playerIndex: 1 as PlayerIndex, card: p1Lane.trap };
-    }
+    let spell: Card | null = triggeredSpell(p1Lane, 'on_direct_attack');
+    if (spell?.effect === 'reduce_damage_500') damage = Math.max(0, damage - 500);
     p1LpDelta -= damage;
-    events.push({ laneIndex, type: 'direct_attack', attackerIndex: 0, damage, destroyedCards: [], trapTriggered, negated: false });
+    events.push({ laneIndex, type: 'direct_attack', attackerIndex: 0, damage, destroyedCards: [], triggeredSpell: spell ? { playerIndex: 1, card: spell } : undefined, negated: false });
   } else if (!p0Mon && p1Mon) {
     let damage = p1Atk;
-    let trapTriggered: BattleEvent['trapTriggered'];
-    if (p0Lane.trap?.trapCondition === 'on_direct_attack' && p0Lane.trap.trapEffect === 'reduce_damage_500') {
-      damage = Math.max(0, damage - 500);
-      trapTriggered = { playerIndex: 0 as PlayerIndex, card: p0Lane.trap };
-    }
+    let spell: Card | null = triggeredSpell(p0Lane, 'on_direct_attack');
+    if (spell?.effect === 'reduce_damage_500') damage = Math.max(0, damage - 500);
     p0LpDelta -= damage;
-    events.push({ laneIndex, type: 'direct_attack', attackerIndex: 1, damage, destroyedCards: [], trapTriggered, negated: false });
+    events.push({ laneIndex, type: 'direct_attack', attackerIndex: 1, damage, destroyedCards: [], triggeredSpell: spell ? { playerIndex: 0, card: spell } : undefined, negated: false });
   }
 
   return { events, p0LpDelta, p1LpDelta };

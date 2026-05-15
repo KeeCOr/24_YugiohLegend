@@ -10,7 +10,7 @@ function makeDeck(): Card[] {
 }
 
 function emptyAction(): TurnAction {
-  return { spells: [], traps: [] };
+  return { spells: [] };
 }
 
 describe('GameRoom', () => {
@@ -75,7 +75,7 @@ describe('GameRoom', () => {
     room.addPlayer('p1', makeDeck());
     const monsterCard = allCards.find(c => c.id === 'goblin_warrior')!;
 
-    room.submitAction(0, { summon: { card: monsterCard, laneIndex: 1 }, spells: [], traps: [] });
+    room.submitAction(0, { summon: { card: monsterCard, laneIndex: 0 }, spells: [] });
     const msgs = room.submitAction(1, emptyAction());
     const result = msgs.find(m => m.message.type === 'battle_result')?.message;
 
@@ -83,7 +83,7 @@ describe('GameRoom', () => {
     if (result?.type === 'battle_result') {
       expect(result.events).toHaveLength(0);
       expect(result.lps).toEqual([4000, 4000]);
-      expect(result.lanes[0][1].monster?.id).toBe(monsterCard.id);
+      expect(result.lanes[0][0].monster?.id).toBe(monsterCard.id);
     }
     expect(room.getState().turn).toBe(2);
   });
@@ -93,22 +93,22 @@ describe('GameRoom', () => {
     room.addPlayer('p0', makeDeck());
     room.addPlayer('p1', makeDeck());
     const lockedTurn1 = allCards.find(c => c.id === 'goblin_warrior')!;
-    const centerTurn1 = allCards.find(c => c.id === 'village_guard')!;
+    const laneOneTurn1 = allCards.find(c => c.id === 'village_guard')!;
     const lockedTurn2 = allCards.find(c => c.id === 'dragon_mage')!;
 
-    room.submitAction(0, { summon: { card: lockedTurn1, laneIndex: 0 }, spells: [], traps: [] });
+    room.submitAction(0, { summon: { card: lockedTurn1, laneIndex: 1 }, spells: [] });
     room.submitAction(1, emptyAction());
-    expect(room.getState().players[0].lanes[0].monster).toBeNull();
+    expect(room.getState().players[0].lanes[1].monster).toBeNull();
 
-    room.submitAction(0, { summon: { card: centerTurn1, laneIndex: 1 }, spells: [], traps: [] });
-    room.submitAction(1, { summon: { card: lockedTurn2, laneIndex: 2 }, spells: [], traps: [] });
-    expect(room.getState().players[0].lanes[1].monster?.id).toBe(centerTurn1.id);
+    room.submitAction(0, { summon: { card: laneOneTurn1, laneIndex: 0 }, spells: [] });
+    room.submitAction(1, { summon: { card: lockedTurn2, laneIndex: 2 }, spells: [] });
+    expect(room.getState().players[0].lanes[0].monster?.id).toBe(laneOneTurn1.id);
     expect(room.getState().players[1].lanes[2].monster).toBeNull();
 
     room.submitAction(0, emptyAction());
     room.submitAction(1, emptyAction());
     room.submitAction(0, emptyAction());
-    room.submitAction(1, { summon: { card: lockedTurn2, laneIndex: 3 }, spells: [], traps: [] });
+    room.submitAction(1, { summon: { card: lockedTurn2, laneIndex: 3 }, spells: [] });
     expect(room.getState().players[1].lanes[3].monster?.id).toBe(lockedTurn2.id);
   });
 
@@ -117,21 +117,26 @@ describe('GameRoom', () => {
     room.addPlayer('p0', makeDeck());
     room.addPlayer('p1', makeDeck());
 
-    const healCard = allCards.find(c => c.id === 'healing_light')!;
-    (room.getState() as GameState).players[0].hand.push(healCard);
+    const boostCard = allCards.find(c => c.id === 'power_boost')!;
+    const monster = allCards.find(c => c.id === 'village_guard')!;
+    const opponentMonster = allCards.find(c => c.id === 'shield_mason')!;
+    (room.getState() as GameState).players[0].hand.push(boostCard);
+    (room.getState() as GameState).players[0].lanes[0].monster = monster;
+    (room.getState() as GameState).players[1].lanes[0].monster = opponentMonster;
 
-    const action: TurnAction = { spells: [{ card: healCard, laneIndex: 1 }], traps: [] };
+    const action: TurnAction = { spells: [{ card: boostCard, laneIndex: 0 }] };
     room.submitAction(0, action);
     room.submitAction(1, emptyAction());
 
-    expect(room.getState().players[0].lp).toBe(4000);
-    expect(room.getState().players[0].lanes[1].spell?.card.id).toBe(healCard.id);
+    expect(room.getState().players[0].lanes[0].tempAtkBoost).toBe(0);
+    expect(room.getState().players[0].lanes[0].spell?.card.id).toBe(boostCard.id);
 
     room.submitAction(0, emptyAction());
     room.submitAction(1, emptyAction());
 
-    expect(room.getState().players[0].lp).toBe(5000);
-    expect(room.getState().players[0].lanes[1].spell).toBeNull();
+    expect(room.getState().players[0].lanes[0].monster?.id).toBe(monster.id);
+    expect(room.getState().players[1].lanes[0].monster).toBeNull();
+    expect(room.getState().players[0].lanes[0].spell).toBeNull();
   });
 
   it('delayed spell is destroyed before resolving when its lane is hit', () => {
@@ -139,15 +144,15 @@ describe('GameRoom', () => {
     room.addPlayer('p0', makeDeck());
     room.addPlayer('p1', makeDeck());
 
-    const healCard = allCards.find(c => c.id === 'healing_light')!;
+    const boostCard = allCards.find(c => c.id === 'power_boost')!;
     const attacker = allCards.find(c => c.id === 'goblin_warrior')!;
-    (room.getState() as GameState).players[0].hand.push(healCard);
+    (room.getState() as GameState).players[0].hand.push(boostCard);
 
     room.submitAction(0, emptyAction());
     room.submitAction(1, emptyAction());
 
-    room.submitAction(0, { spells: [{ card: healCard, laneIndex: 0 }], traps: [] });
-    room.submitAction(1, { summon: { card: attacker, laneIndex: 0 }, spells: [], traps: [] });
+    room.submitAction(0, { spells: [{ card: boostCard, laneIndex: 0 }] });
+    room.submitAction(1, { summon: { card: attacker, laneIndex: 0 }, spells: [] });
 
     expect(room.getState().players[0].lanes[0].spell).toBeNull();
     expect(room.getState().players[0].lp).toBe(2100);
@@ -166,7 +171,7 @@ describe('GameRoom', () => {
     (room.getState() as GameState).players[1].lanes[1].monster = weakMonster;
     (room.getState() as GameState).players[0].hand.push(smashCard);
 
-    const action: TurnAction = { spells: [{ card: smashCard, laneIndex: 1 }], traps: [] };
+    const action: TurnAction = { spells: [{ card: smashCard, laneIndex: 0 }] };
     room.submitAction(0, action);
     room.submitAction(1, emptyAction());
 
@@ -177,6 +182,50 @@ describe('GameRoom', () => {
 
     expect(room.getState().players[1].lanes[0].monster).toBeNull();
     expect(room.getState().players[1].lanes[1].monster?.id).toBe(weakMonster.id);
+  });
+
+  it('backrow_break spell destroys an opponent delayed spell before it resolves', () => {
+    const room = new GameRoom('room1');
+    room.addPlayer('p0', makeDeck());
+    room.addPlayer('p1', makeDeck());
+
+    const breaker = allCards.find(c => c.id === 'backrow_break')!;
+    const opponentSpell = allCards.find(c => c.id === 'power_boost')!;
+
+    (room.getState() as GameState).players[0].hand.push(breaker);
+    (room.getState() as GameState).players[1].lanes[0].spell = {
+      card: opponentSpell,
+      remainingTurns: 2,
+    };
+
+    room.submitAction(0, { spells: [{ card: breaker, laneIndex: 0 }] });
+    room.submitAction(1, emptyAction());
+
+    expect(room.getState().players[1].lanes[0].spell?.card.id).toBe(opponentSpell.id);
+
+    room.submitAction(0, emptyAction());
+    room.submitAction(1, emptyAction());
+
+    expect(room.getState().players[1].lanes[0].spell).toBeNull();
+  });
+
+  it('backrow_break spell destroys an opponent trap when no delayed spell is available', () => {
+    const room = new GameRoom('room1');
+    room.addPlayer('p0', makeDeck());
+    room.addPlayer('p1', makeDeck());
+
+    const breaker = allCards.find(c => c.id === 'backrow_break')!;
+    const trap = allCards.find(c => c.id === 'mirror_snare')!;
+
+    (room.getState() as GameState).players[0].hand.push(breaker);
+    (room.getState() as GameState).players[1].lanes[0].faceDownSpell = trap;
+
+    room.submitAction(0, { spells: [{ card: breaker, laneIndex: 0 }] });
+    room.submitAction(1, emptyAction());
+    room.submitAction(0, emptyAction());
+    room.submitAction(1, emptyAction());
+
+    expect(room.getState().players[1].lanes[0].faceDownSpell).toBeNull();
   });
 
   it('rejects deck sizes outside 8 to 12 cards', () => {
@@ -190,10 +239,10 @@ describe('GameRoom', () => {
     room.addPlayer('p0', makeDeck());
     room.addPlayer('p1', makeDeck());
     const monsterCard = allCards.find(c => c.type === 'monster')!;
-    const action: TurnAction = { summon: { card: monsterCard, laneIndex: 1 }, spells: [], traps: [] };
+    const action: TurnAction = { summon: { card: monsterCard, laneIndex: 0 }, spells: [] };
     room.submitAction(0, action);
     room.submitAction(1, emptyAction());
-    expect(room.getState().players[0].lanes[1].monster?.id).toBe(monsterCard.id);
+    expect(room.getState().players[0].lanes[0].monster?.id).toBe(monsterCard.id);
   });
 
   it('tribute summon requires and consumes tribute monsters', () => {
@@ -206,28 +255,27 @@ describe('GameRoom', () => {
     (room.getState() as GameState).players[0].lanes[1].monster = material;
     (room.getState() as GameState).players[0].hand.push(tributeMonster);
 
-    room.submitAction(0, { summon: { card: tributeMonster, laneIndex: 0 }, spells: [], traps: [] });
+    room.submitAction(0, { summon: { card: tributeMonster, laneIndex: 0 }, spells: [] });
     room.submitAction(1, emptyAction());
     expect(room.getState().players[0].lanes[0].monster).toBeNull();
     expect(room.getState().players[0].lanes[1].monster?.id).toBe(material.id);
 
-    room.submitAction(0, { summon: { card: tributeMonster, laneIndex: 0, tributeLaneIndices: [1] }, spells: [], traps: [] });
+    room.submitAction(0, { summon: { card: tributeMonster, laneIndex: 0, tributeLaneIndices: [1] }, spells: [] });
     room.submitAction(1, emptyAction());
     expect(room.getState().players[0].lanes[0].monster?.id).toBe(tributeMonster.id);
     expect(room.getState().players[0].lanes[1].monster).toBeNull();
   });
 
-  it('reveal hides opponent delayed spells and traps', () => {
+  it('reveal shows opponent face-up spells and hides face-down spells', () => {
     const room = new GameRoom('room1');
     room.addPlayer('p0', makeDeck());
     room.addPlayer('p1', makeDeck());
-    const spell = allCards.find(c => c.id === 'healing_light')!;
-    const trap = allCards.find(c => c.id === 'counter_trap')!;
+    const spell = allCards.find(c => c.id === 'backrow_break')!;
+    const faceDownSpell = allCards.find(c => c.id === 'mirror_snare')!;
 
     room.submitAction(0, emptyAction());
     const msgs = room.submitAction(1, {
-      spells: [{ card: spell, laneIndex: 1 }],
-      traps: [{ card: trap, laneIndex: 1 }],
+      spells: [{ card: spell, laneIndex: 1 }, { card: faceDownSpell, laneIndex: 1 }],
     });
     const revealForP0 = msgs.find(m => m.playerIndex === 0 && m.message.type === 'reveal')?.message;
     const revealForP1 = msgs.find(m => m.playerIndex === 1 && m.message.type === 'reveal')?.message;
@@ -235,10 +283,10 @@ describe('GameRoom', () => {
     expect(revealForP0?.type).toBe('reveal');
     expect(revealForP1?.type).toBe('reveal');
     if (revealForP0?.type === 'reveal' && revealForP1?.type === 'reveal') {
-      expect(revealForP0.opponentAction.spells[0].card.id).toBe('hidden_spell');
-      expect(revealForP0.opponentAction.traps[0].card.id).toBe('hidden_trap');
+      expect(revealForP0.opponentAction.spells[0].card.id).toBe(spell.id);
+      expect(revealForP0.opponentAction.spells[1].card.id).toBe('hidden_face_down_spell');
       expect(revealForP1.yourAction.spells[0].card.id).toBe(spell.id);
-      expect(revealForP1.yourAction.traps[0].card.id).toBe(trap.id);
+      expect(revealForP1.yourAction.spells[1].card.id).toBe(faceDownSpell.id);
     }
   });
 
@@ -254,8 +302,8 @@ describe('GameRoom', () => {
     room.submitAction(0, emptyAction());
     room.submitAction(1, emptyAction());
 
-    room.submitAction(0, { summon: { card: p0Monster, laneIndex: 0 }, spells: [], traps: [] });
-    const msgs = room.submitAction(1, { summon: { card: p1Monster, laneIndex: 2 }, spells: [], traps: [] });
+    room.submitAction(0, { summon: { card: p0Monster, laneIndex: 0 }, spells: [] });
+    const msgs = room.submitAction(1, { summon: { card: p1Monster, laneIndex: 2 }, spells: [] });
     const result = msgs.find(m => m.message.type === 'battle_result')?.message;
 
     expect(result?.type).toBe('battle_result');

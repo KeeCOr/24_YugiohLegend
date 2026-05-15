@@ -6,7 +6,6 @@ export const ART_KEYS = {
   cardBack: 'art_card_back',
   cardMonster: 'art_card_monster',
   cardSpell: 'art_card_spell',
-  cardTrap: 'art_card_trap',
   lane: 'art_lane',
   laneEnemy: 'art_lane_enemy',
   panel: 'art_panel',
@@ -21,7 +20,6 @@ export function registerProceduralArt(scene: Phaser.Scene): void {
   createBackdrop(scene);
   createCardFrame(scene, ART_KEYS.cardMonster, 0x7b2f18, 0xe2a34d, 0x2f1d17);
   createCardFrame(scene, ART_KEYS.cardSpell, 0x145e46, 0x66d39f, 0x132820);
-  createCardFrame(scene, ART_KEYS.cardTrap, 0x5a235f, 0xd280e6, 0x241426);
   createCardBack(scene);
   createLane(scene, ART_KEYS.lane, 0x132b3f, 0x4cb2ff);
   createLane(scene, ART_KEYS.laneEnemy, 0x351d2c, 0xff6692);
@@ -42,14 +40,12 @@ export function addSceneBackdrop(scene: Phaser.Scene): Phaser.GameObjects.Image 
 
 export function cardTextureKey(type: CardType): string {
   if (type === 'monster') return ART_KEYS.cardMonster;
-  if (type === 'spell') return ART_KEYS.cardSpell;
-  return ART_KEYS.cardTrap;
+  return ART_KEYS.cardSpell;
 }
 
 export function typeTint(type: CardType): number {
   if (type === 'monster') return 0xe6a24a;
-  if (type === 'spell') return 0x61d79d;
-  return 0xd281ee;
+  return 0x61d79d;
 }
 
 function createBackdrop(scene: Phaser.Scene): void {

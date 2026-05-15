@@ -119,3 +119,20 @@ interface LaneState {
   tempAtkBoost: number;
 }
 ```
+
+## 2026-05-15 Spell Catalog Update
+- Spell cards are now concentrated on three combat roles: ATK boost (`power_boost`), opponent monster removal (`monster_smash`), and opponent spell/trap removal (`backrow_break`).
+- Healing spells are intentionally excluded from the current catalog so magic decisions stay aggressive and board-focused.
+- `Seal Breaker` uses `backrow_break`: it destroys the opponent delayed spell in the opposite lane first, then the trap in that lane, then falls back to any opponent delayed spell or trap.
+
+## 2026-05-15 UI/Line Fix
+- Lane unlocks now follow visible lane labels: turn 1 unlocks lane 1, turn 2 unlocks lanes 1-2, turn 3 unlocks lanes 1-3, and turn 4 unlocks lanes 1-4.
+- Server validation, AI lane choice, client click validation, and locked overlay labels all use the same unlock order.
+- The Phaser canvas uses FIT scaling inside the Electron content area so the bottom hand panel remains visible even when the OS window frame reduces available height.
+
+## 2026-05-15 Face-Up/Face-Down Spell Update
+- The separate trap card type has been removed. The active card types are now monster and spell only.
+- Spells use `spellMode`: `face_up` spells are placed visibly on a lane and resolve after `spellDelayTurns`; `face_down` spells are set hidden and trigger when their condition is met.
+- Face-up spells keep delayed board effects such as ATK boost, monster removal, and spell removal.
+- Face-down spells replace traps: examples include attack negation on `on_attacked` and direct-attack damage reduction on `on_direct_attack`.
+- Server actions now submit all magic through `TurnAction.spells`; face-down spells are hidden in opponent reveal messages.

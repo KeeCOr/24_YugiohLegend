@@ -85,3 +85,19 @@
 | S→C | `battle_result` | 전투 결과, LP, 양쪽 레인 상태 |
 | S→C | `turn_start` | 새 턴 및 드로우 카드 |
 | S→C | `game_over` | 승패 결과 |
+
+## 2026-05-15 Spell Catalog Update
+- Spell cards are scoped to ATK boosts, opponent monster removal, and opponent spell/trap removal.
+- Current spell effects are `power_boost`, `monster_smash`, and `backrow_break`; `heal_1000` is no longer part of the active catalog.
+- `backrow_break` resolves after its delay and removes the opponent spell/trap in the opposite lane first, with a fallback to any opponent spell/trap if that lane is empty.
+
+## 2026-05-15 UI/Line Fix
+- Lane unlocks follow visible lane labels: turn 1 unlocks lane 1, turn 2 unlocks lanes 1-2, turn 3 unlocks lanes 1-3, and turn 4 unlocks lanes 1-4.
+- Server validation, AI lane choice, client click validation, and locked overlay labels use the same unlock order.
+- Phaser uses FIT scaling in the Electron content area so the bottom hand panel remains visible when the window frame reduces available height.
+
+## 2026-05-15 Face-Up/Face-Down Spell Update
+- Removed trap as a card type. Cards are now `monster` or `spell`.
+- `spellMode: face_up` means visible delayed magic. `spellMode: face_down` means hidden conditional magic.
+- `LaneState` uses `spell` for face-up delayed spells and `faceDownSpell` for hidden conditional spells.
+- `TurnAction.spells` carries both spell modes; opponent reveal masks only face-down spells.

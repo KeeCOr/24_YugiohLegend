@@ -30,6 +30,7 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 900,
     height: 1600,
+    useContentSize: true,
     resizable: false,
     title: 'YugiohLegend',
     webPreferences: {

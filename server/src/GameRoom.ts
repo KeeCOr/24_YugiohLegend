@@ -11,13 +11,17 @@ const INITIAL_HAND_SIZE = 4;
 const SETUP_TURN = 1;
 const MAX_TURNS = 4;
 const UNLOCKED_LANES_BY_TURN: Record<number, LaneIndex[]> = {
-  1: [1],
+  1: [0],
   2: [0, 1],
   3: [0, 1, 2],
   4: [0, 1, 2, 3],
 };
-const HIDDEN_SPELL_CARD: Card = { id: 'hidden_spell', type: 'spell', name: 'Hidden Spell' };
-const HIDDEN_TRAP_CARD: Card = { id: 'hidden_trap', type: 'trap', name: 'Hidden Trap' };
+const HIDDEN_FACE_DOWN_SPELL_CARD: Card = {
+  id: 'hidden_face_down_spell',
+  type: 'spell',
+  spellMode: 'face_down',
+  name: 'Hidden Spell',
+};
 
 export interface OutgoingMessage {
   playerIndex: PlayerIndex | 'both';
@@ -25,7 +29,7 @@ export interface OutgoingMessage {
 }
 
 function emptyLane(): LaneState {
-  return { monster: null, spell: null, trap: null, tempAtkBoost: 0 };
+  return { monster: null, spell: null, faceDownSpell: null, tempAtkBoost: 0 };
 }
 
 function shuffle<T>(arr: T[]): T[] {
@@ -42,7 +46,7 @@ function cloneLanes(state: GameState): [PlayerState['lanes'], PlayerState['lanes
     player.lanes.map(lane => ({
       monster: lane.monster,
       spell: lane.spell,
-      trap: lane.trap,
+      faceDownSpell: lane.faceDownSpell,
       tempAtkBoost: lane.tempAtkBoost,
     })) as PlayerState['lanes']
   ) as [PlayerState['lanes'], PlayerState['lanes']];
@@ -55,8 +59,10 @@ function isLaneUnlocked(turn: number, laneIndex: LaneIndex): boolean {
 function maskActionForOpponent(action: TurnAction): TurnAction {
   return {
     summon: action.summon,
-    spells: action.spells.map(spell => ({ ...spell, card: HIDDEN_SPELL_CARD })),
-    traps: action.traps.map(trap => ({ ...trap, card: HIDDEN_TRAP_CARD })),
+    spells: action.spells.map(spell => ({
+      ...spell,
+      card: spell.card.spellMode === 'face_down' ? HIDDEN_FACE_DOWN_SPELL_CARD : spell.card,
+    })),
   };
 }
 
@@ -85,7 +91,7 @@ export class GameRoom {
   addPlayer(playerId: string, deck: Card[]): OutgoingMessage[] {
     if (deck.length < 8 || deck.length > 12) {
       const idx = this.playerIds[0] === null ? 0 : 1;
-      return [{ playerIndex: idx as PlayerIndex, message: { type: 'error', message: '덱은 8~12장이어야 합니다.' } }];
+      return [{ playerIndex: idx as PlayerIndex, message: { type: 'error', message: 'Deck must contain 8 to 12 cards.' } }];
     }
     const index = this.playerIds[0] === null ? 0 : 1;
     this.playerIds[index] = playerId;
@@ -96,8 +102,6 @@ export class GameRoom {
 
     if (this.playerIds[0] && this.playerIds[1]) {
       this.state.phase = 'action';
-      // 두 플레이어 모두 준비됐을 때 양쪽 메시지를 한 번에 반환
-      // 호출자(RoomManager)가 playerIndex 필드를 보고 각 WebSocket에 라우팅
       return [
         { playerIndex: 0, message: { type: 'game_start', yourIndex: 0, yourHand: this.state.players[0].hand, opponentHandCount: INITIAL_HAND_SIZE, turn: 1 } },
         { playerIndex: 1, message: { type: 'game_start', yourIndex: 1, yourHand: this.state.players[1].hand, opponentHandCount: INITIAL_HAND_SIZE, turn: 1 } },
@@ -113,7 +117,6 @@ export class GameRoom {
 
     if (!this.state.submitted[0] || !this.state.submitted[1]) return [];
 
-    // 양쪽 제출 완료 → 처리
     return this.resolveActions();
   }
 
@@ -121,55 +124,24 @@ export class GameRoom {
     const msgs: OutgoingMessage[] = [];
     const [a0, a1] = this.state.pendingActions as [TurnAction, TurnAction];
 
-    // reveal
     msgs.push({ playerIndex: 0, message: { type: 'reveal', yourAction: a0, opponentAction: maskActionForOpponent(a1) } });
     msgs.push({ playerIndex: 1, message: { type: 'reveal', yourAction: a1, opponentAction: maskActionForOpponent(a0) } });
 
     this.resolveDelayedSpells();
-
-    // 액션 적용
     this.applyAction(0, a0);
     this.applyAction(1, a1);
 
-    // 전투 해결
     const { events, p0LpDelta, p1LpDelta } = this.state.turn === SETUP_TURN
       ? { events: [], p0LpDelta: 0, p1LpDelta: 0 }
-      : resolveBattle(
-        this.state.players[0],
-        this.state.players[1]
-      );
+      : resolveBattle(this.state.players[0], this.state.players[1]);
 
-    // 파괴된 몬스터 제거
-    for (const ev of events) {
-      for (const { playerIndex, card } of ev.destroyedCards) {
-        const lane = this.state.players[playerIndex].lanes[ev.laneIndex];
-        if (lane.monster?.id === card.id) lane.monster = null;
-        if (lane.spell?.card.id === card.id) lane.spell = null;
-      }
-      if (ev.type === 'direct_attack') {
-        const defenderIndex = ev.attackerIndex === 0 ? 1 : 0;
-        this.state.players[defenderIndex].lanes[ev.laneIndex].spell = null;
-      }
-      // 발동된 트랩 제거
-      if (ev.trapTriggered) {
-        const { playerIndex } = ev.trapTriggered;
-        this.state.players[playerIndex].lanes[ev.laneIndex].trap = null;
-      }
-    }
-
-    // tempAtkBoost 초기화
-    for (const p of this.state.players) {
-      for (const l of p.lanes) l.tempAtkBoost = 0;
-    }
-
-    // LP 갱신
+    this.applyBattleResult(events);
     this.state.players[0].lp += p0LpDelta;
     this.state.players[1].lp += p1LpDelta;
 
     const lps: [number, number] = [this.state.players[0].lp, this.state.players[1].lp];
     msgs.push({ playerIndex: 'both', message: { type: 'battle_result', events, lps, lanes: cloneLanes(this.state) } });
 
-    // 즉시 패배 판정
     const p0Dead = this.state.players[0].lp <= 0;
     const p1Dead = this.state.players[1].lp <= 0;
     if (p0Dead || p1Dead) {
@@ -180,12 +152,10 @@ export class GameRoom {
       return msgs;
     }
 
-    // 다음 턴 또는 파이널 배틀
     this.state.submitted = [false, false];
     this.state.pendingActions = [null, null];
 
     if (this.state.turn >= MAX_TURNS) {
-      // 파이널 배틀 페이즈 — 바로 처리
       this.state.phase = 'final_battle';
       return msgs.concat(this.resolveFinalBattle());
     }
@@ -193,7 +163,6 @@ export class GameRoom {
     this.state.turn += 1;
     this.state.phase = 'action';
 
-    // 드로우
     for (const pi of [0, 1] as PlayerIndex[]) {
       const drawn = this.state.players[pi].deck.shift();
       if (drawn) {
@@ -205,12 +174,32 @@ export class GameRoom {
     return msgs;
   }
 
+  private applyBattleResult(events: ReturnType<typeof resolveBattle>['events']): void {
+    for (const ev of events) {
+      for (const { playerIndex, card } of ev.destroyedCards) {
+        const lane = this.state.players[playerIndex].lanes[ev.laneIndex];
+        if (lane.monster?.id === card.id) lane.monster = null;
+        if (lane.spell?.card.id === card.id) lane.spell = null;
+      }
+      if (ev.type === 'direct_attack') {
+        const defenderIndex = ev.attackerIndex === 0 ? 1 : 0;
+        this.state.players[defenderIndex].lanes[ev.laneIndex].spell = null;
+      }
+      if (ev.triggeredSpell) {
+        const { playerIndex } = ev.triggeredSpell;
+        this.state.players[playerIndex].lanes[ev.laneIndex].faceDownSpell = null;
+      }
+    }
+
+    for (const p of this.state.players) {
+      for (const l of p.lanes) l.tempAtkBoost = 0;
+    }
+  }
+
   private resolveFinalBattle(): OutgoingMessage[] {
     const msgs: OutgoingMessage[] = [];
-    const { events, p0LpDelta, p1LpDelta } = resolveBattle(
-      this.state.players[0],
-      this.state.players[1]
-    );
+    const { events, p0LpDelta, p1LpDelta } = resolveBattle(this.state.players[0], this.state.players[1]);
+    this.applyBattleResult(events);
 
     this.state.players[0].lp += p0LpDelta;
     this.state.players[1].lp += p1LpDelta;
@@ -220,8 +209,7 @@ export class GameRoom {
 
     const p0Lp = this.state.players[0].lp;
     const p1Lp = this.state.players[1].lp;
-    const winner: PlayerIndex | 'draw' =
-      p0Lp > p1Lp ? 0 : p1Lp > p0Lp ? 1 : 'draw';
+    const winner: PlayerIndex | 'draw' = p0Lp > p1Lp ? 0 : p1Lp > p0Lp ? 1 : 'draw';
 
     this.state.winner = winner;
     this.state.phase = 'game_over';
@@ -232,14 +220,12 @@ export class GameRoom {
   private applyAction(playerIndex: PlayerIndex, action: TurnAction): void {
     const player = this.state.players[playerIndex];
 
-    // 소환
     if (action.summon) {
       const { card, laneIndex, tributeLaneIndices = [] } = action.summon;
       const tributeCost = card.tributeCost ?? 0;
       const uniqueTributes = [...new Set(tributeLaneIndices)];
       const validTributes = uniqueTributes.filter(tributeLane =>
-        tributeLane !== laneIndex &&
-        player.lanes[tributeLane]?.monster
+        tributeLane !== laneIndex && player.lanes[tributeLane]?.monster
       );
       const canPayTribute = tributeCost === 0 || validTributes.length >= tributeCost;
 
@@ -252,9 +238,17 @@ export class GameRoom {
       }
     }
 
-    // 마법
     for (const { card, laneIndex } of action.spells) {
-      if (isLaneUnlocked(this.state.turn, laneIndex) && !player.lanes[laneIndex].spell) {
+      if (!isLaneUnlocked(this.state.turn, laneIndex)) continue;
+
+      if (card.spellMode === 'face_down') {
+        if (player.lanes[laneIndex].faceDownSpell) continue;
+        player.lanes[laneIndex].faceDownSpell = card;
+        player.hand = player.hand.filter(c => c.id !== card.id);
+        continue;
+      }
+
+      if (!player.lanes[laneIndex].spell) {
         player.lanes[laneIndex].spell = {
           card,
           remainingTurns: card.spellDelayTurns ?? 1,
@@ -262,31 +256,19 @@ export class GameRoom {
         player.hand = player.hand.filter(c => c.id !== card.id);
       }
     }
-
-    // 함정 세트
-    for (const { card, laneIndex } of action.traps) {
-      if (isLaneUnlocked(this.state.turn, laneIndex)) {
-        player.lanes[laneIndex].trap = card;
-        player.hand = player.hand.filter(c => c.id !== card.id);
-      }
-    }
   }
 
-  private applySpell(playerIndex: PlayerIndex, spell: Card): void {
+  private applySpell(playerIndex: PlayerIndex, spell: Card, laneIndex: LaneIndex): void {
     const player = this.state.players[playerIndex];
     const opponent = this.state.players[playerIndex === 0 ? 1 : 0];
 
     switch (spell.effect) {
-      case 'heal_1000':
-        player.lp += 1000;
-        break;
       case 'power_boost':
         for (const l of player.lanes) {
           if (l.monster) l.tempAtkBoost += 500;
         }
         break;
       case 'monster_smash': {
-        // 상대 필드에서 ATK 가장 높은 몬스터 파괴
         let maxAtk = -1;
         let maxLaneIdx = -1;
         for (let i = 0; i < opponent.lanes.length; i++) {
@@ -299,18 +281,40 @@ export class GameRoom {
         if (maxLaneIdx >= 0) opponent.lanes[maxLaneIdx].monster = null;
         break;
       }
+      case 'backrow_break': {
+        const oppositeLane = opponent.lanes[laneIndex];
+        if (oppositeLane.spell) {
+          oppositeLane.spell = null;
+          break;
+        }
+        if (oppositeLane.faceDownSpell) {
+          oppositeLane.faceDownSpell = null;
+          break;
+        }
+
+        const spellLane = opponent.lanes.find(l => l.spell);
+        if (spellLane?.spell) {
+          spellLane.spell = null;
+          break;
+        }
+
+        const faceDownLane = opponent.lanes.find(l => l.faceDownSpell);
+        if (faceDownLane?.faceDownSpell) faceDownLane.faceDownSpell = null;
+        break;
+      }
     }
   }
 
   private resolveDelayedSpells(): void {
     for (const player of this.state.players) {
-      for (const lane of player.lanes) {
+      for (let i = 0; i < player.lanes.length; i++) {
+        const lane = player.lanes[i];
         if (!lane.spell) continue;
         lane.spell.remainingTurns -= 1;
         if (lane.spell.remainingTurns <= 0) {
           const spell = lane.spell.card;
           lane.spell = null;
-          this.applySpell(player.index, spell);
+          this.applySpell(player.index, spell, i as LaneIndex);
         }
       }
     }

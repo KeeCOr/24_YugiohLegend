@@ -17,7 +17,7 @@ interface GameSceneData {
 export class GameScene extends Phaser.Scene {
   private static readonly MAX_TURNS = 4;
   private static getUnlockedLanes(turn: number): LaneIndex[] {
-    if (turn <= 1) return [1];
+    if (turn <= 1) return [0];
     if (turn === 2) return [0, 1];
     if (turn === 3) return [0, 1, 2];
     return [0, 1, 2, 3];
@@ -30,7 +30,7 @@ export class GameScene extends Phaser.Scene {
   private myHand: Card[] = [];
   private myLanes: LaneState[] | null = null;
   private opLanes: LaneState[] | null = null;
-  private pendingAction: TurnAction = { spells: [], traps: [] };
+  private pendingAction: TurnAction = { spells: [] };
   private selectedCard: Card | null = null;
   private submitted = false;
 
@@ -47,7 +47,7 @@ export class GameScene extends Phaser.Scene {
   constructor() { super('GameScene'); }
 
   init(_data: GameSceneData): void {
-    this.pendingAction = { spells: [], traps: [] };
+    this.pendingAction = { spells: [] };
     this.selectedCard = null;
     this.submitted = false;
     this.myHand = [];
@@ -79,7 +79,10 @@ export class GameScene extends Phaser.Scene {
     this.handArea = new HandArea(this, width / 2, height - 118, (card, _sprite) => {
       this.selectedCard = card;
       if (card.type === 'spell') {
-        this.statusTxt.setText(`${card.name}: resolves after ${card.spellDelayTurns ?? 1} turn. Click one of your lanes.`);
+        const text = card.spellMode === 'face_down'
+          ? `${card.name}: set face-down. It triggers on condition. Click one of your lanes.`
+          : `${card.name}: resolves after ${card.spellDelayTurns ?? 1} turn. Click one of your lanes.`;
+        this.statusTxt.setText(text);
       } else {
         const summonText = this.getSummonText(card);
         this.statusTxt.setText(`${card.name}: ${summonText}. Click one of your lanes.`);
@@ -163,25 +166,26 @@ export class GameScene extends Phaser.Scene {
       const tributeText = tributeCost > 0 ? ` Tribute lanes: ${tributeLaneIndices.map(i => i + 1).join(', ')}.` : '';
       this.statusTxt.setText(`${card.name} queued in lane ${laneIndex + 1}.${tributeText} Press COMMIT.`);
     } else if (card.type === 'spell') {
-      if (this.myLanes?.[laneIndex].spell || this.myField.hasPending(laneIndex)) {
+      if (card.spellMode === 'face_down' && this.myLanes?.[laneIndex].faceDownSpell) {
+        this.statusTxt.setText('That lane already has a face-down spell.');
+        return;
+      }
+      if (card.spellMode !== 'face_down' && this.myLanes?.[laneIndex].spell) {
+        this.statusTxt.setText('That lane already has a queued card. Choose another lane.');
+        return;
+      }
+      if (this.myField.hasPending(laneIndex)) {
         this.statusTxt.setText('That lane already has a queued card. Choose another lane.');
         return;
       }
       this.pendingAction.spells.push({ card, laneIndex });
-      this.myField.setPendingCard(laneIndex, card);
+      const faceDown = card.spellMode === 'face_down';
+      this.myField.setPendingCard(laneIndex, card, faceDown);
       this.myHand = this.myHand.filter(c => c.id !== card.id);
       this.handArea.removeCard(card.id);
-      this.statusTxt.setText(`${card.name} set in lane ${laneIndex + 1}. It will resolve later.`);
-    } else if (card.type === 'trap') {
-      if (this.myLanes?.[laneIndex].trap) {
-        this.statusTxt.setText('That lane already has a trap.');
-        return;
-      }
-      this.pendingAction.traps.push({ card, laneIndex });
-      this.myField.setPendingCard(laneIndex, card, true);
-      this.myHand = this.myHand.filter(c => c.id !== card.id);
-      this.handArea.removeCard(card.id);
-      this.statusTxt.setText(`${card.name} set in lane ${laneIndex + 1}. Press COMMIT.`);
+      this.statusTxt.setText(faceDown
+        ? `${card.name} set face-down in lane ${laneIndex + 1}. Press COMMIT.`
+        : `${card.name} set face-up in lane ${laneIndex + 1}. It will resolve later.`);
     }
 
     this.selectedCard = null;
@@ -217,7 +221,7 @@ export class GameScene extends Phaser.Scene {
 
       case 'turn_start':
         this.submitted = false;
-        this.pendingAction = { spells: [], traps: [] };
+        this.pendingAction = { spells: [] };
         this.turn = msg.turn;
         this.turnTxt.setText(`TURN ${this.turn} / ${GameScene.MAX_TURNS}`);
         this.updateLaneUnlocks();
@@ -267,10 +271,7 @@ export class GameScene extends Phaser.Scene {
       this.opField.setPendingCard(action.summon.laneIndex, action.summon.card);
     }
     for (const spell of action.spells) {
-      this.opField.setPendingCard(spell.laneIndex, spell.card, true);
-    }
-    for (const trap of action.traps) {
-      this.opField.setPendingCard(trap.laneIndex, trap.card, true);
+      this.opField.setPendingCard(spell.laneIndex, spell.card, spell.card.spellMode === 'face_down');
     }
   }
 

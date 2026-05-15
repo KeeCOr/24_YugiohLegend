@@ -1,5 +1,5 @@
 export type {
-  Card, CardType, EffectId, TrapConditionId, TrapEffectId,
+  Card, CardType, SpellMode, EffectId, TriggerConditionId,
   MonsterAbilityId, MonsterRole, TributeRole,
   PlayerIndex, LaneIndex, LaneState, PlayerState,
   TurnAction, BattleEvent, GameState,

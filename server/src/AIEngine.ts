@@ -4,12 +4,14 @@ function getEmptyLaneIndices(player: PlayerState): LaneIndex[] {
   return ([0, 1, 2, 3] as LaneIndex[]).filter(i => !player.lanes[i].monster);
 }
 
-function getEmptySpellLaneIndices(player: PlayerState): LaneIndex[] {
-  return ([0, 1, 2, 3] as LaneIndex[]).filter(i => !player.lanes[i].spell);
+function canSetSpell(player: PlayerState, laneIndex: LaneIndex, card: Card): boolean {
+  return card.spellMode === 'face_down'
+    ? !player.lanes[laneIndex].faceDownSpell
+    : !player.lanes[laneIndex].spell;
 }
 
 function getUnlockedLaneIndices(turn: number): LaneIndex[] {
-  if (turn <= 1) return [1];
+  if (turn <= 1) return [0];
   if (turn === 2) return [0, 1];
   if (turn === 3) return [0, 1, 2];
   return [0, 1, 2, 3];
@@ -35,85 +37,47 @@ function buildSummon(card: Card, laneIndex: LaneIndex, player: PlayerState): Tur
   return tributeCost > 0 ? { card, laneIndex, tributeLaneIndices } : { card, laneIndex };
 }
 
+function chooseSpellLanes(player: PlayerState, spellCards: Card[], turn: number): TurnAction['spells'] {
+  const spells: TurnAction['spells'] = [];
+  const unlocked = filterUnlocked([0, 1, 2, 3] as LaneIndex[], turn);
+  for (const spell of spellCards) {
+    const laneIndex = unlocked.find(lane => canSetSpell(player, lane, spell) && !spells.some(s => s.laneIndex === lane && s.card.spellMode === spell.spellMode));
+    if (laneIndex === undefined) continue;
+    spells.push({ card: spell, laneIndex });
+  }
+  return spells;
+}
+
 export function randomAction(player: PlayerState, turn = 3): TurnAction {
   const hand = [...player.hand];
-  const spells: TurnAction['spells'] = [];
-  const traps: TurnAction['traps'] = [];
-  let summon: TurnAction['summon'];
-
   const emptyLanes = filterUnlocked(getEmptyLaneIndices(player), turn);
   const monsters = hand.filter(c => c.type === 'monster');
   const spellCards = hand.filter(c => c.type === 'spell');
-  const trapCards = hand.filter(c => c.type === 'trap');
+  let summon: TurnAction['summon'];
 
-  // 소환 (랜덤 몬스터, 랜덤 빈 레인)
-  let summonedLane: LaneIndex | null = null;
   if (monsters.length > 0 && emptyLanes.length > 0) {
     const card = monsters[Math.floor(Math.random() * monsters.length)];
     const laneIndex = emptyLanes[Math.floor(Math.random() * emptyLanes.length)];
     summon = buildSummon(card, laneIndex, player);
-    if (summon) summonedLane = laneIndex;
   }
 
-  // 마법 (50% 확률로 사용)
-  const spellLanes = filterUnlocked(getEmptySpellLaneIndices(player), turn);
-  for (const spell of spellCards) {
-    if (spellLanes.length === 0) break;
-    if (Math.random() < 0.5) {
-      const idx = Math.floor(Math.random() * spellLanes.length);
-      spells.push({ card: spell, laneIndex: spellLanes.splice(idx, 1)[0] });
-    }
-  }
-
-  // 함정 (소환 레인 제외한 빈 레인에 랜덤 세트)
-  const availableLanes = emptyLanes.filter(l => l !== summonedLane);
-  for (const trap of trapCards) {
-    if (availableLanes.length === 0) break;
-    const idx = Math.floor(Math.random() * availableLanes.length);
-    traps.push({ card: trap, laneIndex: availableLanes.splice(idx, 1)[0] });
-  }
-
-  return { summon, spells, traps };
+  const randomSpells = spellCards.filter(() => Math.random() < 0.5);
+  return { summon, spells: chooseSpellLanes(player, randomSpells, turn) };
 }
 
 export function greedyAction(player: PlayerState, turn = 3): TurnAction {
   const hand = [...player.hand];
-  const spells: TurnAction['spells'] = [];
-  const traps: TurnAction['traps'] = [];
-  let summon: TurnAction['summon'];
-
   const emptyLanes = filterUnlocked(getEmptyLaneIndices(player), turn);
   const monsters = hand.filter(c => c.type === 'monster').sort((a, b) => (b.atk ?? 0) - (a.atk ?? 0));
   const spellCards = hand.filter(c => c.type === 'spell');
-  const trapCards = hand.filter(c => c.type === 'trap');
+  let summon: TurnAction['summon'];
 
-  // ATK 가장 높은 몬스터를 첫 번째 빈 레인에 소환
-  let summonedLane: LaneIndex | null = null;
   if (emptyLanes.length > 0) {
     for (const monster of monsters) {
       summon = buildSummon(monster, emptyLanes[0], player);
-      if (summon) {
-        summonedLane = emptyLanes[0];
-        break;
-      }
+      if (summon) break;
     }
   }
 
-  // 마법 전부 사용
-  const spellLanes = filterUnlocked(getEmptySpellLaneIndices(player), turn);
-  let spellLanePtr = 0;
-  for (const spell of spellCards) {
-    if (spellLanePtr >= spellLanes.length) break;
-    spells.push({ card: spell, laneIndex: spellLanes[spellLanePtr++] });
-  }
-
-  // 함정 세트 (소환 레인 제외한 빈 레인에 순서대로)
-  const lanesForTraps = emptyLanes.filter(l => l !== summonedLane);
-  let lanePtr = 0;
-  for (const trap of trapCards) {
-    if (lanePtr >= lanesForTraps.length) break;
-    traps.push({ card: trap, laneIndex: lanesForTraps[lanePtr++] });
-  }
-
-  return { summon, spells, traps };
+  return { summon, spells: chooseSpellLanes(player, spellCards, turn) };
 }

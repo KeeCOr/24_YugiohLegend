@@ -7,7 +7,7 @@ function monster(id: string, atk: number): Card {
 }
 
 function lane(mon: Card | null = null, trap: Card | null = null): LaneState {
-  return { monster: mon, spell: null, trap, tempAtkBoost: 0 };
+  return { monster: mon, spell: null, faceDownSpell: trap, tempAtkBoost: 0 };
 }
 
 function player(index: 0 | 1, lp: number, l0: LaneState, l1: LaneState, l2: LaneState, l3: LaneState = lane()): PlayerState {
@@ -65,7 +65,7 @@ describe('resolveBattle', () => {
   });
 
   it('tempAtkBoost changes effective ATK', () => {
-    const boostedLane: LaneState = { monster: monster('a', 1000), spell: null, trap: null, tempAtkBoost: 500 };
+    const boostedLane: LaneState = { monster: monster('a', 1000), spell: null, faceDownSpell: null, tempAtkBoost: 500 };
     const result = resolveBattle(
       player(0, 4000, boostedLane, lane(), lane()),
       player(1, 4000, lane(monster('b', 1200)), lane(), lane())
@@ -73,8 +73,8 @@ describe('resolveBattle', () => {
     expect(result.p1LpDelta).toBe(-300);
   });
 
-  it('on_attacked negate_attack trap negates one attack', () => {
-    const trapCard: Card = { id: 'counter_trap', type: 'trap', name: 'Counter', trapCondition: 'on_attacked', trapEffect: 'negate_attack' };
+  it('on_attacked negate_attack face-down spell negates one attack', () => {
+    const trapCard: Card = { id: 'mirror_snare', type: 'spell', spellMode: 'face_down', name: 'Counter', triggerCondition: 'on_attacked', effect: 'negate_attack' };
     const result = resolveBattle(
       player(0, 4000, lane(monster('a', 1500)), lane(), lane()),
       player(1, 4000, lane(monster('b', 1000), trapCard), lane(), lane())
@@ -84,14 +84,14 @@ describe('resolveBattle', () => {
     expect(result.events.find(e => e.type === 'monster_vs_monster')?.negated).toBe(true);
   });
 
-  it('on_direct_attack reduce_damage_500 trap reduces direct damage', () => {
-    const trapCard: Card = { id: 'direct_shield', type: 'trap', name: 'Shield', trapCondition: 'on_direct_attack', trapEffect: 'reduce_damage_500' };
+  it('on_direct_attack reduce_damage_500 face-down spell reduces direct damage', () => {
+    const trapCard: Card = { id: 'direct_shield', type: 'spell', spellMode: 'face_down', name: 'Shield', triggerCondition: 'on_direct_attack', effect: 'reduce_damage_500' };
     const result = resolveBattle(
       player(0, 4000, lane(monster('a', 1000)), lane(), lane()),
       player(1, 4000, lane(null, trapCard), lane(), lane())
     );
     expect(result.p1LpDelta).toBe(-500);
-    expect(result.events[0].trapTriggered?.card.id).toBe('direct_shield');
+    expect(result.events[0].triggeredSpell?.card.id).toBe('direct_shield');
   });
 
   it('all 4 lanes resolve independently', () => {

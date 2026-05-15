@@ -15,7 +15,7 @@ export class Field extends Phaser.GameObjects.Container {
   private pendingSprites: (CardSprite | null)[] = Array(LANE_COUNT).fill(null);
   private lockedOverlays: Phaser.GameObjects.Container[] = [];
   private spellIndicators: Phaser.GameObjects.Container[] = [];
-  private trapIndicators: Phaser.GameObjects.Container[] = [];
+  private faceDownSpellIndicators: Phaser.GameObjects.Container[] = [];
 
   constructor(scene: Phaser.Scene, x: number, y: number, public playerIndex: PlayerIndex) {
     super(scene, x, y);
@@ -33,10 +33,10 @@ export class Field extends Phaser.GameObjects.Container {
       this.laneGlows.push(glow);
       this.laneImages.push(lane);
 
-      const trap = this.createTrapIndicator(scene, lx, LANE_H / 2 - 22);
-      trap.setVisible(false);
-      this.add(trap);
-      this.trapIndicators.push(trap);
+      const faceDown = this.createFaceDownSpellIndicator(scene, lx, LANE_H / 2 - 22);
+      faceDown.setVisible(false);
+      this.add(faceDown);
+      this.faceDownSpellIndicators.push(faceDown);
 
       const spell = this.createSpellIndicator(scene, lx, LANE_H / 2 - 48);
       spell.setVisible(false);
@@ -76,7 +76,7 @@ export class Field extends Phaser.GameObjects.Container {
         this.monsterSprites[i] = sprite;
       }
 
-      this.trapIndicators[i].setVisible(lane.trap !== null);
+      this.faceDownSpellIndicators[i].setVisible(lane.faceDownSpell !== null);
       this.spellIndicators[i].setVisible(lane.spell !== null);
       const spellText = this.spellIndicators[i].getByName('spell-count') as Phaser.GameObjects.Text | null;
       spellText?.setText(lane.spell ? String(lane.spell.remainingTurns) : '');
@@ -123,11 +123,11 @@ export class Field extends Phaser.GameObjects.Container {
     this.laneImages[laneIndex].setTint(on ? 0xfff1a6 : 0xffffff);
   }
 
-  private createTrapIndicator(scene: Phaser.Scene, x: number, y: number): Phaser.GameObjects.Container {
+  private createFaceDownSpellIndicator(scene: Phaser.Scene, x: number, y: number): Phaser.GameObjects.Container {
     const c = scene.add.container(x, y);
     const diamond = scene.add.polygon(0, 0, [0, -10, 12, 0, 0, 10, -12, 0], 0xd281ee, 0.85);
     diamond.setStrokeStyle(2, 0xffe0ff, 0.85);
-    const text = scene.add.text(0, 0, 'T', {
+    const text = scene.add.text(0, 0, '?', {
       fontSize: '10px',
       color: '#170d1b',
       fontStyle: 'bold',
@@ -154,7 +154,7 @@ export class Field extends Phaser.GameObjects.Container {
     const c = scene.add.container(x, 0);
     const veil = scene.add.rectangle(0, 0, LANE_W, LANE_H, 0x05070c, 0.62);
     veil.setStrokeStyle(2, 0x5d667a, 0.65);
-    const unlockTurn = laneIndex === 0 ? 2 : laneIndex === 1 ? 1 : laneIndex === 2 ? 3 : 4;
+    const unlockTurn = laneIndex + 1;
     const label = scene.add.text(0, -6, `LOCKED\nT${unlockTurn}`, {
       fontSize: '13px',
       color: '#aab6ca',

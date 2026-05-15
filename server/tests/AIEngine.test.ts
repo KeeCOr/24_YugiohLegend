@@ -7,7 +7,7 @@ function monster(id: string, atk: number): Card {
 }
 
 function emptyLane(): LaneState {
-  return { monster: null, spell: null, trap: null, tempAtkBoost: 0 };
+  return { monster: null, spell: null, faceDownSpell: null, tempAtkBoost: 0 };
 }
 
 function player(hand: Card[]): PlayerState {
@@ -21,7 +21,7 @@ describe('randomAction', () => {
     expect(action.summon).toBeDefined();
     expect([0, 1, 2, 3]).toContain(action.summon!.laneIndex);
     expect(action.spells).toBeDefined();
-    expect(action.traps).toBeDefined();
+    expect(action.spells).toBeDefined();
   });
 
   it('does nothing with an empty hand', () => {
@@ -29,7 +29,7 @@ describe('randomAction', () => {
     const action = randomAction(p);
     expect(action.summon).toBeUndefined();
     expect(action.spells).toHaveLength(0);
-    expect(action.traps).toHaveLength(0);
+    expect(action.spells).toHaveLength(0);
   });
 
   it('does not summon when every lane has a monster', () => {
@@ -39,33 +39,34 @@ describe('randomAction', () => {
       deck: [],
       hand: [monster('new', 1000)],
       lanes: [
-        { monster: monster('a', 500), spell: null, trap: null, tempAtkBoost: 0 },
-        { monster: monster('b', 500), spell: null, trap: null, tempAtkBoost: 0 },
-        { monster: monster('c', 500), spell: null, trap: null, tempAtkBoost: 0 },
-        { monster: monster('d', 500), spell: null, trap: null, tempAtkBoost: 0 },
+        { monster: monster('a', 500), spell: null, faceDownSpell: null, tempAtkBoost: 0 },
+        { monster: monster('b', 500), spell: null, faceDownSpell: null, tempAtkBoost: 0 },
+        { monster: monster('c', 500), spell: null, faceDownSpell: null, tempAtkBoost: 0 },
+        { monster: monster('d', 500), spell: null, faceDownSpell: null, tempAtkBoost: 0 },
       ],
     };
     const action = randomAction(fullPlayer);
     expect(action.summon).toBeUndefined();
   });
 
-  it('does not put a trap in the same lane as a summoned monster', () => {
-    const trap: Card = { id: 'ct', type: 'trap', name: 'Trap', trapCondition: 'on_attacked', trapEffect: 'negate_attack' };
+  it('can set a face-down spell in the same lane as a summoned monster', () => {
+    const faceDownSpell: Card = { id: 'ct', type: 'spell', spellMode: 'face_down', name: 'Face-down Spell', triggerCondition: 'on_attacked', effect: 'negate_attack' };
     const p: PlayerState = {
       index: 0,
       lp: 4000,
       deck: [],
-      hand: [monster('m', 1000), trap],
+      hand: [monster('m', 1000), faceDownSpell],
       lanes: [
-        { monster: null, spell: null, trap: null, tempAtkBoost: 0 },
-        { monster: monster('x', 500), spell: null, trap: null, tempAtkBoost: 0 },
-        { monster: monster('y', 500), spell: null, trap: null, tempAtkBoost: 0 },
-        { monster: monster('z', 500), spell: null, trap: null, tempAtkBoost: 0 },
+        { monster: null, spell: null, faceDownSpell: null, tempAtkBoost: 0 },
+        { monster: monster('x', 500), spell: null, faceDownSpell: null, tempAtkBoost: 0 },
+        { monster: monster('y', 500), spell: null, faceDownSpell: null, tempAtkBoost: 0 },
+        { monster: monster('z', 500), spell: null, faceDownSpell: null, tempAtkBoost: 0 },
       ],
     };
     const action = randomAction(p);
     expect(action.summon?.laneIndex).toBe(0);
-    expect(action.traps).toHaveLength(0);
+    expect(action.spells).toHaveLength(1);
+    expect(action.spells[0].laneIndex).toBe(0);
   });
 });
 
@@ -77,49 +78,50 @@ describe('greedyAction', () => {
   });
 
   it('sets spell cards in lanes', () => {
-    const spell: Card = { id: 'heal', type: 'spell', name: 'Heal', effect: 'heal_1000' };
+    const spell: Card = { id: 'boost', type: 'spell', name: 'Boost', effect: 'power_boost' };
     const p = player([spell, monster('m', 1000)]);
     const action = greedyAction(p);
     expect(action.spells).toHaveLength(1);
-    expect(action.spells[0].card.id).toBe('heal');
+    expect(action.spells[0].card.id).toBe('boost');
   });
 
-  it('sets a trap in the first empty lane', () => {
-    const trap: Card = { id: 'ct', type: 'trap', name: 'Trap', trapCondition: 'on_attacked', trapEffect: 'negate_attack' };
-    const p = player([trap]);
+  it('sets a faceDownSpell in the first empty lane', () => {
+    const faceDownSpell: Card = { id: 'ct', type: 'spell', spellMode: 'face_down', name: 'Face-down Spell', triggerCondition: 'on_attacked', effect: 'negate_attack' };
+    const p = player([faceDownSpell]);
     const action = greedyAction(p);
-    expect(action.traps).toHaveLength(1);
-    expect(action.traps[0].laneIndex).toBe(0);
+    expect(action.spells).toHaveLength(1);
+    expect(action.spells[0].laneIndex).toBe(0);
   });
 
-  it('does not set a trap in the same lane as a summoned monster', () => {
-    const trap: Card = { id: 'ct', type: 'trap', name: 'Trap', trapCondition: 'on_attacked', trapEffect: 'negate_attack' };
+  it('can set a face-down spell in the same lane as a summoned monster', () => {
+    const faceDownSpell: Card = { id: 'ct', type: 'spell', spellMode: 'face_down', name: 'Face-down Spell', triggerCondition: 'on_attacked', effect: 'negate_attack' };
     const p: PlayerState = {
       index: 0,
       lp: 4000,
       deck: [],
-      hand: [monster('m', 1000), trap],
+      hand: [monster('m', 1000), faceDownSpell],
       lanes: [
-        { monster: null, spell: null, trap: null, tempAtkBoost: 0 },
-        { monster: monster('x', 500), spell: null, trap: null, tempAtkBoost: 0 },
-        { monster: monster('y', 500), spell: null, trap: null, tempAtkBoost: 0 },
-        { monster: monster('z', 500), spell: null, trap: null, tempAtkBoost: 0 },
+        { monster: null, spell: null, faceDownSpell: null, tempAtkBoost: 0 },
+        { monster: monster('x', 500), spell: null, faceDownSpell: null, tempAtkBoost: 0 },
+        { monster: monster('y', 500), spell: null, faceDownSpell: null, tempAtkBoost: 0 },
+        { monster: monster('z', 500), spell: null, faceDownSpell: null, tempAtkBoost: 0 },
       ],
     };
     const action = greedyAction(p);
     expect(action.summon?.laneIndex).toBe(0);
-    expect(action.traps).toHaveLength(0);
+    expect(action.spells).toHaveLength(1);
+    expect(action.spells[0].laneIndex).toBe(0);
   });
 
-  it('turn 1 AI only uses the center lane', () => {
-    const spell: Card = { id: 'heal', type: 'spell', name: 'Heal', effect: 'heal_1000' };
-    const trap: Card = { id: 'ct', type: 'trap', name: 'Trap', trapCondition: 'on_attacked', trapEffect: 'negate_attack' };
-    const p = player([monster('m', 1000), spell, trap]);
+  it('turn 1 AI only uses lane 1', () => {
+    const spell: Card = { id: 'boost', type: 'spell', name: 'Boost', effect: 'power_boost' };
+    const faceDownSpell: Card = { id: 'ct', type: 'spell', spellMode: 'face_down', name: 'Face-down Spell', triggerCondition: 'on_attacked', effect: 'negate_attack' };
+    const p = player([monster('m', 1000), spell, faceDownSpell]);
     const action = greedyAction(p, 1);
 
-    expect(action.summon?.laneIndex).toBe(1);
-    expect(action.spells.every(s => s.laneIndex === 1)).toBe(true);
-    expect(action.traps.every(t => t.laneIndex === 1)).toBe(true);
+    expect(action.summon?.laneIndex).toBe(0);
+    expect(action.spells.every(s => s.laneIndex === 0)).toBe(true);
+    expect(action.spells.every(t => t.laneIndex === 0)).toBe(true);
   });
 
   it('turn 4 AI can use the fourth lane', () => {
@@ -129,10 +131,10 @@ describe('greedyAction', () => {
       deck: [],
       hand: [monster('m', 1000)],
       lanes: [
-        { monster: monster('a', 500), spell: null, trap: null, tempAtkBoost: 0 },
-        { monster: monster('b', 500), spell: null, trap: null, tempAtkBoost: 0 },
-        { monster: monster('c', 500), spell: null, trap: null, tempAtkBoost: 0 },
-        { monster: null, spell: null, trap: null, tempAtkBoost: 0 },
+        { monster: monster('a', 500), spell: null, faceDownSpell: null, tempAtkBoost: 0 },
+        { monster: monster('b', 500), spell: null, faceDownSpell: null, tempAtkBoost: 0 },
+        { monster: monster('c', 500), spell: null, faceDownSpell: null, tempAtkBoost: 0 },
+        { monster: null, spell: null, faceDownSpell: null, tempAtkBoost: 0 },
       ],
     };
     const action = greedyAction(p, 4);
@@ -148,10 +150,10 @@ describe('greedyAction', () => {
       deck: [],
       hand: [tributeMonster],
       lanes: [
-        { monster: material, spell: null, trap: null, tempAtkBoost: 0 },
-        { monster: null, spell: null, trap: null, tempAtkBoost: 0 },
-        { monster: null, spell: null, trap: null, tempAtkBoost: 0 },
-        { monster: null, spell: null, trap: null, tempAtkBoost: 0 },
+        { monster: material, spell: null, faceDownSpell: null, tempAtkBoost: 0 },
+        { monster: null, spell: null, faceDownSpell: null, tempAtkBoost: 0 },
+        { monster: null, spell: null, faceDownSpell: null, tempAtkBoost: 0 },
+        { monster: null, spell: null, faceDownSpell: null, tempAtkBoost: 0 },
       ],
     };
 

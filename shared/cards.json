@@ -128,21 +128,24 @@
     "monsterAbility": "tribute_growth",
     "abilityText": "+Power/Tribute"
   },
-  { "id": "healing_light", "type": "spell", "name": "Healing Light", "effect": "heal_1000", "spellDelayTurns": 1 },
-  { "id": "power_boost", "type": "spell", "name": "Power Sigil", "effect": "power_boost", "spellDelayTurns": 1 },
-  { "id": "monster_smash", "type": "spell", "name": "Crushing Rite", "effect": "monster_smash", "spellDelayTurns": 1 },
+  { "id": "power_boost", "type": "spell", "name": "Power Sigil", "spellMode": "face_up", "effect": "power_boost", "spellDelayTurns": 1 },
+  { "id": "battle_fervor", "type": "spell", "name": "Battle Fervor", "spellMode": "face_up", "effect": "power_boost", "spellDelayTurns": 1 },
+  { "id": "monster_smash", "type": "spell", "name": "Crushing Rite", "spellMode": "face_up", "effect": "monster_smash", "spellDelayTurns": 1 },
+  { "id": "backrow_break", "type": "spell", "name": "Seal Breaker", "spellMode": "face_up", "effect": "backrow_break", "spellDelayTurns": 1 },
   {
-    "id": "counter_trap",
-    "type": "trap",
+    "id": "mirror_snare",
+    "type": "spell",
     "name": "Mirror Snare",
-    "trapCondition": "on_attacked",
-    "trapEffect": "negate_attack"
+    "spellMode": "face_down",
+    "triggerCondition": "on_attacked",
+    "effect": "negate_attack"
   },
   {
     "id": "direct_shield",
-    "type": "trap",
+    "type": "spell",
     "name": "Aegis Ward",
-    "trapCondition": "on_direct_attack",
-    "trapEffect": "reduce_damage_500"
+    "spellMode": "face_down",
+    "triggerCondition": "on_direct_attack",
+    "effect": "reduce_damage_500"
   }
 ]
