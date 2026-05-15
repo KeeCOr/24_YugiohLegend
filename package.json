@@ -21,7 +21,7 @@
     "appId": "com.yugiohlegend.app",
     "productName": "YugiohLegend",
     "directories": {
-      "output": "dist_electron"
+      "output": "release"
     },
     "files": [
       "electron/**/*",

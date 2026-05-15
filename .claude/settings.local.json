@@ -16,7 +16,8 @@
       "Bash(wmic process:*)",
       "Bash(powershell -command \"Get-Process | Where-Object { $_.Modules.FileName -like ''*YugiohLegend*'' -or $_.Modules.FileName -like ''*electron*'' } | Select-Object Id, ProcessName\")",
       "Bash(powershell -command \"Get-Process | Where-Object { \\\\$_.Path -like '*24_YL*' } | Format-Table Id, ProcessName, Path\" 2>&1)",
-      "Bash(powershell -command \"Remove-Item -Force -Path 'C:\\\\\\\\Development\\\\\\\\24_YL\\\\\\\\release\\\\\\\\win-unpacked\\\\\\\\resources\\\\\\\\app.asar'\" 2>&1)"
+      "Bash(powershell -command \"Remove-Item -Force -Path 'C:\\\\\\\\Development\\\\\\\\24_YL\\\\\\\\release\\\\\\\\win-unpacked\\\\\\\\resources\\\\\\\\app.asar'\" 2>&1)",
+      "Bash(mkdir:*)"
     ]
   }
 }
