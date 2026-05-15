@@ -2,6 +2,8 @@ export type CardType = 'monster' | 'spell' | 'trap';
 export type EffectId = 'heal_1000' | 'power_boost' | 'monster_smash';
 export type TrapConditionId = 'on_attacked' | 'on_direct_attack';
 export type TrapEffectId = 'negate_attack' | 'reduce_damage_500';
+export type MonsterRole = 'striker' | 'guardian' | 'utility';
+export type MonsterAbilityId = 'zone_shift' | 'draw_on_summon' | 'guard_adjacent' | 'last_stand';
 export type PlayerIndex = 0 | 1;
 export type LaneIndex = 0 | 1 | 2;
 
@@ -10,6 +12,11 @@ export interface Card {
   type: CardType;
   name: string;
   atk?: number;
+  hp?: number;
+  tributeCost?: number;
+  monsterRole?: MonsterRole;
+  monsterAbility?: MonsterAbilityId;
+  abilityText?: string;
   effect?: EffectId;
   trapCondition?: TrapConditionId;
   trapEffect?: TrapEffectId;
@@ -63,7 +70,7 @@ export type ServerMessage =
   | { type: 'game_start'; yourIndex: PlayerIndex; yourHand: Card[]; opponentHandCount: number; turn: number }
   | { type: 'turn_start'; drawnCard: Card; turn: number }
   | { type: 'reveal'; yourAction: TurnAction; opponentAction: TurnAction }
-  | { type: 'battle_result'; events: BattleEvent[]; lps: [number, number] }
+  | { type: 'battle_result'; events: BattleEvent[]; lps: [number, number]; lanes: [PlayerState['lanes'], PlayerState['lanes']] }
   | { type: 'game_over'; winner: PlayerIndex | 'draw'; finalLPs: [number, number] }
   | { type: 'error'; message: string }
   | { type: 'waiting'; message: string };

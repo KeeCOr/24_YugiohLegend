@@ -28,6 +28,16 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
+function cloneLanes(state: GameState): [PlayerState['lanes'], PlayerState['lanes']] {
+  return state.players.map(player =>
+    player.lanes.map(lane => ({
+      monster: lane.monster,
+      trap: lane.trap,
+      tempAtkBoost: lane.tempAtkBoost,
+    })) as PlayerState['lanes']
+  ) as [PlayerState['lanes'], PlayerState['lanes']];
+}
+
 export class GameRoom {
   id: string;
   private state: GameState;
@@ -126,7 +136,7 @@ export class GameRoom {
     this.state.players[1].lp += p1LpDelta;
 
     const lps: [number, number] = [this.state.players[0].lp, this.state.players[1].lp];
-    msgs.push({ playerIndex: 'both', message: { type: 'battle_result', events, lps } });
+    msgs.push({ playerIndex: 'both', message: { type: 'battle_result', events, lps, lanes: cloneLanes(this.state) } });
 
     // 즉시 패배 판정
     const p0Dead = this.state.players[0].lp <= 0;
@@ -175,7 +185,7 @@ export class GameRoom {
     this.state.players[1].lp += p1LpDelta;
 
     const lps: [number, number] = [this.state.players[0].lp, this.state.players[1].lp];
-    msgs.push({ playerIndex: 'both', message: { type: 'battle_result', events, lps } });
+    msgs.push({ playerIndex: 'both', message: { type: 'battle_result', events, lps, lanes: cloneLanes(this.state) } });
 
     const p0Lp = this.state.players[0].lp;
     const p1Lp = this.state.players[1].lp;

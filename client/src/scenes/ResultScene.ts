@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { ART_KEYS, addSceneBackdrop } from '../art/ProceduralArt';
 import type { PlayerIndex } from '../data/CardTypes';
 
 interface ResultData {
@@ -13,36 +14,52 @@ export class ResultScene extends Phaser.Scene {
   create(data: ResultData): void {
     const { width, height } = this.scale;
     const { winner, myIndex, finalLPs } = data;
+    addSceneBackdrop(this);
 
-    const isWin  = winner === myIndex;
+    const isWin = winner === myIndex;
     const isDraw = winner === 'draw';
-    const label  = isDraw ? '무승부!' : isWin ? '승리!' : '패배...';
-    const color  = isDraw ? '#aaaaaa' : isWin ? '#ffdd00' : '#ff4444';
+    const label = isDraw ? 'DRAW' : isWin ? 'VICTORY' : 'DEFEAT';
+    const color = isDraw ? '#d8e7ff' : isWin ? '#f2c86a' : '#ff667c';
 
-    this.add.text(width / 2, height / 3, label, {
-      fontSize: '72px', color, fontStyle: 'bold',
+    this.add.image(width / 2, height * 0.39, ART_KEYS.panel).setDisplaySize(520, 210);
+    this.add.text(width / 2, height * 0.32, label, {
+      fontSize: '70px',
+      color,
+      fontStyle: 'bold',
+      stroke: '#120912',
+      strokeThickness: 6,
     }).setOrigin(0.5);
 
     const myLp = finalLPs[myIndex];
     const opLp = finalLPs[myIndex === 0 ? 1 : 0];
-    this.add.text(width / 2, height / 2, `내 LP: ${myLp}  상대 LP: ${opLp}`, {
-      fontSize: '24px', color: '#ffffff',
+    this.add.text(width / 2, height * 0.44, `Your LP ${myLp}   Rival LP ${opLp}`, {
+      fontSize: '23px',
+      color: '#ffffff',
     }).setOrigin(0.5);
 
-    // 다시하기
-    const retry = this.add.text(width / 2, height * 0.65, '다시 하기', {
-      fontSize: '22px', color: '#88aaff',
-    }).setOrigin(0.5).setInteractive();
-    retry.on('pointerdown', () => this.scene.start('GameScene', { mode: 'single' }));
-    retry.on('pointerover', () => retry.setColor('#aaccff'));
-    retry.on('pointerout',  () => retry.setColor('#88aaff'));
+    this.createTextButton(width / 2, height * 0.61, 'REMATCH', () => {
+      this.scene.start('GameScene', { mode: 'single' });
+    });
+    this.createTextButton(width / 2, height * 0.72, 'MAIN MENU', () => {
+      this.scene.start('MenuScene');
+    });
+  }
 
-    // 메뉴로
-    const menu = this.add.text(width / 2, height * 0.75, '메인 메뉴', {
-      fontSize: '22px', color: '#88aaff',
-    }).setOrigin(0.5).setInteractive();
-    menu.on('pointerdown', () => this.scene.start('MenuScene'));
-    menu.on('pointerover', () => menu.setColor('#aaccff'));
-    menu.on('pointerout',  () => menu.setColor('#88aaff'));
+  private createTextButton(x: number, y: number, label: string, onClick: () => void): void {
+    const btn = this.add.image(x, y, ART_KEYS.button).setDisplaySize(260, 50).setInteractive();
+    const txt = this.add.text(x, y, label, {
+      fontSize: '17px',
+      color: '#ffffff',
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
+    btn.on('pointerdown', onClick);
+    btn.on('pointerover', () => {
+      btn.setTint(0xffe29a);
+      txt.setColor('#fff3bf');
+    });
+    btn.on('pointerout', () => {
+      btn.clearTint();
+      txt.setColor('#ffffff');
+    });
   }
 }

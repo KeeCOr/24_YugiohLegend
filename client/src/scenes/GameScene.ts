@@ -1,10 +1,11 @@
 import Phaser from 'phaser';
-import { SocketManager } from '../network/SocketManager';
+import { ART_KEYS, addSceneBackdrop } from '../art/ProceduralArt';
 import { Field } from '../components/Field';
 import { HandArea } from '../components/HandArea';
 import { LPDisplay } from '../components/LPDisplay';
+import { SocketManager } from '../network/SocketManager';
 import type {
-  Card, TurnAction, ServerMessage, BattleEvent, PlayerIndex, LaneIndex,
+  BattleEvent, Card, LaneIndex, LaneState, PlayerIndex, ServerMessage, TurnAction,
 } from '../data/CardTypes';
 import { ALL_CARDS } from './BootScene';
 
@@ -18,19 +19,19 @@ export class GameScene extends Phaser.Scene {
   private myIndex: PlayerIndex = 0;
   private turn = 1;
 
-  // 상태
   private myHand: Card[] = [];
+  private myLanes: [LaneState, LaneState, LaneState] | null = null;
+  private opLanes: [LaneState, LaneState, LaneState] | null = null;
   private pendingAction: TurnAction = { spells: [], traps: [] };
   private selectedCard: Card | null = null;
   private submitted = false;
 
-  // UI
   private myField!: Field;
   private opField!: Field;
   private myLP!: LPDisplay;
   private opLP!: LPDisplay;
   private handArea!: HandArea;
-  private submitBtn!: Phaser.GameObjects.Rectangle;
+  private submitBtn!: Phaser.GameObjects.Image;
   private submitTxt!: Phaser.GameObjects.Text;
   private statusTxt!: Phaser.GameObjects.Text;
   private turnTxt!: Phaser.GameObjects.Text;
@@ -42,63 +43,83 @@ export class GameScene extends Phaser.Scene {
     this.selectedCard = null;
     this.submitted = false;
     this.myHand = [];
+    this.myLanes = null;
+    this.opLanes = null;
   }
 
   async create(data: GameSceneData): Promise<void> {
     const { width, height } = this.scale;
+    addSceneBackdrop(this);
 
-    // 덱 (기본 덱: 처음 10장)
     const deck: Card[] = data.deck ?? ALL_CARDS.slice(0, 8).concat(ALL_CARDS.slice(0, 2));
-
-    // 소켓 초기화 (init에서 하면 씬 재시작 시 이전 연결이 남음)
     this.socket = new SocketManager();
 
-    // 필드
-    this.opField = new Field(this, width / 2, height * 0.22, 1);
-    this.myField = new Field(this, width / 2, height * 0.6, 0);
+    this.add.image(width / 2, height / 2, ART_KEYS.panel).setDisplaySize(760, 76).setAlpha(0.58);
+    this.add.text(width / 2, height / 2, 'BATTLE LINE', {
+      fontSize: '13px',
+      color: '#d8b56a',
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
 
-    // LP 표시
-    this.myLP = new LPDisplay(this, 20, height - 40, '나');
-    this.opLP = new LPDisplay(this, 20, 30, '상대');
+    this.opField = new Field(this, width / 2, height * 0.23, 1);
+    this.myField = new Field(this, width / 2, height * 0.59, 0);
 
-    // 핸드
-    this.handArea = new HandArea(this, width / 2, height - 80, (card, _sprite) => {
+    this.myLP = new LPDisplay(this, 20, height - 42, 'YOU');
+    this.opLP = new LPDisplay(this, 20, 38, 'RIVAL');
+
+    this.handArea = new HandArea(this, width / 2, height - 86, (card, _sprite) => {
       this.selectedCard = card;
       if (card.type === 'spell') {
         this.useSpell(card);
       } else {
-        this.statusTxt.setText(`선택: ${card.name} — 레인을 클릭하여 배치`);
+        const summonText = this.getSummonText(card);
+        this.statusTxt.setText(`${card.name}: ${summonText}. Click one of your lanes.`);
       }
     });
 
-    // 제출 버튼
-    this.submitBtn = this.add.rectangle(width - 80, height - 50, 140, 45, 0x334477).setInteractive();
-    this.submitTxt = this.add.text(width - 80, height - 50, '제출', { fontSize: '18px', color: '#ffffff' }).setOrigin(0.5);
+    this.submitBtn = this.add.image(width - 90, height - 50, ART_KEYS.button).setDisplaySize(150, 44).setInteractive();
+    this.submitTxt = this.add.text(width - 90, height - 50, 'COMMIT', {
+      fontSize: '16px',
+      color: '#ffffff',
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
     this.submitBtn.on('pointerdown', () => this.submitAction());
-    this.submitBtn.on('pointerover', () => this.submitBtn.setFillStyle(0x4466aa));
-    this.submitBtn.on('pointerout',  () => this.submitBtn.setFillStyle(0x334477));
+    this.submitBtn.on('pointerover', () => this.submitBtn.setTint(0xffe29a));
+    this.submitBtn.on('pointerout', () => this.submitBtn.clearTint());
 
-    // 상태/턴 텍스트
-    this.statusTxt = this.add.text(width / 2, height - 130, '', { fontSize: '14px', color: '#aaaaaa' }).setOrigin(0.5);
-    this.turnTxt   = this.add.text(width / 2, 10, '턴 1 / 3', { fontSize: '16px', color: '#ffffff' }).setOrigin(0.5);
+    this.statusTxt = this.add.text(width / 2, height - 153, 'Preparing duel...', {
+      fontSize: '15px',
+      color: '#d8e7ff',
+    }).setOrigin(0.5);
+    this.turnTxt = this.add.text(width / 2, 18, 'TURN 1 / 3', {
+      fontSize: '18px',
+      color: '#f2c86a',
+      fontStyle: 'bold',
+      stroke: '#120912',
+      strokeThickness: 3,
+    }).setOrigin(0.5);
 
-    // 레인 클릭 인터랙션
     this.setupLaneInteraction();
 
-    // 서버 연결
     await this.socket.connect();
     this.socket.on((msg) => this.handleServerMessage(msg));
     this.socket.send({ type: 'join_room', mode: data.mode, deck });
   }
 
   private setupLaneInteraction(): void {
-    const { height } = this.scale;
     for (let i = 0; i < 3; i++) {
       const laneIndex = i as LaneIndex;
       const hitArea = this.add.rectangle(
-        this.myField.getLaneWorldX(laneIndex), this.myField.y,
-        100, 150, 0x000000, 0
+        this.myField.getLaneWorldX(laneIndex),
+        this.myField.y,
+        136,
+        176,
+        0x000000,
+        0
       ).setInteractive();
+      hitArea.setDepth(30);
+      hitArea.on('pointerover', () => this.myField.highlightLane(laneIndex, true));
+      hitArea.on('pointerout', () => this.myField.highlightLane(laneIndex, false));
       hitArea.on('pointerdown', () => this.onLaneClick(laneIndex));
     }
   }
@@ -109,18 +130,28 @@ export class GameScene extends Phaser.Scene {
 
     if (card.type === 'monster') {
       if (this.pendingAction.summon) {
-        this.statusTxt.setText('이번 턴에 이미 소환했습니다.');
+        this.statusTxt.setText('Only one monster can be summoned this turn.');
+        return;
+      }
+      if (this.myLanes?.[laneIndex].monster || this.myField.hasPending(laneIndex)) {
+        this.statusTxt.setText('That lane already has a monster. Choose an empty lane.');
         return;
       }
       this.pendingAction.summon = { card, laneIndex };
+      this.myField.setPendingCard(laneIndex, card);
       this.myHand = this.myHand.filter(c => c.id !== card.id);
       this.handArea.removeCard(card.id);
-      this.statusTxt.setText(`${card.name} → 레인 ${laneIndex + 1} 소환 예정`);
+      this.statusTxt.setText(`${card.name} queued in lane ${laneIndex + 1}. Press COMMIT.`);
     } else if (card.type === 'trap') {
+      if (this.myLanes?.[laneIndex].trap) {
+        this.statusTxt.setText('That lane already has a trap.');
+        return;
+      }
       this.pendingAction.traps.push({ card, laneIndex });
+      this.myField.setPendingCard(laneIndex, card, true);
       this.myHand = this.myHand.filter(c => c.id !== card.id);
       this.handArea.removeCard(card.id);
-      this.statusTxt.setText(`${card.name} → 레인 ${laneIndex + 1} 세트 예정`);
+      this.statusTxt.setText(`${card.name} set in lane ${laneIndex + 1}. Press COMMIT.`);
     }
 
     this.selectedCard = null;
@@ -131,7 +162,7 @@ export class GameScene extends Phaser.Scene {
     this.pendingAction.spells.push(card);
     this.myHand = this.myHand.filter(c => c.id !== card.id);
     this.handArea.removeCard(card.id);
-    this.statusTxt.setText(`${card.name} 사용 예정`);
+    this.statusTxt.setText(`${card.name} is queued.`);
     this.selectedCard = null;
     this.handArea.deselectAll();
   }
@@ -139,10 +170,16 @@ export class GameScene extends Phaser.Scene {
   private submitAction(): void {
     if (this.submitted) return;
     this.submitted = true;
-    this.submitBtn.setFillStyle(0x222222);
-    this.submitTxt.setText('대기 중...');
+    this.submitBtn.setAlpha(0.5);
+    this.submitTxt.setText('WAIT');
     this.socket.send({ type: 'submit_action', action: this.pendingAction });
-    this.statusTxt.setText('상대방을 기다리는 중...');
+    this.statusTxt.setText('Waiting for the rival move...');
+  }
+
+  private getSummonText(card: Card): string {
+    if (card.type !== 'monster') return '';
+    const tributeCost = card.tributeCost ?? 0;
+    return tributeCost > 0 ? `TRIBUTE x${tributeCost} REQUIRED` : 'FREE SUMMON';
   }
 
   private handleServerMessage(msg: ServerMessage): void {
@@ -152,29 +189,31 @@ export class GameScene extends Phaser.Scene {
         this.myHand = [...msg.yourHand];
         this.handArea.setHand(this.myHand);
         this.turn = msg.turn;
-        this.turnTxt.setText(`턴 ${this.turn} / 3`);
-        this.statusTxt.setText('행동을 입력하세요');
+        this.turnTxt.setText(`TURN ${this.turn} / 3`);
+        this.statusTxt.setText('Choose a card, then commit your action.');
         break;
 
       case 'turn_start':
         this.submitted = false;
         this.pendingAction = { spells: [], traps: [] };
         this.turn = msg.turn;
-        this.turnTxt.setText(`턴 ${this.turn} / 3`);
+        this.turnTxt.setText(`TURN ${this.turn} / 3`);
         this.myHand.push(msg.drawnCard);
         this.handArea.setHand(this.myHand);
-        this.submitBtn.setFillStyle(0x334477);
-        this.submitTxt.setText('제출');
-        this.statusTxt.setText('행동을 입력하세요');
+        this.submitBtn.setAlpha(1);
+        this.submitTxt.setText('COMMIT');
+        this.statusTxt.setText('New draw. Prepare your lane.');
         break;
 
       case 'reveal':
-        this.statusTxt.setText('전투 해결 중...');
+        this.showOpponentPending(msg.opponentAction);
+        this.statusTxt.setText('Actions revealed. Battle resolving...');
         break;
 
       case 'battle_result':
         this.myLP.update(msg.lps[this.myIndex]);
         this.opLP.update(msg.lps[this.myIndex === 0 ? 1 : 0]);
+        this.applyLaneState(msg.lanes);
         this.showBattleEvents(msg.events);
         break;
 
@@ -194,9 +233,28 @@ export class GameScene extends Phaser.Scene {
         break;
 
       case 'error':
-        this.statusTxt.setText(`오류: ${msg.message}`);
+        this.statusTxt.setText(`Error: ${msg.message}`);
         break;
     }
+  }
+
+  private showOpponentPending(action: TurnAction): void {
+    this.opField.clearPending();
+    if (action.summon) {
+      this.opField.setPendingCard(action.summon.laneIndex, action.summon.card);
+    }
+    for (const trap of action.traps) {
+      this.opField.setPendingCard(trap.laneIndex, trap.card, true);
+    }
+  }
+
+  private applyLaneState(lanes: [LaneState[], LaneState[]]): void {
+    const my = lanes[this.myIndex] as [LaneState, LaneState, LaneState];
+    const op = lanes[this.myIndex === 0 ? 1 : 0] as [LaneState, LaneState, LaneState];
+    this.myLanes = my;
+    this.opLanes = op;
+    this.myField.updateLanes(my);
+    this.opField.updateLanes(op);
   }
 
   private showBattleEvents(events: BattleEvent[]): void {
@@ -204,17 +262,30 @@ export class GameScene extends Phaser.Scene {
       if (ev.type === 'no_action') continue;
       const x = this.myField.getLaneWorldX(ev.laneIndex);
       const y = this.scale.height / 2;
-      const txt = ev.type === 'direct_attack'
-        ? `다이렉트 -${ev.damage}`
-        : ev.negated ? `무효!` : `-${ev.damage}`;
-      const color = ev.negated ? '#88ff88' : '#ff4444';
-      const label = this.add.text(x, y, txt, { fontSize: '20px', color, fontStyle: 'bold' }).setOrigin(0.5);
+      const labelText = ev.type === 'direct_attack'
+        ? `DIRECT -${ev.damage}`
+        : ev.negated ? 'NEGATED' : `-${ev.damage}`;
+      const color = ev.negated ? '#88ffb0' : '#ff667c';
+
+      const slash = this.add.image(x, y, ART_KEYS.slash).setScale(0.6).setAlpha(ev.negated ? 0.35 : 0.95);
+      const label = this.add.text(x, y - 8, labelText, {
+        fontSize: '22px',
+        color,
+        fontStyle: 'bold',
+        stroke: '#11080c',
+        strokeThickness: 4,
+      }).setOrigin(0.5);
+
       this.tweens.add({
-        targets: label,
-        y: y - 50,
+        targets: [label, slash],
+        y: y - 58,
         alpha: 0,
         duration: 1200,
-        onComplete: () => label.destroy(),
+        ease: 'Sine.easeOut',
+        onComplete: () => {
+          label.destroy();
+          slash.destroy();
+        },
       });
     }
   }

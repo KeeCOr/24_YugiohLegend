@@ -127,4 +127,21 @@ describe('GameRoom', () => {
     room.submitAction(1, emptyAction());
     expect(room.getState().players[0].lanes[0].monster?.id).toBe(monsterCard.id);
   });
+  it('battle_result includes both players lane state after summons', () => {
+    const room = new GameRoom('room1');
+    room.addPlayer('p0', makeDeck());
+    room.addPlayer('p1', makeDeck());
+    const p0Monster = allCards.find(c => c.id === 'goblin_warrior')!;
+    const p1Monster = allCards.find(c => c.id === 'dark_knight')!;
+
+    room.submitAction(0, { summon: { card: p0Monster, laneIndex: 0 }, spells: [], traps: [] });
+    const msgs = room.submitAction(1, { summon: { card: p1Monster, laneIndex: 2 }, spells: [], traps: [] });
+    const result = msgs.find(m => m.message.type === 'battle_result')?.message;
+
+    expect(result?.type).toBe('battle_result');
+    if (result?.type === 'battle_result') {
+      expect(result.lanes[0][0].monster?.id).toBe(p0Monster.id);
+      expect(result.lanes[1][2].monster?.id).toBe(p1Monster.id);
+    }
+  });
 });

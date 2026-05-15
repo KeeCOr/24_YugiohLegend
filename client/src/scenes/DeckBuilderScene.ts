@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { ART_KEYS, addSceneBackdrop } from '../art/ProceduralArt';
 import { CardSprite } from '../components/CardSprite';
 import type { Card } from '../data/CardTypes';
 import { ALL_CARDS } from './BootScene';
@@ -9,44 +10,56 @@ export class DeckBuilderScene extends Phaser.Scene {
   private deck: Card[] = [];
   private deckTexts: Phaser.GameObjects.Text[] = [];
   private countText!: Phaser.GameObjects.Text;
-  private saveBtn!: Phaser.GameObjects.Rectangle;
+  private saveBtn!: Phaser.GameObjects.Image;
 
   constructor() { super('DeckBuilderScene'); }
 
   create(): void {
     const { width, height } = this.scale;
+    addSceneBackdrop(this);
 
-    // 저장된 덱 불러오기
     const saved = localStorage.getItem(STORAGE_KEY);
     this.deck = saved ? JSON.parse(saved) : [];
 
-    this.add.text(20, 15, '덱 빌더', { fontSize: '28px', color: '#e2b96e' });
-    this.add.text(width - 20, 15, '← 메뉴로', { fontSize: '16px', color: '#aaaaaa' })
-      .setOrigin(1, 0).setInteractive()
+    this.add.text(26, 18, 'DECK BUILDER', {
+      fontSize: '30px',
+      color: '#f2c86a',
+      fontStyle: 'bold',
+      stroke: '#170b0f',
+      strokeThickness: 4,
+    });
+    this.add.text(width - 28, 24, 'MAIN MENU', {
+      fontSize: '15px',
+      color: '#b8c7e8',
+      fontStyle: 'bold',
+    }).setOrigin(1, 0).setInteractive()
       .on('pointerdown', () => this.scene.start('MenuScene'));
 
-    // 전체 카드 목록 (왼쪽)
-    this.add.text(20, 60, '전체 카드', { fontSize: '16px', color: '#aaaaaa' });
+    this.add.image(width - 175, height / 2, ART_KEYS.panel).setDisplaySize(300, 560);
+    this.add.text(28, 68, 'Card Archive', { fontSize: '16px', color: '#b8c7e8', fontStyle: 'bold' });
+
     ALL_CARDS.forEach((card, i) => {
-      const col = Math.floor(i / 6);
-      const row = i % 6;
-      const x = 65 + col * 110;
-      const y = 90 + row * 150;
+      const col = Math.floor(i / 4);
+      const row = i % 4;
+      const x = 78 + col * 108;
+      const y = 150 + row * 142;
       const sprite = new CardSprite(this, x, y, card);
       this.add.existing(sprite);
       sprite.setInteractive();
       sprite.on('pointerdown', () => this.addToDeck(card));
       sprite.on('pointerover', () => sprite.highlight(true));
-      sprite.on('pointerout',  () => sprite.highlight(false));
+      sprite.on('pointerout', () => sprite.highlight(false));
     });
 
-    // 덱 목록 (오른쪽)
-    this.add.text(width - 220, 60, '내 덱 (8~12장)', { fontSize: '16px', color: '#aaaaaa' });
-    this.countText = this.add.text(width - 220, 85, `${this.deck.length}장`, { fontSize: '14px', color: '#ffffff' });
+    this.add.text(width - 295, 78, 'Current Deck', { fontSize: '17px', color: '#f2c86a', fontStyle: 'bold' });
+    this.countText = this.add.text(width - 295, 105, '', { fontSize: '14px', color: '#ffffff' });
 
-    // 저장 버튼
-    this.saveBtn = this.add.rectangle(width - 100, height - 40, 160, 40, 0x225544).setInteractive();
-    this.add.text(width - 100, height - 40, '저장 & 게임 시작', { fontSize: '14px', color: '#ffffff' }).setOrigin(0.5);
+    this.saveBtn = this.add.image(width - 175, height - 58, ART_KEYS.button).setDisplaySize(230, 48).setInteractive();
+    this.add.text(width - 175, height - 58, 'SAVE AND DUEL', {
+      fontSize: '14px',
+      color: '#ffffff',
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
     this.saveBtn.on('pointerdown', () => this.saveAndStart());
 
     this.refreshDeckList();
@@ -54,8 +67,7 @@ export class DeckBuilderScene extends Phaser.Scene {
 
   private addToDeck(card: Card): void {
     const count = this.deck.filter(c => c.id === card.id).length;
-    if (count >= 2) { return; } // 같은 카드 최대 2장
-    if (this.deck.length >= 12) { return; }
+    if (count >= 2 || this.deck.length >= 12) return;
     this.deck.push(card);
     this.refreshDeckList();
   }
@@ -70,20 +82,21 @@ export class DeckBuilderScene extends Phaser.Scene {
     this.deckTexts = [];
 
     const { width } = this.scale;
-    this.countText.setText(`${this.deck.length}장`);
+    this.countText.setText(`${this.deck.length} / 8-12 cards`);
 
     this.deck.forEach((card, i) => {
-      const t = this.add.text(width - 210, 110 + i * 24, `${i + 1}. ${card.name}`, {
-        fontSize: '13px', color: '#cccccc',
+      const t = this.add.text(width - 292, 138 + i * 26, `${i + 1}. ${card.name}`, {
+        fontSize: '13px',
+        color: '#d8e7ff',
       }).setInteractive();
       t.on('pointerdown', () => this.removeFromDeck(i));
-      t.on('pointerover', () => t.setColor('#ff8888'));
-      t.on('pointerout',  () => t.setColor('#cccccc'));
+      t.on('pointerover', () => t.setColor('#ff9ab7'));
+      t.on('pointerout', () => t.setColor('#d8e7ff'));
       this.deckTexts.push(t);
     });
 
     const valid = this.deck.length >= 8 && this.deck.length <= 12;
-    this.saveBtn.setFillStyle(valid ? 0x225544 : 0x443322);
+    this.saveBtn.setAlpha(valid ? 1 : 0.45);
   }
 
   private saveAndStart(): void {
