@@ -1,10 +1,49 @@
 {
   "name": "yugioh-legend",
+  "version": "0.1.0",
   "private": true,
-  "workspaces": ["server", "client"],
+  "main": "electron/main.js",
+  "workspaces": [
+    "server",
+    "client"
+  ],
   "scripts": {
     "dev:server": "npm run dev --workspace=server",
     "dev:client": "npm run dev --workspace=client",
-    "test": "npm run test --workspace=server"
+    "test": "npm run test --workspace=server",
+    "build:client": "npm run build --workspace=client",
+    "build:server": "cd server && npx tsc",
+    "build:all": "npm run build:server && npm run build:client",
+    "electron:dev": "npm run build:all && electron .",
+    "electron:build": "npm run build:all && electron-builder --win portable"
+  },
+  "build": {
+    "appId": "com.yugiohlegend.app",
+    "productName": "YugiohLegend",
+    "directories": {
+      "output": "dist_electron"
+    },
+    "files": [
+      "electron/**/*",
+      "client/dist/**/*",
+      "server/dist/**/*",
+      "shared/**/*",
+      "node_modules/ws/**/*"
+    ],
+    "asar": true,
+    "win": {
+      "target": "portable",
+      "signAndEditExecutable": false
+    },
+    "portable": {
+      "artifactName": "YugiohLegend_v${version}_portable.exe"
+    }
+  },
+  "devDependencies": {
+    "electron": "^42.1.0",
+    "electron-builder": "^26.8.1"
+  },
+  "dependencies": {
+    "ws": "^8.20.1"
   }
 }

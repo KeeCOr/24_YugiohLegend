@@ -4,7 +4,19 @@
       "Bash(node:*)",
       "Bash(npx vitest:*)",
       "Bash(timeout 8 npx ts-node-dev --transpile-only -r tsconfig-paths/register src/index.ts)",
-      "Bash(git:*)"
+      "Bash(git:*)",
+      "Bash(find /c/Development/24_YL -name electron* -o -name *electron*)",
+      "Bash(tasklist)",
+      "Bash(findstr -i electron)",
+      "Bash(npx electron:*)",
+      "Bash(npx asar:*)",
+      "Bash(taskkill //F //IM YugiohLegend.exe)",
+      "Bash(cmd //c \"del /f /q C:\\\\Development\\\\24_YL\\\\release\\\\win-unpacked\\\\resources\\\\app.asar\")",
+      "Bash(handle64.exe \"app.asar\")",
+      "Bash(wmic process:*)",
+      "Bash(powershell -command \"Get-Process | Where-Object { $_.Modules.FileName -like ''*YugiohLegend*'' -or $_.Modules.FileName -like ''*electron*'' } | Select-Object Id, ProcessName\")",
+      "Bash(powershell -command \"Get-Process | Where-Object { \\\\$_.Path -like '*24_YL*' } | Format-Table Id, ProcessName, Path\" 2>&1)",
+      "Bash(powershell -command \"Remove-Item -Force -Path 'C:\\\\\\\\Development\\\\\\\\24_YL\\\\\\\\release\\\\\\\\win-unpacked\\\\\\\\resources\\\\\\\\app.asar'\" 2>&1)"
     ]
   }
 }
