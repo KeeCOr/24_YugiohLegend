@@ -9,28 +9,6 @@
     "monsterRole": "striker"
   },
   {
-    "id": "dark_knight",
-    "type": "monster",
-    "name": "Nightbound Knight",
-    "atk": 2200,
-    "hp": 2,
-    "tributeCost": 1,
-    "monsterRole": "striker",
-    "monsterAbility": "last_stand",
-    "abilityText": "Last Stand"
-  },
-  {
-    "id": "iron_golem",
-    "type": "monster",
-    "name": "Iron Colossus",
-    "atk": 900,
-    "hp": 6,
-    "tributeCost": 1,
-    "monsterRole": "guardian",
-    "monsterAbility": "guard_adjacent",
-    "abilityText": "Guard Adjacent"
-  },
-  {
     "id": "swift_thief",
     "type": "monster",
     "name": "Swift Cutpurse",
@@ -40,15 +18,6 @@
     "monsterRole": "utility",
     "monsterAbility": "zone_shift",
     "abilityText": "Zone Shift"
-  },
-  {
-    "id": "hero_warrior",
-    "type": "monster",
-    "name": "Radiant Champion",
-    "atk": 2500,
-    "hp": 2,
-    "tributeCost": 1,
-    "monsterRole": "striker"
   },
   {
     "id": "village_guard",
@@ -81,9 +50,87 @@
     "monsterAbility": "last_stand",
     "abilityText": "Last Stand"
   },
-  { "id": "healing_light", "type": "spell", "name": "Healing Light", "effect": "heal_1000" },
-  { "id": "power_boost", "type": "spell", "name": "Power Sigil", "effect": "power_boost" },
-  { "id": "monster_smash", "type": "spell", "name": "Crushing Rite", "effect": "monster_smash" },
+  {
+    "id": "sky_lancer",
+    "type": "monster",
+    "name": "Sky Lancer",
+    "atk": 1800,
+    "hp": 1,
+    "tributeCost": 0,
+    "monsterRole": "striker"
+  },
+  {
+    "id": "shield_mason",
+    "type": "monster",
+    "name": "Shield Mason",
+    "atk": 900,
+    "hp": 4,
+    "tributeCost": 0,
+    "monsterRole": "guardian"
+  },
+  {
+    "id": "iron_golem",
+    "type": "monster",
+    "name": "Iron Colossus",
+    "atk": 2400,
+    "hp": 5,
+    "tributeCost": 1,
+    "monsterRole": "guardian",
+    "tributeRole": "bruiser",
+    "monsterAbility": "guard_adjacent",
+    "abilityText": "Heavy Body"
+  },
+  {
+    "id": "hero_warrior",
+    "type": "monster",
+    "name": "Radiant Champion",
+    "atk": 1800,
+    "hp": 4,
+    "tributeCost": 1,
+    "monsterRole": "guardian",
+    "tributeRole": "ally_booster",
+    "monsterAbility": "ally_warcry",
+    "abilityText": "Ally +300"
+  },
+  {
+    "id": "banner_titan",
+    "type": "monster",
+    "name": "Banner Titan",
+    "atk": 1700,
+    "hp": 5,
+    "tributeCost": 1,
+    "monsterRole": "guardian",
+    "tributeRole": "field_booster",
+    "monsterAbility": "field_aura",
+    "abilityText": "Lane Aura"
+  },
+  {
+    "id": "dark_knight",
+    "type": "monster",
+    "name": "Nightbound Knight",
+    "atk": 2100,
+    "hp": 3,
+    "tributeCost": 1,
+    "monsterRole": "striker",
+    "tributeRole": "mobile",
+    "monsterAbility": "tribute_stride",
+    "abilityText": "Stride"
+  },
+  {
+    "id": "relic_devourer",
+    "type": "monster",
+    "name": "Relic Devourer",
+    "atk": 1600,
+    "hp": 3,
+    "tributeCost": 2,
+    "monsterRole": "striker",
+    "tributeRole": "tribute_scaler",
+    "monsterAbility": "tribute_growth",
+    "abilityText": "+Power/Tribute"
+  },
+  { "id": "healing_light", "type": "spell", "name": "Healing Light", "effect": "heal_1000", "spellDelayTurns": 1 },
+  { "id": "power_boost", "type": "spell", "name": "Power Sigil", "effect": "power_boost", "spellDelayTurns": 1 },
+  { "id": "monster_smash", "type": "spell", "name": "Crushing Rite", "effect": "monster_smash", "spellDelayTurns": 1 },
   {
     "id": "counter_trap",
     "type": "trap",

@@ -8,7 +8,8 @@ import cardsData from '../../shared/cards.json';
 const ALL_CARDS = cardsData as Card[];
 const INITIAL_LP = 4000;
 const INITIAL_HAND_SIZE = 4;
-const MAX_TURNS = 3;
+const SETUP_TURN = 1;
+const MAX_TURNS = 4;
 
 export interface OutgoingMessage {
   playerIndex: PlayerIndex | 'both';
@@ -16,7 +17,7 @@ export interface OutgoingMessage {
 }
 
 function emptyLane(): LaneState {
-  return { monster: null, trap: null, tempAtkBoost: 0 };
+  return { monster: null, spell: null, trap: null, tempAtkBoost: 0 };
 }
 
 function shuffle<T>(arr: T[]): T[] {
@@ -32,6 +33,7 @@ function cloneLanes(state: GameState): [PlayerState['lanes'], PlayerState['lanes
   return state.players.map(player =>
     player.lanes.map(lane => ({
       monster: lane.monster,
+      spell: lane.spell,
       trap: lane.trap,
       tempAtkBoost: lane.tempAtkBoost,
     })) as PlayerState['lanes']
@@ -103,21 +105,30 @@ export class GameRoom {
     msgs.push({ playerIndex: 0, message: { type: 'reveal', yourAction: a0, opponentAction: a1 } });
     msgs.push({ playerIndex: 1, message: { type: 'reveal', yourAction: a1, opponentAction: a0 } });
 
+    this.resolveDelayedSpells();
+
     // 액션 적용
     this.applyAction(0, a0);
     this.applyAction(1, a1);
 
     // 전투 해결
-    const { events, p0LpDelta, p1LpDelta } = resolveBattle(
-      this.state.players[0],
-      this.state.players[1]
-    );
+    const { events, p0LpDelta, p1LpDelta } = this.state.turn === SETUP_TURN
+      ? { events: [], p0LpDelta: 0, p1LpDelta: 0 }
+      : resolveBattle(
+        this.state.players[0],
+        this.state.players[1]
+      );
 
     // 파괴된 몬스터 제거
     for (const ev of events) {
       for (const { playerIndex, card } of ev.destroyedCards) {
         const lane = this.state.players[playerIndex].lanes[ev.laneIndex];
         if (lane.monster?.id === card.id) lane.monster = null;
+        if (lane.spell?.card.id === card.id) lane.spell = null;
+      }
+      if (ev.type === 'direct_attack') {
+        const defenderIndex = ev.attackerIndex === 0 ? 1 : 0;
+        this.state.players[defenderIndex].lanes[ev.laneIndex].spell = null;
       }
       // 발동된 트랩 제거
       if (ev.trapTriggered) {
@@ -211,9 +222,14 @@ export class GameRoom {
     }
 
     // 마법
-    for (const spell of action.spells) {
-      this.applySpell(playerIndex, spell);
-      player.hand = player.hand.filter(c => c.id !== spell.id);
+    for (const { card, laneIndex } of action.spells) {
+      if (!player.lanes[laneIndex].spell) {
+        player.lanes[laneIndex].spell = {
+          card,
+          remainingTurns: card.spellDelayTurns ?? 1,
+        };
+        player.hand = player.hand.filter(c => c.id !== card.id);
+      }
     }
 
     // 함정 세트
@@ -249,6 +265,20 @@ export class GameRoom {
         }
         if (maxLaneIdx >= 0) opponent.lanes[maxLaneIdx as 0 | 1 | 2].monster = null;
         break;
+      }
+    }
+  }
+
+  private resolveDelayedSpells(): void {
+    for (const player of this.state.players) {
+      for (const lane of player.lanes) {
+        if (!lane.spell) continue;
+        lane.spell.remainingTurns -= 1;
+        if (lane.spell.remainingTurns <= 0) {
+          const spell = lane.spell.card;
+          lane.spell = null;
+          this.applySpell(player.index, spell);
+        }
       }
     }
   }

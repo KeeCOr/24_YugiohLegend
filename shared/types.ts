@@ -3,7 +3,16 @@ export type EffectId = 'heal_1000' | 'power_boost' | 'monster_smash';
 export type TrapConditionId = 'on_attacked' | 'on_direct_attack';
 export type TrapEffectId = 'negate_attack' | 'reduce_damage_500';
 export type MonsterRole = 'striker' | 'guardian' | 'utility';
-export type MonsterAbilityId = 'zone_shift' | 'draw_on_summon' | 'guard_adjacent' | 'last_stand';
+export type TributeRole = 'bruiser' | 'ally_booster' | 'field_booster' | 'mobile' | 'tribute_scaler';
+export type MonsterAbilityId =
+  | 'zone_shift'
+  | 'draw_on_summon'
+  | 'guard_adjacent'
+  | 'last_stand'
+  | 'ally_warcry'
+  | 'field_aura'
+  | 'tribute_stride'
+  | 'tribute_growth';
 export type PlayerIndex = 0 | 1;
 export type LaneIndex = 0 | 1 | 2;
 
@@ -15,15 +24,23 @@ export interface Card {
   hp?: number;
   tributeCost?: number;
   monsterRole?: MonsterRole;
+  tributeRole?: TributeRole;
   monsterAbility?: MonsterAbilityId;
   abilityText?: string;
   effect?: EffectId;
   trapCondition?: TrapConditionId;
   trapEffect?: TrapEffectId;
+  spellDelayTurns?: number;
+}
+
+export interface SpellSlot {
+  card: Card;
+  remainingTurns: number;
 }
 
 export interface LaneState {
   monster: Card | null;
+  spell: SpellSlot | null;
   trap: Card | null;
   tempAtkBoost: number; // power_boost 적용 시 이번 전투에서만 유효
 }
@@ -38,7 +55,7 @@ export interface PlayerState {
 
 export interface TurnAction {
   summon?: { card: Card; laneIndex: LaneIndex };
-  spells: Card[];
+  spells: { card: Card; laneIndex: LaneIndex }[];
   traps: { card: Card; laneIndex: LaneIndex }[];
 }
 
@@ -53,7 +70,7 @@ export interface BattleEvent {
 }
 
 export interface GameState {
-  turn: number; // 1~3
+  turn: number; // 1~4
   phase: 'waiting' | 'action' | 'reveal' | 'battle' | 'final_battle' | 'game_over';
   players: [PlayerState, PlayerState];
   submitted: [boolean, boolean];

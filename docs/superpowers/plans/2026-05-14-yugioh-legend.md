@@ -2,7 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 유희왕 단순화 카드 대전 게임 — 3레인, 3턴, 동시 행동 공개, Phaser 3 + Node.js WebSocket
+**Current rules update (2026-05-15):** The implemented game now uses 4 total turns. Turn 1 applies summons, traps, and spells but skips combat; turns 2-4 resolve battles, then final battle decides the result.
+
+**Goal:** 유희왕 단순화 카드 대전 게임 — 3레인, 4턴, 1턴 준비턴, 동시 행동 공개, Phaser 3 + Node.js WebSocket
 
 **Architecture:** Monorepo (server / client / shared). 서버가 게임 로직·AI·턴 흐름을 담당하는 단일 권위자(source of truth). 클라이언트는 렌더링과 입력만 담당하며, 항상 서버 메시지를 기반으로 상태를 갱신한다.
 
@@ -691,11 +693,11 @@ describe('GameRoom', () => {
     expect(msgs.some(m => m.message.type === 'reveal')).toBe(false);
   });
 
-  it('3턴 + 파이널 배틀 후 game_over 발송', () => {
+  it('4턴 + 파이널 배틀 후 game_over 발송', () => {
     const room = new GameRoom('room1');
     room.addPlayer('p0', makeDeck());
     room.addPlayer('p1', makeDeck());
-    for (let t = 0; t < 3; t++) {
+    for (let t = 0; t < 4; t++) {
       room.submitAction(0, emptyAction());
       room.submitAction(1, emptyAction());
     }
@@ -746,7 +748,8 @@ import cardsData from '../../shared/cards.json';
 const ALL_CARDS = cardsData as Card[];
 const INITIAL_LP = 4000;
 const INITIAL_HAND_SIZE = 4;
-const MAX_TURNS = 3;
+const SETUP_TURN = 1;
+const MAX_TURNS = 4;
 
 export interface OutgoingMessage {
   playerIndex: PlayerIndex | 'both';
@@ -1891,7 +1894,7 @@ export class GameScene extends Phaser.Scene {
 
     // 상태/턴 텍스트
     this.statusTxt = this.add.text(width / 2, height - 130, '', { fontSize: '14px', color: '#aaaaaa' }).setOrigin(0.5);
-    this.turnTxt   = this.add.text(width / 2, 10, '턴 1 / 3', { fontSize: '16px', color: '#ffffff' }).setOrigin(0.5);
+    this.turnTxt   = this.add.text(width / 2, 10, '턴 1 / 4', { fontSize: '16px', color: '#ffffff' }).setOrigin(0.5);
 
     // 레인 클릭 인터랙션
     this.setupLaneInteraction();
@@ -1967,7 +1970,7 @@ export class GameScene extends Phaser.Scene {
         this.myHand = msg.yourHand;
         this.handArea.setHand(this.myHand);
         this.turn = msg.turn;
-        this.turnTxt.setText(`턴 ${this.turn} / 3`);
+        this.turnTxt.setText(`턴 ${this.turn} / 4`);
         this.statusTxt.setText('행동을 입력하세요');
         break;
 
@@ -1975,7 +1978,7 @@ export class GameScene extends Phaser.Scene {
         this.submitted = false;
         this.pendingAction = { spells: [], traps: [] };
         this.turn = msg.turn;
-        this.turnTxt.setText(`턴 ${this.turn} / 3`);
+        this.turnTxt.setText(`턴 ${this.turn} / 4`);
         this.myHand.push(msg.drawnCard);
         this.handArea.setHand(this.myHand);
         this.submitBtn.setFillStyle(0x334477);
@@ -2285,7 +2288,7 @@ git commit -m "feat: implement ResultScene and complete v0.1.0 web prototype"
 - [x] 함정 자동 발동 (on_attacked, on_direct_attack) → BattleResolver
 - [x] 마법 즉발 (heal, power_boost, monster_smash) → GameRoom.applySpell
 - [x] 덱 빌딩 8~12장 → GameRoom.addPlayer + DeckBuilderScene
-- [x] 3턴 + 파이널 배틀 페이즈 → GameRoom.resolveActions
+- [x] 4턴 + 파이널 배틀 페이즈, 1턴 준비턴 → GameRoom.resolveActions
 - [x] 동시 행동 공개 → submit_action + reveal 메시지
 - [x] AI (랜덤/그리디) → AIEngine + RoomManager
 - [x] LP 4000, 즉시 패배 판정 → GameRoom

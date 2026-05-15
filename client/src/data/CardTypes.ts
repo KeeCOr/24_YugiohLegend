@@ -1,6 +1,6 @@
 export type {
   Card, CardType, EffectId, TrapConditionId, TrapEffectId,
-  MonsterAbilityId, MonsterRole,
+  MonsterAbilityId, MonsterRole, TributeRole,
   PlayerIndex, LaneIndex, LaneState, PlayerState,
   TurnAction, BattleEvent, GameState,
   ClientMessage, ServerMessage,

@@ -15,6 +15,7 @@ interface GameSceneData {
 }
 
 export class GameScene extends Phaser.Scene {
+  private static readonly MAX_TURNS = 4;
   private socket!: SocketManager;
   private myIndex: PlayerIndex = 0;
   private turn = 1;
@@ -91,7 +92,7 @@ export class GameScene extends Phaser.Scene {
       fontSize: '15px',
       color: '#d8e7ff',
     }).setOrigin(0.5);
-    this.turnTxt = this.add.text(width / 2, 18, 'TURN 1 / 3', {
+    this.turnTxt = this.add.text(width / 2, 18, `TURN 1 / ${GameScene.MAX_TURNS}`, {
       fontSize: '18px',
       color: '#f2c86a',
       fontStyle: 'bold',
@@ -189,15 +190,15 @@ export class GameScene extends Phaser.Scene {
         this.myHand = [...msg.yourHand];
         this.handArea.setHand(this.myHand);
         this.turn = msg.turn;
-        this.turnTxt.setText(`TURN ${this.turn} / 3`);
-        this.statusTxt.setText('Choose a card, then commit your action.');
+        this.turnTxt.setText(`TURN ${this.turn} / ${GameScene.MAX_TURNS}`);
+        this.statusTxt.setText('Setup turn: place cards. Attacks start on turn 2.');
         break;
 
       case 'turn_start':
         this.submitted = false;
         this.pendingAction = { spells: [], traps: [] };
         this.turn = msg.turn;
-        this.turnTxt.setText(`TURN ${this.turn} / 3`);
+        this.turnTxt.setText(`TURN ${this.turn} / ${GameScene.MAX_TURNS}`);
         this.myHand.push(msg.drawnCard);
         this.handArea.setHand(this.myHand);
         this.submitBtn.setAlpha(1);

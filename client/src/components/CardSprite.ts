@@ -50,8 +50,9 @@ export class CardSprite extends Phaser.GameObjects.Container {
     }).setOrigin(0, 0.5);
     this.add(badge);
 
-    if (card.type === 'monster' && card.monsterRole) {
-      const role = new Phaser.GameObjects.Text(scene, 34, -52, card.monsterRole.toUpperCase(), {
+    const roleLabel = this.getRoleLabel(card);
+    if (card.type === 'monster' && roleLabel) {
+      const role = new Phaser.GameObjects.Text(scene, 34, -52, roleLabel, {
         fontSize: '5px',
         color: '#111111',
         backgroundColor: Phaser.Display.Color.IntegerToColor(roleColor).rgba,
@@ -109,6 +110,18 @@ export class CardSprite extends Phaser.GameObjects.Container {
   }
 
   private getRoleColor(card: Card): number {
+    switch (card.tributeRole) {
+      case 'bruiser':
+        return 0xffcf5a;
+      case 'ally_booster':
+        return 0x9cff8f;
+      case 'field_booster':
+        return 0x8fc9ff;
+      case 'mobile':
+        return 0xf3a6ff;
+      case 'tribute_scaler':
+        return 0xff8f8f;
+    }
     switch (card.monsterRole) {
       case 'striker':
         return 0xff9a52;
@@ -118,6 +131,23 @@ export class CardSprite extends Phaser.GameObjects.Container {
         return 0xd7a6ff;
       default:
         return typeTint(card.type);
+    }
+  }
+
+  private getRoleLabel(card: Card): string | null {
+    switch (card.tributeRole) {
+      case 'bruiser':
+        return 'BRUISER';
+      case 'ally_booster':
+        return 'ALLY+';
+      case 'field_booster':
+        return 'FIELD+';
+      case 'mobile':
+        return 'MOBILE';
+      case 'tribute_scaler':
+        return 'SCALER';
+      default:
+        return card.monsterRole ? card.monsterRole.toUpperCase() : null;
     }
   }
 
