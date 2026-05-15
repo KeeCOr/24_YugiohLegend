@@ -16,7 +16,7 @@ export class HandArea extends Phaser.GameObjects.Container {
   ) {
     super(scene, x, y);
     scene.add.existing(this);
-    this.rail = scene.add.image(0, 18, ART_KEYS.panel).setDisplaySize(690, 92).setAlpha(0.86);
+    this.rail = scene.add.image(0, 12, ART_KEYS.panel).setDisplaySize(720, 124).setAlpha(0.86);
     this.add(this.rail);
   }
 
@@ -42,9 +42,9 @@ export class HandArea extends Phaser.GameObjects.Container {
 
   private layoutCards(hand: Card[]): void {
     const total = hand.length;
-    const gap = total > 6 ? 80 : CardSprite.W + 12;
+    const gap = total > 6 ? 88 : CardSprite.W + 14;
     const startX = -((total - 1) * gap) / 2;
-    this.rail.setDisplaySize(Math.max(420, total * gap + 90), 92);
+    this.rail.setDisplaySize(Math.max(450, total * gap + 100), 124);
 
     for (let i = 0; i < total; i++) {
       const sprite = new CardSprite(this.scene, startX + i * gap, 0, hand[i]);
@@ -66,9 +66,9 @@ export class HandArea extends Phaser.GameObjects.Container {
 
   private reflow(): void {
     const total = this.sprites.length;
-    const gap = total > 6 ? 80 : CardSprite.W + 12;
+    const gap = total > 6 ? 88 : CardSprite.W + 14;
     const startX = -((total - 1) * gap) / 2;
-    this.rail.setDisplaySize(Math.max(420, total * gap + 90), 92);
+    this.rail.setDisplaySize(Math.max(450, total * gap + 100), 124);
     this.sprites.forEach((s, i) => {
       this.scene.tweens.add({ targets: s, x: startX + i * gap, duration: 180, ease: 'Sine.easeOut' });
     });

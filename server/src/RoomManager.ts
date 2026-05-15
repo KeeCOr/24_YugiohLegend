@@ -103,7 +103,7 @@ export class RoomManager {
         // 딜레이 직전이 아닌 직후에 최신 상태로 행동 결정
         const latestState = room.getState();
         if (latestState.phase !== 'action' || latestState.submitted[1]) return;
-        const action = greedyAction(latestState.players[1]);
+        const action = greedyAction(latestState.players[1], latestState.turn);
         const outMsgs = room.submitAction(1, action);
         this.broadcast(roomId, outMsgs);
         if (room.getState().phase === 'action') {

@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Current rules update (2026-05-15):** The implemented game now uses 4 total turns. Turn 1 applies summons, traps, and spells but skips combat; turns 2-4 resolve battles, then final battle decides the result.
+**Current rules update (2026-05-15):** The implemented game now uses 4 total turns. Turn 1 applies summons, traps, and delayed spell placement but skips combat; turns 2-4 resolve battles, then final battle decides the result. Spells are no longer instant: they are placed into a lane, count down, and fizzle if destroyed before resolving. Lanes unlock one by one: turn 1 center only, turn 2 left + center, turn 3 onward all lanes. Hand cards now use larger type, summon-condition, and ATK/HP presentation.
 
 **Goal:** 유희왕 단순화 카드 대전 게임 — 3레인, 4턴, 1턴 준비턴, 동시 행동 공개, Phaser 3 + Node.js WebSocket
 
@@ -270,7 +270,7 @@ export interface PlayerState {
 
 export interface TurnAction {
   summon?: { card: Card; laneIndex: LaneIndex };
-  spells: Card[];
+  spells: { card: Card; laneIndex: LaneIndex }[];
   traps: { card: Card; laneIndex: LaneIndex }[];
 }
 
@@ -285,7 +285,7 @@ export interface BattleEvent {
 }
 
 export interface GameState {
-  turn: number; // 1~3
+  turn: number; // 1~4
   phase: 'waiting' | 'action' | 'reveal' | 'battle' | 'final_battle' | 'game_over';
   players: [PlayerState, PlayerState];
   submitted: [boolean, boolean];
@@ -1074,7 +1074,7 @@ describe('greedyAction', () => {
     const p = player([spell, monster('m', 1000)]);
     const action = greedyAction(p);
     expect(action.spells).toHaveLength(1);
-    expect(action.spells[0].id).toBe('heal');
+    expect(action.spells[0].card.id).toBe('heal');
   });
 
   it('함정 카드는 첫 번째 빈 레인에 세트', () => {
@@ -1106,7 +1106,7 @@ function getEmptyLaneIndices(player: PlayerState): LaneIndex[] {
 
 export function randomAction(player: PlayerState): TurnAction {
   const hand = [...player.hand];
-  const spells: Card[] = [];
+  const spells: TurnAction['spells'] = [];
   const traps: TurnAction['traps'] = [];
   let summon: TurnAction['summon'];
 
@@ -1140,7 +1140,7 @@ export function randomAction(player: PlayerState): TurnAction {
 
 export function greedyAction(player: PlayerState): TurnAction {
   const hand = [...player.hand];
-  const spells: Card[] = [];
+  const spells: TurnAction['spells'] = [];
   const traps: TurnAction['traps'] = [];
   let summon: TurnAction['summon'];
 
@@ -1155,7 +1155,7 @@ export function greedyAction(player: PlayerState): TurnAction {
   }
 
   // 마법 전부 사용
-  spells.push(...spellCards);
+  spells.push(...spellCards.map((card, laneIndex) => ({ card, laneIndex: laneIndex as LaneIndex })));
 
   // 함정 세트 (빈 레인에 순서대로)
   let lanePtr = 0;
@@ -2286,7 +2286,7 @@ git commit -m "feat: implement ResultScene and complete v0.1.0 web prototype"
 **스펙 커버리지:**
 - [x] 3레인, 몬스터 자동 공격, 다이렉트 어택 → BattleResolver
 - [x] 함정 자동 발동 (on_attacked, on_direct_attack) → BattleResolver
-- [x] 마법 즉발 (heal, power_boost, monster_smash) → GameRoom.applySpell
+- [x] 지연 마법 배치/카운트다운/발동 (heal, power_boost, monster_smash) → GameRoom.resolveDelayedSpells
 - [x] 덱 빌딩 8~12장 → GameRoom.addPlayer + DeckBuilderScene
 - [x] 4턴 + 파이널 배틀 페이즈, 1턴 준비턴 → GameRoom.resolveActions
 - [x] 동시 행동 공개 → submit_action + reveal 메시지

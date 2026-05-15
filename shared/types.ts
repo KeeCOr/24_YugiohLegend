@@ -14,7 +14,7 @@ export type MonsterAbilityId =
   | 'tribute_stride'
   | 'tribute_growth';
 export type PlayerIndex = 0 | 1;
-export type LaneIndex = 0 | 1 | 2;
+export type LaneIndex = 0 | 1 | 2 | 3;
 
 export interface Card {
   id: string;
@@ -50,7 +50,7 @@ export interface PlayerState {
   lp: number;
   hand: Card[];
   deck: Card[];
-  lanes: [LaneState, LaneState, LaneState];
+  lanes: LaneState[];
 }
 
 export interface TurnAction {

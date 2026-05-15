@@ -75,7 +75,7 @@ describe('GameRoom', () => {
     room.addPlayer('p1', makeDeck());
     const monsterCard = allCards.find(c => c.id === 'goblin_warrior')!;
 
-    room.submitAction(0, { summon: { card: monsterCard, laneIndex: 0 }, spells: [], traps: [] });
+    room.submitAction(0, { summon: { card: monsterCard, laneIndex: 1 }, spells: [], traps: [] });
     const msgs = room.submitAction(1, emptyAction());
     const result = msgs.find(m => m.message.type === 'battle_result')?.message;
 
@@ -83,9 +83,27 @@ describe('GameRoom', () => {
     if (result?.type === 'battle_result') {
       expect(result.events).toHaveLength(0);
       expect(result.lps).toEqual([4000, 4000]);
-      expect(result.lanes[0][0].monster?.id).toBe(monsterCard.id);
+      expect(result.lanes[0][1].monster?.id).toBe(monsterCard.id);
     }
     expect(room.getState().turn).toBe(2);
+  });
+
+  it('only unlocks one additional lane each turn', () => {
+    const room = new GameRoom('room1');
+    room.addPlayer('p0', makeDeck());
+    room.addPlayer('p1', makeDeck());
+    const lockedTurn1 = allCards.find(c => c.id === 'goblin_warrior')!;
+    const centerTurn1 = allCards.find(c => c.id === 'village_guard')!;
+    const lockedTurn2 = allCards.find(c => c.id === 'dragon_mage')!;
+
+    room.submitAction(0, { summon: { card: lockedTurn1, laneIndex: 0 }, spells: [], traps: [] });
+    room.submitAction(1, emptyAction());
+    expect(room.getState().players[0].lanes[0].monster).toBeNull();
+
+    room.submitAction(0, { summon: { card: centerTurn1, laneIndex: 1 }, spells: [], traps: [] });
+    room.submitAction(1, { summon: { card: lockedTurn2, laneIndex: 2 }, spells: [], traps: [] });
+    expect(room.getState().players[0].lanes[1].monster?.id).toBe(centerTurn1.id);
+    expect(room.getState().players[1].lanes[2].monster).toBeNull();
   });
 
   it('spell is set on a lane first and resolves on the next turn', () => {
@@ -96,18 +114,18 @@ describe('GameRoom', () => {
     const healCard = allCards.find(c => c.id === 'healing_light')!;
     (room.getState() as GameState).players[0].hand.push(healCard);
 
-    const action: TurnAction = { spells: [{ card: healCard, laneIndex: 0 }], traps: [] };
+    const action: TurnAction = { spells: [{ card: healCard, laneIndex: 1 }], traps: [] };
     room.submitAction(0, action);
     room.submitAction(1, emptyAction());
 
     expect(room.getState().players[0].lp).toBe(4000);
-    expect(room.getState().players[0].lanes[0].spell?.card.id).toBe(healCard.id);
+    expect(room.getState().players[0].lanes[1].spell?.card.id).toBe(healCard.id);
 
     room.submitAction(0, emptyAction());
     room.submitAction(1, emptyAction());
 
     expect(room.getState().players[0].lp).toBe(5000);
-    expect(room.getState().players[0].lanes[0].spell).toBeNull();
+    expect(room.getState().players[0].lanes[1].spell).toBeNull();
   });
 
   it('delayed spell is destroyed before resolving when its lane is hit', () => {
@@ -142,7 +160,7 @@ describe('GameRoom', () => {
     (room.getState() as GameState).players[1].lanes[1].monster = weakMonster;
     (room.getState() as GameState).players[0].hand.push(smashCard);
 
-    const action: TurnAction = { spells: [{ card: smashCard, laneIndex: 0 }], traps: [] };
+    const action: TurnAction = { spells: [{ card: smashCard, laneIndex: 1 }], traps: [] };
     room.submitAction(0, action);
     room.submitAction(1, emptyAction());
 
@@ -166,10 +184,10 @@ describe('GameRoom', () => {
     room.addPlayer('p0', makeDeck());
     room.addPlayer('p1', makeDeck());
     const monsterCard = allCards.find(c => c.type === 'monster')!;
-    const action: TurnAction = { summon: { card: monsterCard, laneIndex: 0 }, spells: [], traps: [] };
+    const action: TurnAction = { summon: { card: monsterCard, laneIndex: 1 }, spells: [], traps: [] };
     room.submitAction(0, action);
     room.submitAction(1, emptyAction());
-    expect(room.getState().players[0].lanes[0].monster?.id).toBe(monsterCard.id);
+    expect(room.getState().players[0].lanes[1].monster?.id).toBe(monsterCard.id);
   });
 
   it('battle_result includes both players lane state after summons', () => {
@@ -178,6 +196,11 @@ describe('GameRoom', () => {
     room.addPlayer('p1', makeDeck());
     const p0Monster = allCards.find(c => c.id === 'goblin_warrior')!;
     const p1Monster = allCards.find(c => c.id === 'dark_knight')!;
+
+    room.submitAction(0, emptyAction());
+    room.submitAction(1, emptyAction());
+    room.submitAction(0, emptyAction());
+    room.submitAction(1, emptyAction());
 
     room.submitAction(0, { summon: { card: p0Monster, laneIndex: 0 }, spells: [], traps: [] });
     const msgs = room.submitAction(1, { summon: { card: p1Monster, laneIndex: 2 }, spells: [], traps: [] });

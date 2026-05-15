@@ -1,7 +1,7 @@
 import { resolveBattle } from './BattleResolver';
 import type {
   Card, GameState, LaneState, PlayerState, TurnAction,
-  ServerMessage, PlayerIndex
+  ServerMessage, PlayerIndex, LaneIndex
 } from '../../shared/types';
 import cardsData from '../../shared/cards.json';
 
@@ -10,6 +10,12 @@ const INITIAL_LP = 4000;
 const INITIAL_HAND_SIZE = 4;
 const SETUP_TURN = 1;
 const MAX_TURNS = 4;
+const UNLOCKED_LANES_BY_TURN: Record<number, LaneIndex[]> = {
+  1: [1],
+  2: [0, 1],
+  3: [0, 1, 2],
+  4: [0, 1, 2],
+};
 
 export interface OutgoingMessage {
   playerIndex: PlayerIndex | 'both';
@@ -38,6 +44,10 @@ function cloneLanes(state: GameState): [PlayerState['lanes'], PlayerState['lanes
       tempAtkBoost: lane.tempAtkBoost,
     })) as PlayerState['lanes']
   ) as [PlayerState['lanes'], PlayerState['lanes']];
+}
+
+function isLaneUnlocked(turn: number, laneIndex: LaneIndex): boolean {
+  return (UNLOCKED_LANES_BY_TURN[turn] ?? UNLOCKED_LANES_BY_TURN[4]).includes(laneIndex);
 }
 
 export class GameRoom {
@@ -215,7 +225,7 @@ export class GameRoom {
     // 소환
     if (action.summon) {
       const { card, laneIndex } = action.summon;
-      if (!player.lanes[laneIndex].monster) {
+      if (isLaneUnlocked(this.state.turn, laneIndex) && !player.lanes[laneIndex].monster) {
         player.lanes[laneIndex].monster = card;
         player.hand = player.hand.filter(c => c.id !== card.id);
       }
@@ -223,7 +233,7 @@ export class GameRoom {
 
     // 마법
     for (const { card, laneIndex } of action.spells) {
-      if (!player.lanes[laneIndex].spell) {
+      if (isLaneUnlocked(this.state.turn, laneIndex) && !player.lanes[laneIndex].spell) {
         player.lanes[laneIndex].spell = {
           card,
           remainingTurns: card.spellDelayTurns ?? 1,
@@ -234,8 +244,10 @@ export class GameRoom {
 
     // 함정 세트
     for (const { card, laneIndex } of action.traps) {
-      player.lanes[laneIndex].trap = card;
-      player.hand = player.hand.filter(c => c.id !== card.id);
+      if (isLaneUnlocked(this.state.turn, laneIndex)) {
+        player.lanes[laneIndex].trap = card;
+        player.hand = player.hand.filter(c => c.id !== card.id);
+      }
     }
   }
 

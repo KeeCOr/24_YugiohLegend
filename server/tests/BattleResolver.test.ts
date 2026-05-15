@@ -6,7 +6,7 @@ function monster(id: string, atk: number): Card {
   return { id, type: 'monster', name: id, atk };
 }
 function lane(mon: Card | null = null, trap: Card | null = null): LaneState {
-  return { monster: mon, trap, tempAtkBoost: 0 };
+  return { monster: mon, spell: null, trap, tempAtkBoost: 0 };
 }
 function player(index: 0 | 1, lp: number, l0: LaneState, l1: LaneState, l2: LaneState): PlayerState {
   return { index, lp, hand: [], deck: [], lanes: [l0, l1, l2] };
@@ -58,7 +58,7 @@ describe('resolveBattle', () => {
   });
 
   it('tempAtkBoost가 ATK에 반영됨', () => {
-    const boostedLane: LaneState = { monster: monster('a', 1000), trap: null, tempAtkBoost: 500 };
+    const boostedLane: LaneState = { monster: monster('a', 1000), spell: null, trap: null, tempAtkBoost: 500 };
     const p0 = player(0, 4000, boostedLane, lane(), lane());
     const p1 = player(1, 4000, lane(monster('b', 1200)), lane(), lane());
     // p0 effective ATK = 1500 > 1200 → p1 monster destroyed, p1 lp -300

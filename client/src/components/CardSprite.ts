@@ -42,27 +42,30 @@ export class CardSprite extends Phaser.GameObjects.Container {
 
     const tint = typeTint(card.type);
     const roleColor = this.getRoleColor(card);
-    const badge = new Phaser.GameObjects.Text(scene, -34, -52, card.type.toUpperCase(), {
-      fontSize: '6px',
-      color: '#111111',
-      backgroundColor: Phaser.Display.Color.IntegerToColor(tint).rgba,
-      padding: { left: 3, right: 3, top: 1, bottom: 1 },
-    }).setOrigin(0, 0.5);
-    this.add(badge);
+    const typeBar = new Phaser.GameObjects.Rectangle(scene, 0, -51, 78, 15, tint, 0.92);
+    typeBar.setStrokeStyle(1, 0x0e1117, 0.8);
+    this.add(typeBar);
+
+    const typeText = new Phaser.GameObjects.Text(scene, 0, -51, this.getTypeLabel(card), {
+      fontSize: '8px',
+      color: '#101014',
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
+    this.add(typeText);
 
     const roleLabel = this.getRoleLabel(card);
     if (card.type === 'monster' && roleLabel) {
-      const role = new Phaser.GameObjects.Text(scene, 34, -52, roleLabel, {
-        fontSize: '5px',
+      const role = new Phaser.GameObjects.Text(scene, 0, -38, roleLabel, {
+        fontSize: '6px',
         color: '#111111',
         backgroundColor: Phaser.Display.Color.IntegerToColor(roleColor).rgba,
         padding: { left: 3, right: 3, top: 1, bottom: 1 },
-      }).setOrigin(1, 0.5);
+      }).setOrigin(0.5);
       this.add(role);
     }
 
-    const nameText = new Phaser.GameObjects.Text(scene, 0, 20, card.name, {
-      fontSize: '9px',
+    const nameText = new Phaser.GameObjects.Text(scene, 0, 16, card.name, {
+      fontSize: '10px',
       color: '#f8f0d8',
       wordWrap: { width: CardSprite.W - 12 },
       align: 'center',
@@ -70,8 +73,8 @@ export class CardSprite extends Phaser.GameObjects.Container {
     this.add(nameText);
 
     const actionLabel = this.getActionLabel(card);
-    const actionText = new Phaser.GameObjects.Text(scene, 0, card.abilityText ? 34 : 38, actionLabel, {
-      fontSize: '7px',
+    const actionText = new Phaser.GameObjects.Text(scene, 0, card.abilityText ? 33 : 37, actionLabel, {
+      fontSize: card.type === 'monster' && (card.tributeCost ?? 0) > 0 ? '8px' : '7px',
       color: card.type === 'monster' && (card.tributeCost ?? 0) > 0 ? '#ffb1c0' : '#a9f4d0',
       fontStyle: 'bold',
       stroke: '#10090d',
@@ -91,8 +94,8 @@ export class CardSprite extends Phaser.GameObjects.Container {
     }
 
     if (card.type === 'monster') {
-      this.addStatGem(scene, -28, 53, String(card.atk ?? 0), 0xf2b94b, 'ATK');
-      this.addStatGem(scene, 28, 53, String(card.hp ?? 1), 0xe94d64, 'HP');
+      this.addStatGem(scene, -28, 52, String(card.atk ?? 0), 0xf2b94b, 'ATK');
+      this.addStatGem(scene, 28, 52, String(card.hp ?? 1), 0xe94d64, 'HP');
     }
   }
 
@@ -106,7 +109,15 @@ export class CardSprite extends Phaser.GameObjects.Container {
       const tributeCost = card.tributeCost ?? 0;
       return tributeCost > 0 ? `TRIBUTE x${tributeCost}` : 'FREE SUMMON';
     }
-    return card.type === 'spell' ? 'CAST' : 'SET TRAP';
+    if (card.type === 'spell') return `DELAY ${card.spellDelayTurns ?? 1}T`;
+    return 'SET TRAP';
+  }
+
+  private getTypeLabel(card: Card): string {
+    if (card.type === 'monster') {
+      return (card.tributeCost ?? 0) > 0 ? 'MONSTER - TRIBUTE' : 'MONSTER - FREE';
+    }
+    return card.type === 'spell' ? 'SPELL' : 'TRAP';
   }
 
   private getRoleColor(card: Card): number {
@@ -159,12 +170,12 @@ export class CardSprite extends Phaser.GameObjects.Container {
     color: number,
     label: string
   ): void {
-    const gem = new Phaser.GameObjects.Arc(scene, x, y, 13, 0, 360, false, color, 1);
+    const gem = new Phaser.GameObjects.Arc(scene, x, y, 15, 0, 360, false, color, 1);
     gem.setStrokeStyle(2, 0x1b1117, 0.9);
     this.add(gem);
 
     const valueText = new Phaser.GameObjects.Text(scene, x, y - 1, value, {
-      fontSize: '10px',
+      fontSize: '12px',
       color: '#ffffff',
       fontStyle: 'bold',
       stroke: '#160d12',
@@ -172,8 +183,8 @@ export class CardSprite extends Phaser.GameObjects.Container {
     }).setOrigin(0.5);
     this.add(valueText);
 
-    const labelText = new Phaser.GameObjects.Text(scene, x, y + 14, label, {
-      fontSize: '5px',
+    const labelText = new Phaser.GameObjects.Text(scene, x, y + 15, label, {
+      fontSize: '6px',
       color: '#d8e7ff',
       fontStyle: 'bold',
     }).setOrigin(0.5);

@@ -16,6 +16,12 @@ interface GameSceneData {
 
 export class GameScene extends Phaser.Scene {
   private static readonly MAX_TURNS = 4;
+  private static getUnlockedLanes(turn: number): LaneIndex[] {
+    if (turn <= 1) return [1];
+    if (turn === 2) return [0, 1];
+    return [0, 1, 2];
+  }
+
   private socket!: SocketManager;
   private myIndex: PlayerIndex = 0;
   private turn = 1;
@@ -64,6 +70,7 @@ export class GameScene extends Phaser.Scene {
 
     this.opField = new Field(this, width / 2, height * 0.23, 1);
     this.myField = new Field(this, width / 2, height * 0.59, 0);
+    this.updateLaneUnlocks();
 
     this.myLP = new LPDisplay(this, 20, height - 42, 'YOU');
     this.opLP = new LPDisplay(this, 20, 38, 'RIVAL');
@@ -71,7 +78,7 @@ export class GameScene extends Phaser.Scene {
     this.handArea = new HandArea(this, width / 2, height - 86, (card, _sprite) => {
       this.selectedCard = card;
       if (card.type === 'spell') {
-        this.useSpell(card);
+        this.statusTxt.setText(`${card.name}: resolves after ${card.spellDelayTurns ?? 1} turn. Click one of your lanes.`);
       } else {
         const summonText = this.getSummonText(card);
         this.statusTxt.setText(`${card.name}: ${summonText}. Click one of your lanes.`);
@@ -127,6 +134,10 @@ export class GameScene extends Phaser.Scene {
 
   private onLaneClick(laneIndex: LaneIndex): void {
     if (!this.selectedCard || this.submitted) return;
+    if (!this.isLaneUnlocked(laneIndex)) {
+      this.statusTxt.setText(`Lane ${laneIndex + 1} is locked this turn.`);
+      return;
+    }
     const card = this.selectedCard;
 
     if (card.type === 'monster') {
@@ -143,6 +154,16 @@ export class GameScene extends Phaser.Scene {
       this.myHand = this.myHand.filter(c => c.id !== card.id);
       this.handArea.removeCard(card.id);
       this.statusTxt.setText(`${card.name} queued in lane ${laneIndex + 1}. Press COMMIT.`);
+    } else if (card.type === 'spell') {
+      if (this.myLanes?.[laneIndex].spell || this.myField.hasPending(laneIndex)) {
+        this.statusTxt.setText('That lane already has a queued card. Choose another lane.');
+        return;
+      }
+      this.pendingAction.spells.push({ card, laneIndex });
+      this.myField.setPendingCard(laneIndex, card);
+      this.myHand = this.myHand.filter(c => c.id !== card.id);
+      this.handArea.removeCard(card.id);
+      this.statusTxt.setText(`${card.name} set in lane ${laneIndex + 1}. It will resolve later.`);
     } else if (card.type === 'trap') {
       if (this.myLanes?.[laneIndex].trap) {
         this.statusTxt.setText('That lane already has a trap.');
@@ -155,15 +176,6 @@ export class GameScene extends Phaser.Scene {
       this.statusTxt.setText(`${card.name} set in lane ${laneIndex + 1}. Press COMMIT.`);
     }
 
-    this.selectedCard = null;
-    this.handArea.deselectAll();
-  }
-
-  private useSpell(card: Card): void {
-    this.pendingAction.spells.push(card);
-    this.myHand = this.myHand.filter(c => c.id !== card.id);
-    this.handArea.removeCard(card.id);
-    this.statusTxt.setText(`${card.name} is queued.`);
     this.selectedCard = null;
     this.handArea.deselectAll();
   }
@@ -191,6 +203,7 @@ export class GameScene extends Phaser.Scene {
         this.handArea.setHand(this.myHand);
         this.turn = msg.turn;
         this.turnTxt.setText(`TURN ${this.turn} / ${GameScene.MAX_TURNS}`);
+        this.updateLaneUnlocks();
         this.statusTxt.setText('Setup turn: place cards. Attacks start on turn 2.');
         break;
 
@@ -199,6 +212,7 @@ export class GameScene extends Phaser.Scene {
         this.pendingAction = { spells: [], traps: [] };
         this.turn = msg.turn;
         this.turnTxt.setText(`TURN ${this.turn} / ${GameScene.MAX_TURNS}`);
+        this.updateLaneUnlocks();
         this.myHand.push(msg.drawnCard);
         this.handArea.setHand(this.myHand);
         this.submitBtn.setAlpha(1);
@@ -244,6 +258,9 @@ export class GameScene extends Phaser.Scene {
     if (action.summon) {
       this.opField.setPendingCard(action.summon.laneIndex, action.summon.card);
     }
+    for (const spell of action.spells) {
+      this.opField.setPendingCard(spell.laneIndex, spell.card);
+    }
     for (const trap of action.traps) {
       this.opField.setPendingCard(trap.laneIndex, trap.card, true);
     }
@@ -256,6 +273,18 @@ export class GameScene extends Phaser.Scene {
     this.opLanes = op;
     this.myField.updateLanes(my);
     this.opField.updateLanes(op);
+    this.updateLaneUnlocks();
+  }
+
+  private isLaneUnlocked(laneIndex: LaneIndex): boolean {
+    return GameScene.getUnlockedLanes(this.turn).includes(laneIndex);
+  }
+
+  private updateLaneUnlocks(): void {
+    if (!this.myField || !this.opField) return;
+    const unlocked = GameScene.getUnlockedLanes(this.turn);
+    this.myField.setUnlockedLanes(unlocked);
+    this.opField.setUnlockedLanes(unlocked);
   }
 
   private showBattleEvents(events: BattleEvent[]): void {
