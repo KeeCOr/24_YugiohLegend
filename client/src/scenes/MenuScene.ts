@@ -16,7 +16,7 @@ export class MenuScene extends Phaser.Scene {
       strokeThickness: 6,
     }).setOrigin(0.5);
 
-    this.add.text(width / 2, height * 0.31, 'Four lanes. One setup turn. Four turns total.', {
+    this.add.text(width / 2, height * 0.31, 'Three lanes. One setup turn. Four turns total.', {
       fontSize: '18px',
       color: '#b8c7e8',
     }).setOrigin(0.5);

@@ -9,6 +9,9 @@ import type {
 } from '../data/CardTypes';
 import { ALL_CARDS } from './BootScene';
 
+const LANE_COUNT = 3;
+const LANE_INDICES: LaneIndex[] = [0, 1, 2];
+
 interface GameSceneData {
   mode: 'single' | 'multi';
   deck?: Card[];
@@ -19,8 +22,7 @@ export class GameScene extends Phaser.Scene {
   private static getUnlockedLanes(turn: number): LaneIndex[] {
     if (turn <= 1) return [0];
     if (turn === 2) return [0, 1];
-    if (turn === 3) return [0, 1, 2];
-    return [0, 1, 2, 3];
+    return [0, 1, 2];
   }
 
   private socket!: SocketManager;
@@ -119,7 +121,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private setupLaneInteraction(): void {
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < LANE_COUNT; i++) {
       const laneIndex = i as LaneIndex;
       const hitArea = this.add.rectangle(
         this.myField.getLaneWorldX(laneIndex),
@@ -298,7 +300,7 @@ export class GameScene extends Phaser.Scene {
 
   private getAutoTributeLaneIndices(cost: number): LaneIndex[] {
     if (cost <= 0 || !this.myLanes) return [];
-    return ([0, 1, 2, 3] as LaneIndex[])
+    return LANE_INDICES
       .filter(laneIndex => this.myLanes?.[laneIndex].monster)
       .sort((a, b) => (this.myLanes?.[a].monster?.atk ?? 0) - (this.myLanes?.[b].monster?.atk ?? 0))
       .slice(0, cost);

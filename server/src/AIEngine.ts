@@ -1,7 +1,8 @@
 import type { Card, PlayerState, TurnAction, LaneIndex } from '../../shared/types';
+import { LANE_INDICES } from '../../shared/types';
 
 function getEmptyLaneIndices(player: PlayerState): LaneIndex[] {
-  return ([0, 1, 2, 3] as LaneIndex[]).filter(i => !player.lanes[i].monster);
+  return LANE_INDICES.filter(i => !player.lanes[i].monster);
 }
 
 function canSetSpell(player: PlayerState, laneIndex: LaneIndex, card: Card): boolean {
@@ -13,8 +14,7 @@ function canSetSpell(player: PlayerState, laneIndex: LaneIndex, card: Card): boo
 function getUnlockedLaneIndices(turn: number): LaneIndex[] {
   if (turn <= 1) return [0];
   if (turn === 2) return [0, 1];
-  if (turn === 3) return [0, 1, 2];
-  return [0, 1, 2, 3];
+  return [0, 1, 2];
 }
 
 function filterUnlocked(lanes: LaneIndex[], turn: number): LaneIndex[] {
@@ -24,7 +24,7 @@ function filterUnlocked(lanes: LaneIndex[], turn: number): LaneIndex[] {
 
 function getTributeLaneIndices(player: PlayerState, cost: number): LaneIndex[] {
   if (cost <= 0) return [];
-  return ([0, 1, 2, 3] as LaneIndex[])
+  return LANE_INDICES
     .filter(i => player.lanes[i].monster)
     .sort((a, b) => (player.lanes[a].monster?.atk ?? 0) - (player.lanes[b].monster?.atk ?? 0))
     .slice(0, cost);
@@ -39,7 +39,7 @@ function buildSummon(card: Card, laneIndex: LaneIndex, player: PlayerState): Tur
 
 function chooseSpellLanes(player: PlayerState, spellCards: Card[], turn: number): TurnAction['spells'] {
   const spells: TurnAction['spells'] = [];
-  const unlocked = filterUnlocked([0, 1, 2, 3] as LaneIndex[], turn);
+  const unlocked = filterUnlocked(LANE_INDICES, turn);
   for (const spell of spellCards) {
     const laneIndex = unlocked.find(lane => canSetSpell(player, lane, spell) && !spells.some(s => s.laneIndex === lane && s.card.spellMode === spell.spellMode));
     if (laneIndex === undefined) continue;
@@ -61,7 +61,7 @@ export function randomAction(player: PlayerState, turn = 3): TurnAction {
     summon = buildSummon(card, laneIndex, player);
   }
 
-  const randomSpells = spellCards.filter(() => Math.random() < 0.5);
+  const randomSpells = spellCards.filter(card => card.spellMode === 'face_down' || Math.random() < 0.5);
   return { summon, spells: chooseSpellLanes(player, randomSpells, turn) };
 }
 

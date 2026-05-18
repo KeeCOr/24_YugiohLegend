@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>YugiohLegend 기획서</title>
+  <style>
+    :root {
+      --bg: #090c14;
+      --panel: #121a2a;
+      --panel-2: #18243a;
+      --line: #334866;
+      --gold: #e1b96c;
+      --cyan: #7fd8ff;
+      --green: #8ef2ba;
+      --red: #ff7087;
+      --text: #f2f5ff;
+      --muted: #aab7cc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: radial-gradient(circle at top, #1c2840 0, var(--bg) 48rem);
+      color: var(--text);
+      font-family: "Malgun Gothic", "Segoe UI", Arial, sans-serif;
+      line-height: 1.68;
+    }
+    main {
+      width: min(1040px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 42px 0 72px;
+    }
+    header {
+      padding: 28px 30px;
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, rgba(18,26,42,.96), rgba(24,36,58,.88));
+      border-radius: 14px;
+      box-shadow: 0 24px 80px rgba(0,0,0,.34);
+    }
+    h1, h2, h3 { margin: 0; color: var(--gold); }
+    h1 { font-size: 38px; letter-spacing: .02em; }
+    h2 { font-size: 24px; margin-top: 34px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+    h3 { font-size: 18px; margin-top: 22px; color: var(--cyan); }
+    p { margin: 10px 0; }
+    ul { margin: 10px 0 0; padding-left: 22px; }
+    li { margin: 4px 0; }
+    table {
+      width: 100%;
+      margin-top: 12px;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+    }
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(51,72,102,.7);
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: #1a2840; color: var(--gold); }
+    tr:nth-child(even) td { background: rgba(255,255,255,.025); }
+    code {
+      padding: 2px 6px;
+      border-radius: 5px;
+      background: #07101d;
+      color: #bde8ff;
+    }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+    .pill {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(127,216,255,.1);
+      border: 1px solid rgba(127,216,255,.35);
+      color: #d9f4ff;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .section {
+      margin-top: 18px;
+      padding: 20px 22px;
+      background: rgba(18,26,42,.88);
+      border: 1px solid rgba(51,72,102,.72);
+      border-radius: 12px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-top: 12px;
+    }
+    .card {
+      padding: 14px 16px;
+      border-radius: 10px;
+      background: var(--panel-2);
+      border: 1px solid rgba(127,216,255,.22);
+    }
+    .good { color: var(--green); font-weight: 700; }
+    .warn { color: var(--gold); font-weight: 700; }
+    .danger { color: var(--red); font-weight: 700; }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>YugiohLegend 기획서</h1>
+    <p>3개 라인, 4턴, 동시 행동 공개를 중심으로 한 간단한 카드 대전 게임. 1턴은 공격 없이 필드를 준비하고, 2턴부터 자동 전투가 해결된다.</p>
+    <div class="meta">
+      <span class="pill">버전 v0.1.0</span>
+      <span class="pill">최종 갱신 2026-05-18</span>
+      <span class="pill">화면 900 x 1600</span>
+      <span class="pill">플랫폼 Windows / Electron</span>
+    </div>
+  </header>
+
+  <section class="section">
+    <h2>핵심 규칙</h2>
+    <ul>
+      <li>각 플레이어는 <strong>3개 라인</strong>을 사용한다.</li>
+      <li>시작 LP는 4000이다.</li>
+      <li>시작 손패는 4장이고, 매턴 1장을 드로우한다.</li>
+      <li>한 턴에 몬스터는 1장만 소환할 수 있다.</li>
+      <li>마법은 여러 장 사용할 수 있지만, 해금된 라인에 먼저 배치해야 한다.</li>
+      <li>1턴은 셋업 턴이다. 소환과 마법 배치만 처리하고 공격은 하지 않는다.</li>
+      <li>2~4턴은 행동 공개 후 자동 전투를 처리한다.</li>
+      <li>4턴 종료 후 마지막 전투를 처리하고, LP가 높은 쪽이 승리한다.</li>
+    </ul>
+  </section>
+
+  <section class="section">
+    <h2>라인 해금</h2>
+    <table>
+      <thead>
+        <tr><th>턴</th><th>사용 가능 라인</th><th>의도</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1턴</td><td>1번 라인</td><td>공격 없이 필드의 첫 축을 만든다.</td></tr>
+        <tr><td>2턴</td><td>1~2번 라인</td><td>전투가 시작되고 선택지가 늘어난다.</td></tr>
+        <tr><td>3턴</td><td>1~3번 라인 전체</td><td>전체 라인이 열려 본격적인 라인 싸움이 된다.</td></tr>
+        <tr><td>4턴</td><td>1~3번 라인 전체</td><td>마지막 전투와 승패 결정에 집중한다.</td></tr>
+      </tbody>
+    </table>
+    <p>서버 검증, AI 선택, 클라이언트 클릭 판정, 잠금 오버레이는 모두 같은 3라인 해금 규칙을 사용한다.</p>
+  </section>
+
+  <section class="section">
+    <h2>카드 사용 조건과 등급</h2>
+    <p>카드는 손패에서 바로 구분할 수 있도록 사용 조건과 별 등급을 표시한다.</p>
+    <div class="grid">
+      <div class="card"><strong>즉시 사용</strong><br>제물 없이 바로 낼 수 있는 기본 몬스터. 카드에는 <span class="good">FREE</span> 또는 즉시 사용 배지가 표시된다.</div>
+      <div class="card"><strong>제물 필요</strong><br>강력한 몬스터는 필드의 아군 몬스터를 제물로 바쳐야 한다. 카드에는 <span class="warn">TRIBUTE</span> 배지가 표시된다.</div>
+      <div class="card"><strong>별 등급</strong><br>카드의 체급을 별 개수로 보여준다. 일반 몬스터는 낮은 별, 제물 몬스터는 높은 별을 가진다.</div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>몬스터 구성</h2>
+    <h3>기본 몬스터</h3>
+    <table>
+      <thead>
+        <tr><th>역할</th><th>특징</th><th>예시</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>STRIKER</td><td>전투력이 높지만 생존력이 낮다.</td><td>Bronze Raider, Sky Lancer</td></tr>
+        <tr><td>GUARDIAN</td><td>생존력이 높지만 전투력이 낮다.</td><td>Gate Watcher, Shield Mason</td></tr>
+        <tr><td>UTILITY</td><td>전투력과 생존력은 낮지만 라인 이동, 드로우, 특수효과를 가진다.</td><td>Swift Cutpurse, Dragon Acolyte, Ember Magus</td></tr>
+      </tbody>
+    </table>
+
+    <h3>제물 몬스터</h3>
+    <table>
+      <thead>
+        <tr><th>역할</th><th>설계 의도</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>BRUISER</td><td>강한 전투력과 생존력을 모두 가진 중심 몬스터.</td></tr>
+        <tr><td>ALLY+</td><td>아군 몬스터를 강화하는 지원형 몬스터.</td></tr>
+        <tr><td>FIELD+</td><td>라인 또는 필드 전체의 가치를 올리는 몬스터.</td></tr>
+        <tr><td>MOBILE</td><td>어느 정도 라인 이동이 가능한 기동형 몬스터.</td></tr>
+        <tr><td>SCALER</td><td>바친 제물 수만큼 더 강해지는 성장형 몬스터.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section">
+    <h2>마법 카드</h2>
+    <ul>
+      <li>마법은 낸 직후 즉발하지 않고, 라인에 배치된 뒤 지정 턴 수가 지나면 발동한다.</li>
+      <li>앞면 마법은 공개된 지연 효과다. 예: 전투력 상승, 상대 몬스터 제거, 상대 마법 제거.</li>
+      <li>뒷면 마법은 숨겨진 조건부 효과다. 예: 공격 무효, 직접 공격 피해 감소.</li>
+      <li>발동 전에 해당 라인이 공격받으면 배치된 앞면 마법은 파괴되어 효과가 사라진다.</li>
+      <li>상대에게는 뒷면 마법이 예약 카드로만 보인다.</li>
+    </ul>
+  </section>
+
+  <section class="section">
+    <h2>전투 처리</h2>
+    <ul>
+      <li>같은 라인에 양쪽 몬스터가 있으면 전투력 차이만큼 약한 쪽이 피해를 받고 몬스터가 파괴된다.</li>
+      <li>공격하는 라인에 상대 몬스터가 없으면 직접 공격으로 상대 LP가 감소한다.</li>
+      <li>양쪽 전투력이 같으면 두 몬스터가 함께 파괴된다.</li>
+      <li>라인에 배치된 뒷면 마법 조건이 맞으면 전투에 개입한다.</li>
+    </ul>
+  </section>
+
+  <section class="section">
+    <h2>UI 구성</h2>
+    <ul>
+      <li>상단에는 상대 LP와 상대 필드를 보여준다.</li>
+      <li>중앙에는 3개 라인의 전투 구역을 크게 보여준다.</li>
+      <li>하단에는 내 LP, 커밋 버튼, 손패를 배치한다.</li>
+      <li>잠긴 라인은 어둡게 표시하고, 해금 턴을 안내한다.</li>
+      <li>카드는 종류, 사용 조건, 별 등급, ATK/HP가 손패에서도 보이도록 표시한다.</li>
+    </ul>
+  </section>
+
+  <section class="section">
+    <h2>최근 반영 사항</h2>
+    <ul>
+      <li>2026-05-18: 전체 필드를 4라인에서 <strong>3라인</strong>으로 축소.</li>
+      <li>2026-05-18: 서버 상태, AI, 클라이언트 필드 렌더링, 클릭 영역을 3라인 기준으로 수정.</li>
+      <li>2026-05-18: 메뉴와 기획서 문구를 3라인 기준으로 정리.</li>
+      <li>2026-05-15: 함정 카드 타입을 제거하고 앞면/뒷면 마법 구조로 통합.</li>
+      <li>2026-05-15: 카드에 소환 조건, 역할, ATK/HP 가독성을 강화.</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>

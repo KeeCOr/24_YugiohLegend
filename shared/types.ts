@@ -14,7 +14,9 @@ export type MonsterAbilityId =
   | 'tribute_stride'
   | 'tribute_growth';
 export type PlayerIndex = 0 | 1;
-export type LaneIndex = 0 | 1 | 2 | 3;
+export type LaneIndex = 0 | 1 | 2;
+export const LANE_COUNT = 3;
+export const LANE_INDICES: LaneIndex[] = [0, 1, 2];
 
 export interface Card {
   id: string;

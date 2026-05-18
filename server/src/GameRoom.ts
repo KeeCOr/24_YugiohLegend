@@ -3,6 +3,7 @@ import type {
   Card, GameState, LaneState, PlayerState, TurnAction,
   ServerMessage, PlayerIndex, LaneIndex
 } from '../../shared/types';
+import { LANE_INDICES } from '../../shared/types';
 import cardsData from '../../shared/cards.json';
 
 const ALL_CARDS = cardsData as Card[];
@@ -14,7 +15,7 @@ const UNLOCKED_LANES_BY_TURN: Record<number, LaneIndex[]> = {
   1: [0],
   2: [0, 1],
   3: [0, 1, 2],
-  4: [0, 1, 2, 3],
+  4: [0, 1, 2],
 };
 const HIDDEN_FACE_DOWN_SPELL_CARD: Card = {
   id: 'hidden_face_down_spell',
@@ -77,8 +78,8 @@ export class GameRoom {
       turn: 1,
       phase: 'waiting',
       players: [
-        { index: 0, lp: INITIAL_LP, hand: [], deck: [], lanes: [emptyLane(), emptyLane(), emptyLane(), emptyLane()] },
-        { index: 1, lp: INITIAL_LP, hand: [], deck: [], lanes: [emptyLane(), emptyLane(), emptyLane(), emptyLane()] },
+        { index: 0, lp: INITIAL_LP, hand: [], deck: [], lanes: LANE_INDICES.map(() => emptyLane()) },
+        { index: 1, lp: INITIAL_LP, hand: [], deck: [], lanes: LANE_INDICES.map(() => emptyLane()) },
       ],
       submitted: [false, false],
       pendingActions: [null, null],

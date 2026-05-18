@@ -92,7 +92,7 @@
 - `backrow_break` resolves after its delay and removes the opponent spell/trap in the opposite lane first, with a fallback to any opponent spell/trap if that lane is empty.
 
 ## 2026-05-15 UI/Line Fix
-- Lane unlocks follow visible lane labels: turn 1 unlocks lane 1, turn 2 unlocks lanes 1-2, turn 3 unlocks lanes 1-3, and turn 4 unlocks lanes 1-4.
+- Lane unlocks follow visible lane labels: turn 1 unlocks lane 1, turn 2 unlocks lanes 1-2, and turn 3 onward unlocks lanes 1-3.
 - Server validation, AI lane choice, client click validation, and locked overlay labels use the same unlock order.
 - Phaser uses FIT scaling in the Electron content area so the bottom hand panel remains visible when the window frame reduces available height.
 

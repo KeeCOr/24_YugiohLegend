@@ -3,10 +3,10 @@ import { ART_KEYS } from '../art/ProceduralArt';
 import { CardSprite } from './CardSprite';
 import type { Card, LaneIndex, LaneState, PlayerIndex } from '../data/CardTypes';
 
-const LANE_COUNT = 4;
+const LANE_COUNT = 3;
 const LANE_W = 118;
-const LANE_H = 176;
-const LANE_GAP = 16;
+const LANE_H = 186;
+const LANE_GAP = 34;
 
 export class Field extends Phaser.GameObjects.Container {
   private laneImages: Phaser.GameObjects.Image[] = [];
@@ -108,7 +108,7 @@ export class Field extends Phaser.GameObjects.Container {
   }
 
   clearPending(laneIndex?: LaneIndex): void {
-    const indexes = laneIndex === undefined ? [0, 1, 2, 3] : [laneIndex];
+    const indexes = laneIndex === undefined ? Array.from({ length: LANE_COUNT }, (_, i) => i) : [laneIndex];
     for (const i of indexes) {
       if (this.pendingSprites[i]) {
         this.pendingSprites[i]!.destroy();
