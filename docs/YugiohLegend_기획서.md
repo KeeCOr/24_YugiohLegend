@@ -1,138 +1,84 @@
 # YugiohLegend 기획서
 
+업데이트: 2026-05-19
+
 ## 개요
-YugiohLegend는 3개 레인, 4턴, 동시 행동 공개를 중심으로 한 간단한 카드 대전 게임이다. 1턴은 공격 없이 카드를 내고 필드를 준비하는 셋업 턴이며, 이후 턴마다 레인이 하나씩 열리고 자동 전투가 해결된다.
+YugiohLegend는 900 x 1600 세로 화면에서 진행되는 3라인 자동 전투 카드 게임이다. 플레이어는 매 턴 카드를 배치하고, 공개 단계 이후 각 라인에서 전투를 해결한다. 현재 버전은 한 턴에 모든 라인을 쓰는 구조가 아니라 턴이 지날수록 라인이 열리는 구조를 유지한다.
 
 ## 핵심 규칙
-- 기본 화면 해상도는 900 x 1600 세로형이다.
 - 시작 LP는 4000이다.
-- 시작 손패는 4장이고, 매턴 1장을 드로우한다.
-- 각 플레이어는 3개 레인을 가진다.
-- 라인은 매턴 하나씩 해금된다.
-- 한 턴에 몬스터는 1장까지 소환할 수 있다.
-- 제물 몬스터는 필요한 수만큼 내 필드 몬스터를 제물로 바쳐야 소환된다.
-- 마법과 함정은 여러 장 사용할 수 있지만, 각각 해금된 레인에 먼저 배치해야 한다.
-- 1턴은 소환, 마법 배치, 함정 세트만 처리하고 공격하지 않는다.
-- 2~4턴은 행동 공개 후 자동 전투를 처리한다.
-- 4턴 종료 후 마지막 전투를 처리하고 LP가 높은 쪽이 승리한다.
+- 시작 손패는 4장이고, 매 턴 1장을 드로우한다.
+- 총 4턴으로 진행한다.
+- 1턴은 배치 전용 턴이며 공격하지 않는다.
+- 2턴부터 공개 후 자동 전투가 발생한다.
+- 4턴 종료 후 LP가 높은 쪽이 승리한다.
+- 각 플레이어는 3개의 라인을 가진다.
+- 각 라인에는 몬스터 1장과 마법 카드가 배치될 수 있다.
 
 ## 라인 해금
-| 턴 | 사용 가능 레인 |
+| 턴 | 사용 가능 라인 |
 | --- | --- |
-| 1턴 | 중앙 레인만 |
-| 2턴 | 왼쪽 + 중앙 레인 |
-| 3턴 | 왼쪽 + 중앙 + 오른쪽 레인 |
-| 4턴 | 3개 레인 전체 |
+| 1턴 | 중앙 라인 |
+| 2턴 | 왼쪽 + 중앙 라인 |
+| 3턴 | 왼쪽 + 중앙 + 오른쪽 라인 |
+| 4턴 | 3개 라인 전체 |
 
-- 잠긴 레인은 서버에서 소환, 마법 배치, 함정 세트를 무시한다.
-- AI도 현재 턴에 열린 레인만 사용한다.
-- 클라이언트는 잠긴 레인을 어둡게 표시하고, 클릭 시 상태 문구로 안내한다.
+잠긴 라인은 서버에서 소환과 마법 배치를 무시하고, 클라이언트는 잠긴 상태를 화면에 표시한다.
 
-## 지연 마법
-- 마법은 손에서 즉시 발동되지 않는다.
-- 마법 카드를 선택한 뒤 해금된 내 레인을 클릭해 해당 레인에 배치한다.
-- 상대에게는 지연 마법과 함정이 뒷면 예약 카드로만 공개된다.
-- 배치된 마법은 `spellDelayTurns`만큼 카운트다운한 뒤 효과가 발동된다. 현재 기본값은 1턴이다.
-- 지연 중인 마법은 레인 상태에 저장되며, UI에는 남은 턴 수가 표시된다.
-- 발동 전에 해당 레인이 직접 공격당하면 배치된 마법은 파괴되고 효과가 사라진다.
-- 발동한 마법은 레인에서 제거된다.
+## 카드 구분
+몬스터 카드는 하스스톤처럼 전투력과 생명력을 동시에 가진다.
 
-## 제물 소환
-- `tributeCost`가 1 이상인 몬스터는 제물 소환 몬스터다.
-- 서버는 제출된 `tributeLaneIndices`에 실제 내 몬스터가 충분히 있는지 검증한다.
-- 제물이 부족하면 소환은 무시되고 카드도 손패에서 제거되지 않는다.
-- 제물 소환이 성공하면 지정된 제물 몬스터들이 필드에서 제거되고, 목표 레인에 새 몬스터가 소환된다.
-- 클라이언트는 현재 UI 기준으로 낮은 ATK의 내 몬스터부터 자동으로 제물 후보를 지정한다.
-- AI도 제물 몬스터를 소환할 때 낮은 ATK 몬스터부터 제물로 선택한다.
+| 구분 | 설명 |
+| --- | --- |
+| FREE | 제물 없이 일반 소환 가능 |
+| TRIBUTE | 제물이 필요한 상급 소환 |
+| STRIKER | 전투력은 높지만 생명력이 낮은 기본 몬스터 |
+| GUARDIAN | 생명력은 높지만 전투력이 낮은 기본 몬스터 |
+| UTILITY | 전투력과 생명력은 낮지만 이동 또는 특수효과를 가진 기본 몬스터 |
+| BRUISER | 제물을 요구하며 전투력과 생명력이 모두 높은 몬스터 |
+| ALLY+ | 아군 몬스터를 강화하는 상급 몬스터 |
+| FIELD+ | 다른 라인 또는 필드 상태를 강화하는 상급 몬스터 |
 
-## 손패 카드 가독성
-- 카드 상단에 큰 타입 바를 표시한다.
-- 몬스터는 `MONSTER - FREE` 또는 `MONSTER - TRIBUTE`로 일반 소환과 제물 소환을 구분한다.
-- 몬스터 역할 배지는 `STRIKER`, `GUARDIAN`, `UTILITY`, `BRUISER`, `ALLY+`처럼 별도 색상으로 표시한다.
-- ATK/HP 젬 크기와 숫자 크기를 키워 손패 상태에서도 전투력과 생명력을 읽기 쉽게 한다.
-- 손패 패널 높이와 카드 간격을 키워 하단 스탯이 덜 가려지게 한다.
-- 마법 카드는 `DELAY nT`, 함정 카드는 `SET TRAP`으로 표시한다.
+카드 상단에는 `MONSTER - FREE`, `MONSTER - TRIBUTE`, `SPELL - FACE`, `SPELL - SET`처럼 종류와 사용 방식을 표시한다. 몬스터 카드는 하단에 ATK/HP 보석을 크게 표시해 손패에서도 전투력을 바로 읽을 수 있어야 한다.
+
+## 전투 규칙
+- 같은 라인에 양쪽 몬스터가 있으면 전투력 차이만큼 패배한 쪽 몬스터의 생명력을 잃는다.
+- 생명력이 0 이하가 된 몬스터는 파괴된다.
+- 상대 라인이 비어 있으면 몬스터가 상대 LP에 직접 피해를 준다.
+- 전투력과 생명력 수치 차이가 너무 크지 않도록, 현재 UI 기준에서 읽기 쉬운 숫자 크기로 조절한다.
+
+## 마법 카드
+함정 카드는 제거하고, 마법 카드는 앞면 마법과 뒷면 마법으로 나눈다.
+
+| 구분 | 동작 |
+| --- | --- |
+| 앞면 마법 | 라인에 배치한 뒤 몇 턴 후 효과가 발동된다. 발동 전에 파괴되면 효과가 사라진다. |
+| 뒷면 마법 | 뒤집어 배치하고, 조건이 달성되면 공개되며 효과가 발동된다. |
+
+마법은 단순 즉발기가 아니라 라인의 규칙을 바꾸는 장치로 설계한다. 주요 효과는 전투력 상승, 상대 몬스터 제거, 상대 마법 제거를 중심으로 구성한다.
 
 ## 화면 구성
-- Electron 창과 Phaser 캔버스는 900 x 1600으로 맞춘다.
-- 게임 화면은 위에서부터 상대 LP/상대 필드, 전투선, 내 필드, 내 LP/커밋 버튼, 손패 순서로 세로 배치한다.
-- 덱 빌더는 카드 목록을 3열 그리드로 보여주고, 현재 덱 목록은 하단 패널에 배치한다.
+- 기준 해상도는 900 x 1600이다.
+- 실행파일 창은 모니터 작업영역에 맞춰 9:16 비율로 자동 축소된다.
+- 전장 중심에 상대 필드, 전투 라인, 내 필드를 세로로 배치한다.
+- 하단에는 손패를 배치한다.
+- 불필요한 빈 공간을 줄이기 위해 카드와 라인 크기를 키운다.
+- 카드 기본 크기: 132 x 188.
+- 라인 기본 크기: 198 x 286.
+- 손패 패널 높이: 208.
+- 전투 라인 패널: 850 x 96.
+- 라인 클릭 히트 영역: 222 x 296.
 
-## 상대 카드 표시
-- 서버는 `battle_result` 메시지에 양쪽 플레이어의 최신 레인 상태를 포함한다.
-- 클라이언트는 내 레인 상태와 상대 레인 상태를 모두 갱신한다.
-- `reveal` 단계에서는 상대가 예약한 소환/마법/함정을 먼저 보여준다.
+## 최신 UI 개선 사항
+- 3라인 구조에 맞춰 라인 간격과 카드 배치를 다시 조정했다.
+- 손패 카드가 작게 보이지 않도록 카드 스프라이트를 확대했다.
+- 라인 자체도 커져 몬스터, 앞면 마법, 뒷면 마법 상태가 더 잘 보인다.
+- 손패 패널과 필드 히트 영역도 함께 키워 입력이 더 안정적으로 느껴지게 했다.
+- 하단 잘림을 피하기 위해 손패와 상태 문구 사이의 간격을 재조정했다.
+- 실행파일 창 높이가 모니터보다 커져 하단이 잘리는 문제를 막기 위해 Electron 창 크기를 작업영역 기준으로 계산한다.
+- 카드 내 ATK/HP, 소환 등급, 카드 종류 표시 위치를 확대된 카드 기준으로 재배치했다.
 
-## 기본 몬스터 역할
-- `STRIKER`: 전투력이 높지만 생명력이 낮다. 빠르게 상대 LP나 몬스터를 압박한다.
-- `GUARDIAN`: 생명력이 높지만 전투력이 낮다. 레인을 오래 지키는 역할이다.
-- `UTILITY`: 전투력과 생명력이 낮지만 존 이동이나 특수효과를 가진다.
-
-## 현재 기본 몬스터 분포
-| 카드 | 역할 | ATK | HP | 소환 | 능력 |
-| --- | --- | ---: | ---: | --- | --- |
-| Bronze Raider | STRIKER | 1900 | 1 | FREE | - |
-| Gate Watcher | GUARDIAN | 600 | 5 | FREE | - |
-| Swift Cutpurse | UTILITY | 800 | 1 | FREE | Zone Shift |
-| Dragon Acolyte | UTILITY | 1100 | 2 | FREE | Draw Spark |
-| Ember Magus | UTILITY | 1200 | 2 | FREE | Last Stand |
-| Sky Lancer | STRIKER | 1800 | 2 | FREE | Sky Pierce |
-| Shield Mason | GUARDIAN | 900 | 4 | FREE | Fortify |
-
-## 제물 소환 몬스터 구성
-| 카드 | 제물 역할 | ATK | HP | 제물 | 능력 | 용도 |
-| --- | --- | ---: | ---: | ---: | --- | --- |
-| Iron Colossus | BRUISER | 2400 | 5 | 1 | Heavy Body | 강한 전투력과 생존력을 모두 가진 중심 몬스터 |
-| Radiant Champion | ALLY+ | 1800 | 4 | 1 | Ally +300 | 아군 몬스터를 강화하는 지원형 몬스터 |
-| Banner Titan | FIELD+ | 1700 | 5 | 1 | Lane Aura | 특정 필드/레인 가치를 올리는 운영형 몬스터 |
-| Nightbound Knight | MOBILE | 2100 | 3 | 1 | Stride | 어느 정도 존 이동이 가능한 기동형 몬스터 |
-| Relic Devourer | SCALER | 1600 | 3 | 2 | +Power/Tribute | 바친 제물만큼 강해지는 성장형 몬스터 |
-
-## 카드 데이터 구조
-```typescript
-interface Card {
-  id: string;
-  type: CardType;
-  name: string;
-  atk?: number;
-  hp?: number;
-  tributeCost?: number;
-  monsterRole?: 'striker' | 'guardian' | 'utility';
-  tributeRole?: 'bruiser' | 'ally_booster' | 'field_booster' | 'mobile' | 'tribute_scaler';
-  monsterAbility?: string;
-  abilityText?: string;
-  effect?: EffectId;
-  trapCondition?: TrapConditionId;
-  trapEffect?: TrapEffectId;
-  spellDelayTurns?: number;
-}
-
-interface SpellSlot {
-  card: Card;
-  remainingTurns: number;
-}
-
-interface LaneState {
-  monster: Card | null;
-  spell: SpellSlot | null;
-  trap: Card | null;
-  tempAtkBoost: number;
-}
-```
-
-## 2026-05-15 Spell Catalog Update
-- Spell cards are now concentrated on three combat roles: ATK boost (`power_boost`), opponent monster removal (`monster_smash`), and opponent spell/trap removal (`backrow_break`).
-- Healing spells are intentionally excluded from the current catalog so magic decisions stay aggressive and board-focused.
-- `Seal Breaker` uses `backrow_break`: it destroys the opponent delayed spell in the opposite lane first, then the trap in that lane, then falls back to any opponent delayed spell or trap.
-
-## 2026-05-15 UI/Line Fix
-- Lane unlocks now follow visible lane labels: turn 1 unlocks lane 1, turn 2 unlocks lanes 1-2, and turn 3 onward unlocks lanes 1-3.
-- Server validation, AI lane choice, client click validation, and locked overlay labels all use the same unlock order.
-- The Phaser canvas uses FIT scaling inside the Electron content area so the bottom hand panel remains visible even when the OS window frame reduces available height.
-
-## 2026-05-15 Face-Up/Face-Down Spell Update
-- The separate trap card type has been removed. The active card types are now monster and spell only.
-- Spells use `spellMode`: `face_up` spells are placed visibly on a lane and resolve after `spellDelayTurns`; `face_down` spells are set hidden and trigger when their condition is met.
-- Face-up spells keep delayed board effects such as ATK boost, monster removal, and spell removal.
-- Face-down spells replace traps: examples include attack negation on `on_attacked` and direct-attack damage reduction on `on_direct_attack`.
-- Server actions now submit all magic through `TurnAction.spells`; face-down spells are hidden in opponent reveal messages.
+## 빌드 산출물
+- 최신 실행파일: `YugiohLegend_v0.1.0_portable.exe`
+- 최신 문서: `docs/YugiohLegend_기획서.md`
+- 최신 HTML 문서: `docs/YugiohLegend_기획서.html`

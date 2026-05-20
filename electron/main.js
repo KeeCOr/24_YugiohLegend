@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, screen } = require('electron');
 const path = require('path');
 const { WebSocketServer } = require('ws');
 
@@ -27,11 +27,20 @@ function startServer() {
 }
 
 function createWindow() {
+  const { width: workWidth, height: workHeight } = screen.getPrimaryDisplay().workAreaSize;
+  const targetWidth = 900;
+  const targetHeight = 1600;
+  const scale = Math.min(1, (workWidth - 80) / targetWidth, (workHeight - 80) / targetHeight);
+  const windowWidth = Math.max(520, Math.floor(targetWidth * scale));
+  const windowHeight = Math.max(900, Math.floor(targetHeight * scale));
+
   mainWindow = new BrowserWindow({
-    width: 900,
-    height: 1600,
+    width: windowWidth,
+    height: windowHeight,
     useContentSize: true,
-    resizable: false,
+    resizable: true,
+    minWidth: 520,
+    minHeight: 900,
     title: 'YugiohLegend',
     webPreferences: {
       nodeIntegration: false,

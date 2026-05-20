@@ -7,8 +7,8 @@ export class CardSprite extends Phaser.GameObjects.Container {
   private glow: Phaser.GameObjects.Image;
   private faceDown: boolean;
 
-  static readonly W = 90;
-  static readonly H = 130;
+  static readonly W = 132;
+  static readonly H = 188;
 
   constructor(scene: Phaser.Scene, x: number, y: number, card: Card, faceDown = false) {
     super(scene, x, y);
@@ -42,12 +42,12 @@ export class CardSprite extends Phaser.GameObjects.Container {
 
     const tint = typeTint(card.type);
     const roleColor = this.getRoleColor(card);
-    const typeBar = new Phaser.GameObjects.Rectangle(scene, 0, -51, 78, 15, tint, 0.92);
+    const typeBar = new Phaser.GameObjects.Rectangle(scene, 0, -70, 106, 18, tint, 0.92);
     typeBar.setStrokeStyle(1, 0x0e1117, 0.8);
     this.add(typeBar);
 
-    const typeText = new Phaser.GameObjects.Text(scene, 0, -51, this.getTypeLabel(card), {
-      fontSize: '8px',
+    const typeText = new Phaser.GameObjects.Text(scene, 0, -70, this.getTypeLabel(card), {
+      fontSize: '10px',
       color: '#101014',
       fontStyle: 'bold',
     }).setOrigin(0.5);
@@ -55,8 +55,8 @@ export class CardSprite extends Phaser.GameObjects.Container {
 
     const roleLabel = this.getRoleLabel(card);
     if (card.type === 'monster' && roleLabel) {
-      const role = new Phaser.GameObjects.Text(scene, 0, -38, roleLabel, {
-        fontSize: '6px',
+      const role = new Phaser.GameObjects.Text(scene, 0, -54, roleLabel, {
+        fontSize: '8px',
         color: '#111111',
         backgroundColor: Phaser.Display.Color.IntegerToColor(roleColor).rgba,
         padding: { left: 3, right: 3, top: 1, bottom: 1 },
@@ -64,8 +64,8 @@ export class CardSprite extends Phaser.GameObjects.Container {
       this.add(role);
     }
 
-    const nameText = new Phaser.GameObjects.Text(scene, 0, 16, card.name, {
-      fontSize: '10px',
+    const nameText = new Phaser.GameObjects.Text(scene, 0, 25, card.name, {
+      fontSize: '13px',
       color: '#f8f0d8',
       wordWrap: { width: CardSprite.W - 12 },
       align: 'center',
@@ -73,8 +73,8 @@ export class CardSprite extends Phaser.GameObjects.Container {
     this.add(nameText);
 
     const actionLabel = this.getActionLabel(card);
-    const actionText = new Phaser.GameObjects.Text(scene, 0, card.abilityText ? 33 : 37, actionLabel, {
-      fontSize: card.type === 'monster' && (card.tributeCost ?? 0) > 0 ? '8px' : '7px',
+    const actionText = new Phaser.GameObjects.Text(scene, 0, card.abilityText ? 49 : 53, actionLabel, {
+      fontSize: card.type === 'monster' && (card.tributeCost ?? 0) > 0 ? '10px' : '9px',
       color: card.type === 'monster' && (card.tributeCost ?? 0) > 0 ? '#ffb1c0' : '#a9f4d0',
       fontStyle: 'bold',
       stroke: '#10090d',
@@ -83,8 +83,8 @@ export class CardSprite extends Phaser.GameObjects.Container {
     this.add(actionText);
 
     if (card.abilityText) {
-      const ability = new Phaser.GameObjects.Text(scene, 0, 44, card.abilityText.toUpperCase(), {
-        fontSize: '6px',
+      const ability = new Phaser.GameObjects.Text(scene, 0, 65, card.abilityText.toUpperCase(), {
+        fontSize: '8px',
         color: '#c8d9ff',
         fontStyle: 'bold',
         stroke: '#10090d',
@@ -94,8 +94,8 @@ export class CardSprite extends Phaser.GameObjects.Container {
     }
 
     if (card.type === 'monster') {
-      this.addStatGem(scene, -28, 52, String(card.atk ?? 0), 0xf2b94b, 'ATK');
-      this.addStatGem(scene, 28, 52, String(card.hp ?? 1), 0xe94d64, 'HP');
+      this.addStatGem(scene, -43, 72, String(card.atk ?? 0), 0xf2b94b, 'ATK');
+      this.addStatGem(scene, 43, 72, String(card.hp ?? 1), 0xe94d64, 'HP');
     }
   }
 
@@ -172,12 +172,12 @@ export class CardSprite extends Phaser.GameObjects.Container {
     color: number,
     label: string
   ): void {
-    const gem = new Phaser.GameObjects.Arc(scene, x, y, 15, 0, 360, false, color, 1);
+    const gem = new Phaser.GameObjects.Arc(scene, x, y, 20, 0, 360, false, color, 1);
     gem.setStrokeStyle(2, 0x1b1117, 0.9);
     this.add(gem);
 
     const valueText = new Phaser.GameObjects.Text(scene, x, y - 1, value, {
-      fontSize: '12px',
+      fontSize: '14px',
       color: '#ffffff',
       fontStyle: 'bold',
       stroke: '#160d12',
@@ -185,8 +185,8 @@ export class CardSprite extends Phaser.GameObjects.Container {
     }).setOrigin(0.5);
     this.add(valueText);
 
-    const labelText = new Phaser.GameObjects.Text(scene, x, y + 15, label, {
-      fontSize: '6px',
+    const labelText = new Phaser.GameObjects.Text(scene, x, y + 19, label, {
+      fontSize: '8px',
       color: '#d8e7ff',
       fontStyle: 'bold',
     }).setOrigin(0.5);
@@ -218,25 +218,25 @@ export class CardSprite extends Phaser.GameObjects.Container {
   }
 
   private createSymbol(scene: Phaser.Scene, id: string, type: Card['type']): Phaser.GameObjects.Container {
-    const box = new Phaser.GameObjects.Container(scene, 0, -24);
+    const box = new Phaser.GameObjects.Container(scene, 0, -30);
     const tint = typeTint(type);
     const g = new Phaser.GameObjects.Graphics(scene);
     g.fillStyle(0x05070c, 0.25);
-    g.fillRoundedRect(-31, -25, 62, 42, 4);
+    g.fillRoundedRect(-44, -31, 88, 56, 5);
     g.lineStyle(2, tint, 0.65);
 
     if (type === 'monster') {
-      g.strokeCircle(0, -3, 16);
-      g.lineBetween(-14, 13, 0, -23);
-      g.lineBetween(14, 13, 0, -23);
+      g.strokeCircle(0, -3, 22);
+      g.lineBetween(-20, 19, 0, -29);
+      g.lineBetween(20, 19, 0, -29);
       g.fillStyle(tint, 0.9);
       g.fillCircle(-6, -5, 2);
       g.fillCircle(6, -5, 2);
     } else if (type === 'spell') {
-      g.strokeCircle(0, -4, 17);
-      g.lineBetween(-18, -4, 18, -4);
-      g.lineBetween(0, -22, 0, 14);
-      g.strokeCircle(0, -4, 7);
+      g.strokeCircle(0, -4, 23);
+      g.lineBetween(-25, -4, 25, -4);
+      g.lineBetween(0, -29, 0, 21);
+      g.strokeCircle(0, -4, 9);
     } else {
       g.strokeTriangle(0, -24, -20, 14, 20, 14);
       g.lineBetween(-10, -4, 10, -4);
@@ -244,7 +244,7 @@ export class CardSprite extends Phaser.GameObjects.Container {
     }
 
     const sig = new Phaser.GameObjects.Text(scene, 0, 20, id.slice(0, 3).toUpperCase(), {
-      fontSize: '7px',
+      fontSize: '9px',
       color: '#d8e7ff',
     }).setOrigin(0.5);
     box.add([g, sig]);

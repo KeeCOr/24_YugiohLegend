@@ -4,9 +4,9 @@ import { CardSprite } from './CardSprite';
 import type { Card, LaneIndex, LaneState, PlayerIndex } from '../data/CardTypes';
 
 const LANE_COUNT = 3;
-const LANE_W = 118;
-const LANE_H = 186;
-const LANE_GAP = 34;
+const LANE_W = 198;
+const LANE_H = 286;
+const LANE_GAP = 48;
 
 export class Field extends Phaser.GameObjects.Container {
   private laneImages: Phaser.GameObjects.Image[] = [];
@@ -26,25 +26,25 @@ export class Field extends Phaser.GameObjects.Container {
   private buildLanes(scene: Phaser.Scene): void {
     for (let i = 0; i < LANE_COUNT; i++) {
       const lx = this.getLaneLocalX(i);
-      const glow = scene.add.image(lx, 0, ART_KEYS.glow).setDisplaySize(164, 204).setAlpha(0);
+      const glow = scene.add.image(lx, 0, ART_KEYS.glow).setDisplaySize(258, 334).setAlpha(0);
       const lane = scene.add.image(lx, 0, this.playerIndex === 0 ? ART_KEYS.lane : ART_KEYS.laneEnemy);
       lane.setDisplaySize(LANE_W, LANE_H);
       this.add([glow, lane]);
       this.laneGlows.push(glow);
       this.laneImages.push(lane);
 
-      const faceDown = this.createFaceDownSpellIndicator(scene, lx, LANE_H / 2 - 22);
+      const faceDown = this.createFaceDownSpellIndicator(scene, lx, LANE_H / 2 - 24);
       faceDown.setVisible(false);
       this.add(faceDown);
       this.faceDownSpellIndicators.push(faceDown);
 
-      const spell = this.createSpellIndicator(scene, lx, LANE_H / 2 - 48);
+      const spell = this.createSpellIndicator(scene, lx, LANE_H / 2 - 54);
       spell.setVisible(false);
       this.add(spell);
       this.spellIndicators.push(spell);
 
-      const label = scene.add.text(lx, -LANE_H / 2 + 14, `LANE ${i + 1}`, {
-        fontSize: '10px',
+      const label = scene.add.text(lx, -LANE_H / 2 + 16, `LANE ${i + 1}`, {
+        fontSize: '11px',
         color: this.playerIndex === 0 ? '#7fc8ff' : '#ff9ab7',
         fontStyle: 'bold',
       }).setOrigin(0.5);
@@ -125,10 +125,10 @@ export class Field extends Phaser.GameObjects.Container {
 
   private createFaceDownSpellIndicator(scene: Phaser.Scene, x: number, y: number): Phaser.GameObjects.Container {
     const c = scene.add.container(x, y);
-    const diamond = scene.add.polygon(0, 0, [0, -10, 12, 0, 0, 10, -12, 0], 0xd281ee, 0.85);
+    const diamond = scene.add.polygon(0, 0, [0, -14, 16, 0, 0, 14, -16, 0], 0xd281ee, 0.85);
     diamond.setStrokeStyle(2, 0xffe0ff, 0.85);
     const text = scene.add.text(0, 0, '?', {
-      fontSize: '10px',
+      fontSize: '11px',
       color: '#170d1b',
       fontStyle: 'bold',
     }).setOrigin(0.5);
@@ -138,10 +138,10 @@ export class Field extends Phaser.GameObjects.Container {
 
   private createSpellIndicator(scene: Phaser.Scene, x: number, y: number): Phaser.GameObjects.Container {
     const c = scene.add.container(x, y);
-    const circle = scene.add.circle(0, 0, 12, 0x61d79d, 0.88);
+    const circle = scene.add.circle(0, 0, 16, 0x61d79d, 0.88);
     circle.setStrokeStyle(2, 0xd6ffe8, 0.9);
     const text = scene.add.text(0, 0, '', {
-      fontSize: '10px',
+      fontSize: '12px',
       color: '#082217',
       fontStyle: 'bold',
     }).setOrigin(0.5);
@@ -156,7 +156,7 @@ export class Field extends Phaser.GameObjects.Container {
     veil.setStrokeStyle(2, 0x5d667a, 0.65);
     const unlockTurn = laneIndex + 1;
     const label = scene.add.text(0, -6, `LOCKED\nT${unlockTurn}`, {
-      fontSize: '13px',
+      fontSize: '16px',
       color: '#aab6ca',
       fontStyle: 'bold',
       align: 'center',

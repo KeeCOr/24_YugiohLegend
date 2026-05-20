@@ -64,21 +64,21 @@ export class GameScene extends Phaser.Scene {
     const deck: Card[] = data.deck ?? ALL_CARDS.slice(0, 8).concat(ALL_CARDS.slice(0, 2));
     this.socket = new SocketManager();
 
-    this.add.image(width / 2, height * 0.48, ART_KEYS.panel).setDisplaySize(760, 76).setAlpha(0.58);
-    this.add.text(width / 2, height * 0.48, 'BATTLE LINE', {
+    this.add.image(width / 2, height * 0.45, ART_KEYS.panel).setDisplaySize(850, 96).setAlpha(0.58);
+    this.add.text(width / 2, height * 0.45, 'BATTLE LINE', {
       fontSize: '13px',
       color: '#d8b56a',
       fontStyle: 'bold',
     }).setOrigin(0.5);
 
-    this.opField = new Field(this, width / 2, height * 0.25, 1);
-    this.myField = new Field(this, width / 2, height * 0.68, 0);
+    this.opField = new Field(this, width / 2, height * 0.235, 1);
+    this.myField = new Field(this, width / 2, height * 0.645, 0);
     this.updateLaneUnlocks();
 
-    this.myLP = new LPDisplay(this, 24, height * 0.825, 'YOU');
+    this.myLP = new LPDisplay(this, 24, height * 0.807, 'YOU');
     this.opLP = new LPDisplay(this, 24, height * 0.095, 'RIVAL');
 
-    this.handArea = new HandArea(this, width / 2, height - 118, (card, _sprite) => {
+    this.handArea = new HandArea(this, width / 2, height - 148, (card, _sprite) => {
       this.selectedCard = card;
       if (card.type === 'spell') {
         const text = card.spellMode === 'face_down'
@@ -91,8 +91,8 @@ export class GameScene extends Phaser.Scene {
       }
     });
 
-    this.submitBtn = this.add.image(width - 104, height * 0.825, ART_KEYS.button).setDisplaySize(170, 50).setInteractive();
-    this.submitTxt = this.add.text(width - 104, height * 0.825, 'COMMIT', {
+    this.submitBtn = this.add.image(width - 104, height * 0.807, ART_KEYS.button).setDisplaySize(170, 50).setInteractive();
+    this.submitTxt = this.add.text(width - 104, height * 0.807, 'COMMIT', {
       fontSize: '16px',
       color: '#ffffff',
       fontStyle: 'bold',
@@ -101,9 +101,11 @@ export class GameScene extends Phaser.Scene {
     this.submitBtn.on('pointerover', () => this.submitBtn.setTint(0xffe29a));
     this.submitBtn.on('pointerout', () => this.submitBtn.clearTint());
 
-    this.statusTxt = this.add.text(width / 2, height * 0.865, 'Preparing duel...', {
+    this.statusTxt = this.add.text(width / 2, height * 0.824, 'Preparing duel...', {
       fontSize: '15px',
       color: '#d8e7ff',
+      stroke: '#080b12',
+      strokeThickness: 3,
     }).setOrigin(0.5);
     this.turnTxt = this.add.text(width / 2, height * 0.055, `TURN 1 / ${GameScene.MAX_TURNS}`, {
       fontSize: '18px',
@@ -126,8 +128,8 @@ export class GameScene extends Phaser.Scene {
       const hitArea = this.add.rectangle(
         this.myField.getLaneWorldX(laneIndex),
         this.myField.y,
-        136,
-        176,
+        222,
+        296,
         0x000000,
         0
       ).setInteractive();
