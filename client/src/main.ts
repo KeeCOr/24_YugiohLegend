@@ -10,8 +10,8 @@ const config: Phaser.Types.Core.GameConfig = {
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
-    width: 900,
-    height: 1600,
+    width: 1600,
+    height: 900,
   },
   backgroundColor: '#1a1a2e',
   scene: [BootScene, MenuScene, DeckBuilderScene, GameScene, ResultScene],

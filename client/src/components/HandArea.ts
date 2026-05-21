@@ -6,6 +6,8 @@ import type { Card } from '../data/CardTypes';
 const HAND_CARD_SCALE = 1.5;
 const HAND_CARD_W = CardSprite.W * HAND_CARD_SCALE;
 const HAND_CARD_H = CardSprite.H * HAND_CARD_SCALE;
+const HAND_RAIL_W = 330;
+const HAND_RAIL_H = 760;
 
 export class HandArea extends Phaser.GameObjects.Container {
   private sprites: CardSprite[] = [];
@@ -21,7 +23,7 @@ export class HandArea extends Phaser.GameObjects.Container {
   ) {
     super(scene, x, y);
     scene.add.existing(this);
-    this.rail = scene.add.image(0, 10, ART_KEYS.panel).setDisplaySize(890, 318).setAlpha(0.86);
+    this.rail = scene.add.image(0, 0, ART_KEYS.panel).setDisplaySize(HAND_RAIL_W, HAND_RAIL_H).setAlpha(0.86);
     this.add(this.rail);
   }
 
@@ -54,13 +56,15 @@ export class HandArea extends Phaser.GameObjects.Container {
 
   private layoutCards(hand: Card[]): void {
     const total = hand.length;
-    const gap = total > 6 ? HAND_CARD_W * 0.82 : HAND_CARD_W + 12;
-    const startX = -((total - 1) * gap) / 2;
-    this.rail.setDisplaySize(Math.min(898, Math.max(720, total * gap + 150)), 318);
+    const gap = total > 6 ? 68 : 92;
+    const startY = -((total - 1) * gap) / 2;
+    this.rail.setDisplaySize(HAND_RAIL_W, HAND_RAIL_H);
 
     for (let i = 0; i < total; i++) {
-      const sprite = new CardSprite(this.scene, startX + i * gap, 0, hand[i]);
+      const centerOffset = i - (total - 1) / 2;
+      const sprite = new CardSprite(this.scene, centerOffset * 14, startY + i * gap, hand[i]);
       sprite.setBaseScale(HAND_CARD_SCALE);
+      sprite.setRotation(Phaser.Math.DegToRad(centerOffset * 3.5));
       sprite.setPlayable(this.playableIds.has(hand[i].id));
       sprite.setInteractive(new Phaser.Geom.Rectangle(-CardSprite.W / 2, -CardSprite.H / 2, CardSprite.W, CardSprite.H), Phaser.Geom.Rectangle.Contains);
       sprite.on('pointerdown', () => this.selectCard(hand[i], sprite));
@@ -80,11 +84,19 @@ export class HandArea extends Phaser.GameObjects.Container {
 
   private reflow(): void {
     const total = this.sprites.length;
-    const gap = total > 6 ? HAND_CARD_W * 0.82 : HAND_CARD_W + 12;
-    const startX = -((total - 1) * gap) / 2;
-    this.rail.setDisplaySize(Math.min(898, Math.max(720, total * gap + 150)), 318);
+    const gap = total > 6 ? 68 : 92;
+    const startY = -((total - 1) * gap) / 2;
+    this.rail.setDisplaySize(HAND_RAIL_W, HAND_RAIL_H);
     this.sprites.forEach((s, i) => {
-      this.scene.tweens.add({ targets: s, x: startX + i * gap, duration: 180, ease: 'Sine.easeOut' });
+      const centerOffset = i - (total - 1) / 2;
+      this.scene.tweens.add({
+        targets: s,
+        x: centerOffset * 14,
+        y: startY + i * gap,
+        rotation: Phaser.Math.DegToRad(centerOffset * 3.5),
+        duration: 180,
+        ease: 'Sine.easeOut',
+      });
     });
   }
 }

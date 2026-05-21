@@ -35,15 +35,17 @@ export class DeckBuilderScene extends Phaser.Scene {
     }).setOrigin(1, 0).setInteractive()
       .on('pointerdown', () => this.scene.start('MenuScene'));
 
-    this.add.image(width / 2, height - 245, ART_KEYS.panel).setDisplaySize(820, 360);
-    this.add.text(28, 68, 'Card Archive', { fontSize: '16px', color: '#b8c7e8', fontStyle: 'bold' });
+    this.add.image(width * 0.36, height * 0.52, ART_KEYS.panel).setDisplaySize(1030, 720).setAlpha(0.78);
+    this.add.image(width * 0.82, height * 0.52, ART_KEYS.panel).setDisplaySize(450, 720).setAlpha(0.78);
+    this.add.text(48, 78, 'Card Archive', { fontSize: '18px', color: '#b8c7e8', fontStyle: 'bold' });
 
     ALL_CARDS.forEach((card, i) => {
-      const col = i % 3;
-      const row = Math.floor(i / 3);
-      const x = 160 + col * 200;
-      const y = 165 + row * 150;
+      const col = i % 5;
+      const row = Math.floor(i / 5);
+      const x = 135 + col * 185;
+      const y = 178 + row * 170;
       const sprite = new CardSprite(this, x, y, card);
+      sprite.setBaseScale(0.86);
       this.add.existing(sprite);
       sprite.setInteractive();
       sprite.on('pointerdown', () => this.addToDeck(card));
@@ -51,12 +53,12 @@ export class DeckBuilderScene extends Phaser.Scene {
       sprite.on('pointerout', () => sprite.highlight(false));
     });
 
-    this.add.text(70, height - 395, 'Current Deck', { fontSize: '22px', color: '#f2c86a', fontStyle: 'bold' });
-    this.countText = this.add.text(70, height - 360, '', { fontSize: '17px', color: '#ffffff' });
+    this.add.text(width * 0.71, 96, 'Current Deck', { fontSize: '24px', color: '#f2c86a', fontStyle: 'bold' });
+    this.countText = this.add.text(width * 0.71, 132, '', { fontSize: '18px', color: '#ffffff' });
 
-    this.saveBtn = this.add.image(width - 170, height - 70, ART_KEYS.button).setDisplaySize(260, 56).setInteractive();
-    this.add.text(width - 170, height - 70, 'SAVE AND DUEL', {
-      fontSize: '14px',
+    this.saveBtn = this.add.image(width * 0.84, height - 70, ART_KEYS.button).setDisplaySize(300, 62).setInteractive();
+    this.add.text(width * 0.84, height - 70, 'SAVE AND DUEL', {
+      fontSize: '16px',
       color: '#ffffff',
       fontStyle: 'bold',
     }).setOrigin(0.5);
@@ -81,13 +83,13 @@ export class DeckBuilderScene extends Phaser.Scene {
     for (const t of this.deckTexts) t.destroy();
     this.deckTexts = [];
 
-    const { height } = this.scale;
+    const { width } = this.scale;
     this.countText.setText(`${this.deck.length} / 8-12 cards`);
 
     this.deck.forEach((card, i) => {
       const col = Math.floor(i / 6);
       const row = i % 6;
-      const t = this.add.text(70 + col * 300, height - 325 + row * 34, `${i + 1}. ${card.name}`, {
+      const t = this.add.text(width * 0.71 + col * 190, 174 + row * 42, `${i + 1}. ${card.name}`, {
         fontSize: '16px',
         color: '#d8e7ff',
       }).setInteractive();
