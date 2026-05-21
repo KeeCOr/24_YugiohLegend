@@ -5,7 +5,9 @@ import { ART_KEYS, cardTextureKey, typeTint } from '../art/ProceduralArt';
 export class CardSprite extends Phaser.GameObjects.Container {
   card: Card;
   private glow: Phaser.GameObjects.Image;
+  private playableGlow: Phaser.GameObjects.Image;
   private faceDown: boolean;
+  private baseScale = 1;
 
   static readonly W = 132;
   static readonly H = 188;
@@ -14,6 +16,10 @@ export class CardSprite extends Phaser.GameObjects.Container {
     super(scene, x, y);
     this.card = card;
     this.faceDown = faceDown;
+
+    this.playableGlow = new Phaser.GameObjects.Image(scene, 0, 0, ART_KEYS.glow);
+    this.playableGlow.setDisplaySize(CardSprite.W + 42, CardSprite.H + 42).setAlpha(0).setTint(0x80ffbf);
+    this.add(this.playableGlow);
 
     this.glow = new Phaser.GameObjects.Image(scene, 0, 0, ART_KEYS.glow);
     this.glow.setDisplaySize(CardSprite.W + 22, CardSprite.H + 22).setAlpha(0);
@@ -101,7 +107,16 @@ export class CardSprite extends Phaser.GameObjects.Container {
 
   setPreview(on = true): void {
     this.setAlpha(on ? 0.58 : 1);
-    if (on) this.setScale(0.92);
+    if (on) this.setScale(this.baseScale * 0.92);
+  }
+
+  setBaseScale(scale: number): void {
+    this.baseScale = scale;
+    this.setScale(scale);
+  }
+
+  setPlayable(on: boolean): void {
+    this.playableGlow.setAlpha(on ? 0.72 : 0);
   }
 
   private getActionLabel(card: Card): string {
@@ -214,7 +229,7 @@ export class CardSprite extends Phaser.GameObjects.Container {
 
   highlight(on: boolean): void {
     this.glow.setAlpha(on ? 0.9 : 0);
-    this.setScale(on ? 1.07 : 1);
+    this.setScale(on ? this.baseScale * 1.07 : this.baseScale);
   }
 
   private createSymbol(scene: Phaser.Scene, id: string, type: Card['type']): Phaser.GameObjects.Container {

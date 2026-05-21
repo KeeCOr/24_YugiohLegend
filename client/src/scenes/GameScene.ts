@@ -75,10 +75,10 @@ export class GameScene extends Phaser.Scene {
     this.myField = new Field(this, width / 2, height * 0.645, 0);
     this.updateLaneUnlocks();
 
-    this.myLP = new LPDisplay(this, 24, height * 0.807, 'YOU');
+    this.myLP = new LPDisplay(this, 24, height * 0.765, 'YOU');
     this.opLP = new LPDisplay(this, 24, height * 0.095, 'RIVAL');
 
-    this.handArea = new HandArea(this, width / 2, height - 148, (card, _sprite) => {
+    this.handArea = new HandArea(this, width / 2, height - 178, (card, _sprite) => {
       this.selectedCard = card;
       if (card.type === 'spell') {
         const text = card.spellMode === 'face_down'
@@ -91,8 +91,8 @@ export class GameScene extends Phaser.Scene {
       }
     });
 
-    this.submitBtn = this.add.image(width - 104, height * 0.807, ART_KEYS.button).setDisplaySize(170, 50).setInteractive();
-    this.submitTxt = this.add.text(width - 104, height * 0.807, 'COMMIT', {
+    this.submitBtn = this.add.image(width - 104, height * 0.765, ART_KEYS.button).setDisplaySize(170, 50).setInteractive();
+    this.submitTxt = this.add.text(width - 104, height * 0.765, 'COMMIT', {
       fontSize: '16px',
       color: '#ffffff',
       fontStyle: 'bold',
@@ -101,7 +101,7 @@ export class GameScene extends Phaser.Scene {
     this.submitBtn.on('pointerover', () => this.submitBtn.setTint(0xffe29a));
     this.submitBtn.on('pointerout', () => this.submitBtn.clearTint());
 
-    this.statusTxt = this.add.text(width / 2, height * 0.824, 'Preparing duel...', {
+    this.statusTxt = this.add.text(width / 2, height * 0.785, 'Preparing duel...', {
       fontSize: '15px',
       color: '#d8e7ff',
       stroke: '#080b12',
@@ -167,6 +167,7 @@ export class GameScene extends Phaser.Scene {
       this.myField.setPendingCard(laneIndex, card);
       this.myHand = this.myHand.filter(c => c.id !== card.id);
       this.handArea.removeCard(card.id);
+      this.updatePlayableHandCards();
       const tributeText = tributeCost > 0 ? ` Tribute lanes: ${tributeLaneIndices.map(i => i + 1).join(', ')}.` : '';
       this.statusTxt.setText(`${card.name} queued in lane ${laneIndex + 1}.${tributeText} Press COMMIT.`);
     } else if (card.type === 'spell') {
@@ -187,6 +188,7 @@ export class GameScene extends Phaser.Scene {
       this.myField.setPendingCard(laneIndex, card, faceDown);
       this.myHand = this.myHand.filter(c => c.id !== card.id);
       this.handArea.removeCard(card.id);
+      this.updatePlayableHandCards();
       this.statusTxt.setText(faceDown
         ? `${card.name} set face-down in lane ${laneIndex + 1}. Press COMMIT.`
         : `${card.name} set face-up in lane ${laneIndex + 1}. It will resolve later.`);
@@ -203,6 +205,7 @@ export class GameScene extends Phaser.Scene {
     this.submitTxt.setText('WAIT');
     this.socket.send({ type: 'submit_action', action: this.pendingAction });
     this.statusTxt.setText('Waiting for the rival move...');
+    this.updatePlayableHandCards();
   }
 
   private getSummonText(card: Card): string {
@@ -220,6 +223,7 @@ export class GameScene extends Phaser.Scene {
         this.turn = msg.turn;
         this.turnTxt.setText(`TURN ${this.turn} / ${GameScene.MAX_TURNS}`);
         this.updateLaneUnlocks();
+        this.updatePlayableHandCards();
         this.statusTxt.setText('Setup turn: place cards. Attacks start on turn 2.');
         break;
 
@@ -234,6 +238,7 @@ export class GameScene extends Phaser.Scene {
         this.submitBtn.setAlpha(1);
         this.submitTxt.setText('COMMIT');
         this.statusTxt.setText('New draw. Prepare your lane.');
+        this.updatePlayableHandCards();
         break;
 
       case 'reveal':
@@ -287,6 +292,7 @@ export class GameScene extends Phaser.Scene {
     this.myField.updateLanes(my);
     this.opField.updateLanes(op);
     this.updateLaneUnlocks();
+    this.updatePlayableHandCards();
   }
 
   private isLaneUnlocked(laneIndex: LaneIndex): boolean {
@@ -306,6 +312,37 @@ export class GameScene extends Phaser.Scene {
       .filter(laneIndex => this.myLanes?.[laneIndex].monster)
       .sort((a, b) => (this.myLanes?.[a].monster?.atk ?? 0) - (this.myLanes?.[b].monster?.atk ?? 0))
       .slice(0, cost);
+  }
+
+  private updatePlayableHandCards(): void {
+    if (!this.handArea) return;
+    const playable = new Set<string>();
+    for (const card of this.myHand) {
+      if (this.canPlayCardNow(card)) playable.add(card.id);
+    }
+    this.handArea.setPlayableCards(playable);
+  }
+
+  private canPlayCardNow(card: Card): boolean {
+    if (this.submitted) return false;
+    const unlocked = GameScene.getUnlockedLanes(this.turn);
+    const hasOpenLane = unlocked.some(laneIndex => {
+      const lane = this.myLanes?.[laneIndex];
+      const pending = this.myField?.hasPending(laneIndex);
+      if (card.type === 'monster') return !lane?.monster && !pending;
+      if (card.type === 'spell') {
+        if (pending) return false;
+        if (card.spellMode === 'face_down') return !lane?.faceDownSpell;
+        return !lane?.spell;
+      }
+      return false;
+    });
+
+    if (!hasOpenLane) return false;
+    if (card.type !== 'monster') return true;
+    if (this.pendingAction.summon) return false;
+    const tributeCost = card.tributeCost ?? 0;
+    return this.getAutoTributeLaneIndices(tributeCost).length >= tributeCost;
   }
 
   private showBattleEvents(events: BattleEvent[]): void {
