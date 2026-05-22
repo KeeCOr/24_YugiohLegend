@@ -4,3 +4,7 @@ dist/
 release/
 dist_electron/
 *.portable.exe
+*.exe
+release_latest/win-unpacked/
+release_tmp_codex/win-unpacked/
+release/win-unpacked/
