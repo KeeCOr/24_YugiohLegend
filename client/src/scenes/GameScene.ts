@@ -63,8 +63,8 @@ export class GameScene extends Phaser.Scene {
 
     const deck: Card[] = data.deck ?? ALL_CARDS.slice(0, 8).concat(ALL_CARDS.slice(0, 2));
     this.socket = new SocketManager();
-    const boardX = width * 0.52;
-    const sideX = width * 0.82;
+    const boardX = width * 0.56;
+    const sideX = width * 0.83;
 
     this.add.image(boardX, height * 0.47, ART_KEYS.panel).setDisplaySize(850, 90).setAlpha(0.58);
     this.add.text(boardX, height * 0.47, 'BATTLE LINE', {
@@ -82,7 +82,7 @@ export class GameScene extends Phaser.Scene {
     this.opLP = new LPDisplay(this, sideX, height * 0.21, 'RIVAL');
     this.opLP.setScale(1.32);
 
-    this.handArea = new HandArea(this, 238, height * 0.53, (card, _sprite) => {
+    this.handArea = new HandArea(this, 285, height * 0.53, (card, _sprite) => {
       this.selectedCard = card;
       if (card.type === 'spell') {
         const text = card.spellMode === 'face_down'

@@ -6,13 +6,14 @@ import type { Card } from '../data/CardTypes';
 const HAND_CARD_SCALE = 1.5;
 const HAND_CARD_W = CardSprite.W * HAND_CARD_SCALE;
 const HAND_CARD_H = CardSprite.H * HAND_CARD_SCALE;
-const HAND_RAIL_W = 440;
+const HAND_RAIL_W = 520;
 const HAND_RAIL_H = 760;
 
 export class HandArea extends Phaser.GameObjects.Container {
   private sprites: CardSprite[] = [];
   private selectedSprite: CardSprite | null = null;
   private rail: Phaser.GameObjects.Image;
+  private countText: Phaser.GameObjects.Text;
   private playableIds = new Set<string>();
 
   constructor(
@@ -23,14 +24,28 @@ export class HandArea extends Phaser.GameObjects.Container {
   ) {
     super(scene, x, y);
     scene.add.existing(this);
+    this.setDepth(1000);
     this.rail = scene.add.image(0, 0, ART_KEYS.panel).setDisplaySize(HAND_RAIL_W, HAND_RAIL_H).setAlpha(0.86);
-    this.add(this.rail);
+    const title = scene.add.text(0, -HAND_RAIL_H / 2 + 32, 'HAND', {
+      fontSize: '24px',
+      color: '#f2c86a',
+      fontStyle: 'bold',
+      stroke: '#120912',
+      strokeThickness: 4,
+    }).setOrigin(0.5);
+    this.countText = scene.add.text(0, -HAND_RAIL_H / 2 + 62, '0 CARDS', {
+      fontSize: '14px',
+      color: '#d8e7ff',
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
+    this.add([this.rail, title, this.countText]);
   }
 
   setHand(hand: Card[]): void {
     for (const s of this.sprites) s.destroy();
     this.sprites = [];
     this.selectedSprite = null;
+    this.countText.setText(`${hand.length} CARD${hand.length === 1 ? '' : 'S'}`);
     this.layoutCards(hand);
   }
 
