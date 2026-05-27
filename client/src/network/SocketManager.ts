@@ -7,8 +7,14 @@ export class SocketManager {
   private handlers: MessageHandler[] = [];
   private url: string;
 
-  constructor(url: string = `ws://localhost:8080`) {
+  constructor(url: string = SocketManager.getDefaultUrl()) {
     this.url = url;
+  }
+
+  private static getDefaultUrl(): string {
+    const params = new URLSearchParams(window.location.search);
+    const wsPort = params.get('wsPort');
+    return wsPort ? `ws://127.0.0.1:${wsPort}` : 'ws://127.0.0.1:8080';
   }
 
   connect(): Promise<void> {

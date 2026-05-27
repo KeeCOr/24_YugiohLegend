@@ -4,26 +4,34 @@ const { WebSocketServer } = require('ws');
 
 let mainWindow;
 let wss;
+let serverPort = 8080;
 
 function startServer() {
   // Load server modules from built server dist
   const serverDist = path.join(__dirname, '..', 'server', 'dist', 'server', 'src');
   const { RoomManager } = require(path.join(serverDist, 'RoomManager'));
 
-  const PORT = 8080;
-  wss = new WebSocketServer({ port: PORT });
-  const manager = new RoomManager();
+  return new Promise((resolve, reject) => {
+    wss = new WebSocketServer({ host: '127.0.0.1', port: 0 });
+    const manager = new RoomManager();
 
-  wss.on('connection', (ws) => {
-    console.log('[server] client connected');
-    manager.handleConnection(ws);
+    wss.on('connection', (ws) => {
+      console.log('[server] client connected');
+      manager.handleConnection(ws);
+    });
+
+    wss.on('listening', () => {
+      const address = wss.address();
+      serverPort = typeof address === 'object' && address ? address.port : 8080;
+      console.log(`[server] WebSocket server running on ws://127.0.0.1:${serverPort}`);
+      resolve(serverPort);
+    });
+
+    wss.on('error', (err) => {
+      console.error('[server] WebSocket server error:', err);
+      reject(err);
+    });
   });
-
-  wss.on('error', (err) => {
-    console.error('[server] WebSocket server error:', err);
-  });
-
-  console.log(`[server] WebSocket server running on ws://localhost:${PORT}`);
 }
 
 function createWindow() {
@@ -51,15 +59,15 @@ function createWindow() {
   mainWindow.setMenuBarVisibility(false);
 
   const clientDist = path.join(__dirname, '..', 'client', 'dist', 'index.html');
-  mainWindow.loadFile(clientDist);
+  mainWindow.loadFile(clientDist, { query: { wsPort: String(serverPort) } });
 
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
 }
 
-app.whenReady().then(() => {
-  startServer();
+app.whenReady().then(async () => {
+  await startServer();
   createWindow();
 });
 

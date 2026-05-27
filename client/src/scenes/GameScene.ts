@@ -123,9 +123,13 @@ export class GameScene extends Phaser.Scene {
 
     this.setupLaneInteraction();
 
-    await this.socket.connect();
     this.socket.on((msg) => this.handleServerMessage(msg));
-    this.socket.send({ type: 'join_room', mode: data.mode, deck });
+    try {
+      await this.socket.connect();
+      this.socket.send({ type: 'join_room', mode: data.mode, deck });
+    } catch {
+      this.statusTxt.setText('Connection failed. Restart the game executable.');
+    }
   }
 
   private setupLaneInteraction(): void {
