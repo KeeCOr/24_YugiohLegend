@@ -184,12 +184,23 @@
         <li>카드 기본 크기: <code>132 x 188</code>.</li>
         <li>라인 기본 크기: <code>198 x 286</code>.</li>
         <li>손패 패널 높이: <code>318</code>.</li>
-        <li>좌측 손패 패널 크기: <code>520 x 760</code>.</li>
+        <li>좌측 손패 패널 크기: <code>430 x 760</code>.</li>
         <li>손패 카드 표시 배율: <code>150%</code>.</li>
         <li>전투 라인 패널: <code>850 x 96</code>.</li>
         <li>라인 클릭 히트 영역: <code>222 x 296</code>.</li>
       </ul>
-      <div class="note">예시 이미지의 가로 보드 구도를 참고해 1600 x 900 레이아웃으로 전환했다. 좌측 손패 카드는 필드 카드 대비 150%로 표시하며, 현재 소환 또는 배치가 가능한 카드는 초록색 글로우로 표시한다. 손패가 묻히지 않도록 좌측 2열 그리드와 최상단 레이어로 고정했고, 실행파일은 빈 WebSocket 포트를 자동 할당해 손패 수신 실패를 줄인다.</div>
+      <div class="note">예시 이미지의 가로 보드 구도를 참고해 1600 x 900 레이아웃으로 전환했다. 좌측 손패는 사선 팬 형태로 표시하되 카드 얼굴이 가려지지 않도록 스케일과 간격을 동적으로 조정하며, 현재 소환 또는 배치가 가능한 카드는 초록색 글로우로 표시한다. 실행파일은 빈 WebSocket 포트를 자동 할당해 손패 수신 실패를 줄인다.</div>
+    </section>
+
+    <section>
+      <h2>카드 아트 에셋</h2>
+      <ul>
+        <li>현재 카드 구성 18종에 맞춘 다크 판타지 카드 일러스트를 생성했다.</li>
+        <li>6 x 3 카드 일러스트 아틀라스를 생성한 뒤 카드 ID별 PNG로 분할했다.</li>
+        <li>원본 아틀라스: <code>client/public/assets/cards/card_art_atlas.png</code></li>
+        <li>카드별 경로: <code>client/public/assets/cards/{cardId}.png</code></li>
+        <li><code>BootScene</code>에서 모든 카드 아트를 로드하고, <code>CardSprite</code>가 카드 ID에 맞는 이미지를 프레임 안쪽에 표시한다.</li>
+      </ul>
     </section>
 
     <section>

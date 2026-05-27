@@ -82,7 +82,7 @@ export class GameScene extends Phaser.Scene {
     this.opLP = new LPDisplay(this, sideX, height * 0.21, 'RIVAL');
     this.opLP.setScale(1.32);
 
-    this.handArea = new HandArea(this, 285, height * 0.53, (card, _sprite) => {
+    this.handArea = new HandArea(this, 235, height * 0.52, (card, _sprite) => {
       this.selectedCard = card;
       if (card.type === 'spell') {
         const text = card.spellMode === 'face_down'

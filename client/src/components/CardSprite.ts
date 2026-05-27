@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import type { Card } from '../data/CardTypes';
-import { ART_KEYS, cardTextureKey, typeTint } from '../art/ProceduralArt';
+import { ART_KEYS, cardArtKey, cardTextureKey, typeTint } from '../art/ProceduralArt';
 
 export class CardSprite extends Phaser.GameObjects.Container {
   card: Card;
@@ -44,7 +44,7 @@ export class CardSprite extends Phaser.GameObjects.Container {
       return;
     }
 
-    this.add(this.createSymbol(scene, card.id, card.type));
+    this.addCardArtwork(scene, card);
 
     const tint = typeTint(card.type);
     const roleColor = this.getRoleColor(card);
@@ -230,6 +230,22 @@ export class CardSprite extends Phaser.GameObjects.Container {
   highlight(on: boolean): void {
     this.glow.setAlpha(on ? 0.9 : 0);
     this.setScale(on ? this.baseScale * 1.07 : this.baseScale);
+  }
+
+  private addCardArtwork(scene: Phaser.Scene, card: Card): void {
+    const key = cardArtKey(card.id);
+    const artFrame = new Phaser.GameObjects.Rectangle(scene, 0, -30, 106, 72, 0x05070c, 0.38);
+    artFrame.setStrokeStyle(2, typeTint(card.type), 0.58);
+    this.add(artFrame);
+
+    if (scene.textures.exists(key)) {
+      const art = new Phaser.GameObjects.Image(scene, 0, -30, key);
+      art.setDisplaySize(102, 68);
+      this.add(art);
+      return;
+    }
+
+    this.add(this.createSymbol(scene, card.id, card.type));
   }
 
   private createSymbol(scene: Phaser.Scene, id: string, type: Card['type']): Phaser.GameObjects.Container {

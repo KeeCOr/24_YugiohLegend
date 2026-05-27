@@ -43,6 +43,10 @@ export function cardTextureKey(type: CardType): string {
   return ART_KEYS.cardSpell;
 }
 
+export function cardArtKey(cardId: string): string {
+  return `card_art_${cardId}`;
+}
+
 export function typeTint(type: CardType): number {
   if (type === 'monster') return 0xe6a24a;
   return 0x61d79d;

@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>YugiohLegend UX 및 튜토리얼 개선 대책</title>
+  <style>
+    :root {
+      --bg: #090c14;
+      --panel: #131c2d;
+      --panel-2: #1a2942;
+      --line: #334866;
+      --gold: #e6bf70;
+      --blue: #7fd8ff;
+      --green: #8ef2ba;
+      --red: #ff7487;
+      --text: #f4f7ff;
+      --muted: #aebbd0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: radial-gradient(circle at top, #1b2942 0, var(--bg) 680px);
+      color: var(--text);
+      font-family: "Malgun Gothic", "Segoe UI", Arial, sans-serif;
+      line-height: 1.66;
+    }
+    main {
+      width: min(1120px, calc(100% - 42px));
+      margin: 0 auto;
+      padding: 42px 0 78px;
+    }
+    header, section {
+      border: 1px solid var(--line);
+      background: rgba(19, 28, 45, .88);
+      border-radius: 10px;
+      box-shadow: 0 18px 70px rgba(0,0,0,.26);
+    }
+    header { padding: 30px 32px; }
+    section { padding: 24px 26px; margin-top: 18px; }
+    h1, h2, h3 { margin: 0; color: var(--gold); }
+    h1 { font-size: 36px; }
+    h2 { font-size: 24px; }
+    h3 { font-size: 18px; color: var(--blue); margin-top: 20px; }
+    p { margin: 10px 0; }
+    ul { margin: 10px 0 0; padding-left: 22px; }
+    li { margin: 5px 0; }
+    table {
+      width: 100%;
+      margin-top: 14px;
+      border-collapse: collapse;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 11px 12px;
+      border-bottom: 1px solid rgba(51,72,102,.72);
+      vertical-align: top;
+      text-align: left;
+    }
+    th { background: #1c2b45; color: var(--gold); }
+    tr:nth-child(even) td { background: rgba(255,255,255,.025); }
+    code {
+      background: #07101d;
+      color: #bde8ff;
+      border-radius: 5px;
+      padding: 2px 6px;
+    }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .pill {
+      border: 1px solid rgba(127,216,255,.35);
+      background: rgba(127,216,255,.1);
+      color: #dcf5ff;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 14px;
+      margin-top: 14px;
+    }
+    .card {
+      border: 1px solid var(--line);
+      background: rgba(26,41,66,.74);
+      border-radius: 8px;
+      padding: 15px;
+    }
+    .card strong { color: var(--green); }
+    .warn strong { color: var(--red); }
+    .note {
+      margin-top: 14px;
+      padding: 14px 16px;
+      border-left: 4px solid var(--gold);
+      background: rgba(230,191,112,.09);
+      color: #fff4d9;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>YugiohLegend UX 및 튜토리얼 개선 대책</h1>
+      <p>현재 게임은 카드/라인/마법 규칙이 짧은 시간에 많이 바뀌었기 때문에, 플레이어가 첫 판에서 무엇을 해야 하는지 즉시 이해하기 어렵다. 이 문서는 가로형 레이아웃 기준으로 UX 문제와 튜토리얼 보강안을 정리한다.</p>
+      <div class="meta">
+        <span class="pill">작성일: 2026-05-27</span>
+        <span class="pill">대상: 1600 x 900 가로형 UI</span>
+        <span class="pill">목표: 첫 판 이해도 개선</span>
+      </div>
+    </header>
+
+    <section>
+      <h2>핵심 문제</h2>
+      <div class="grid">
+        <div class="card warn"><strong>목표가 불명확함</strong><br>플레이어가 첫 화면에서 “카드를 어디에, 왜 내야 하는지”를 바로 알기 어렵다.</div>
+        <div class="card warn"><strong>행동 가능 여부가 약함</strong><br>글로우가 있어도 왜 가능한지, 왜 불가능한지 설명이 부족하다.</div>
+        <div class="card warn"><strong>전투 결과 예측이 어려움</strong><br>ATK/HP 차이, 라인 해금, 마법 지연 발동이 한 번에 이해되지 않는다.</div>
+        <div class="card warn"><strong>턴 흐름 안내 부족</strong><br>1턴은 배치만, 2턴부터 전투라는 핵심 규칙이 플레이 중 계속 보이지 않는다.</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>UX 개선 방향</h2>
+      <table>
+        <thead>
+          <tr><th>영역</th><th>개선안</th><th>효과</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>손패</td>
+            <td>낼 수 있는 카드는 초록 글로우, 낼 수 없는 카드는 어둡게 처리한다. 마우스 오버 시 “가능/불가능 이유”를 한 줄로 표시한다.</td>
+            <td>플레이어가 고민해야 할 카드 수가 줄어든다.</td>
+          </tr>
+          <tr>
+            <td>라인</td>
+            <td>잠긴 라인에는 <code>TURN 2 OPEN</code>처럼 해금 턴을 크게 표시한다. 사용 가능 라인은 테두리와 바닥광을 강화한다.</td>
+            <td>첫 턴에 왜 한 라인만 쓰는지 바로 이해된다.</td>
+          </tr>
+          <tr>
+            <td>선택 흐름</td>
+            <td>카드 선택 후 배치 가능한 라인만 밝게 켠다. 배치 불가능 라인은 클릭해도 이유를 표시한다.</td>
+            <td>입력 실패가 “버그”처럼 느껴지는 문제를 줄인다.</td>
+          </tr>
+          <tr>
+            <td>전투 예측</td>
+            <td>카드를 라인 위에 올리면 예상 피해, 생존 여부, 직접 공격 여부를 미리 보여준다.</td>
+            <td>ATK/HP 규칙을 설명 없이 체감할 수 있다.</td>
+          </tr>
+          <tr>
+            <td>마법</td>
+            <td>앞면 마법에는 남은 턴 카운터, 뒷면 마법에는 조건 아이콘을 표시한다.</td>
+            <td>지연 발동과 조건 발동의 차이가 명확해진다.</td>
+          </tr>
+          <tr>
+            <td>우측 패널</td>
+            <td>LP 아래에 현재 턴 목표와 다음 단계 안내를 고정한다.</td>
+            <td>상태 문구가 사라져도 플레이 방향을 잃지 않는다.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>튜토리얼 구조</h2>
+      <h3>1단계: 첫 소환</h3>
+      <ul>
+        <li>게임 시작 시 손패의 무료 소환 몬스터 1장을 강제로 강조한다.</li>
+        <li>중앙 라인만 밝게 표시하고, 나머지 라인은 잠금 상태를 유지한다.</li>
+        <li>안내 문구: “초록색 카드 하나를 선택한 뒤 빛나는 라인에 배치하세요.”</li>
+      </ul>
+
+      <h3>2단계: 커밋</h3>
+      <ul>
+        <li>카드 배치 후 COMMIT 버튼에 강한 글로우를 준다.</li>
+        <li>안내 문구: “배치를 확정하면 상대도 행동하고, 이번 턴은 공격하지 않습니다.”</li>
+      </ul>
+
+      <h3>3단계: 전투 이해</h3>
+      <ul>
+        <li>2턴 시작 시 “이제 전투가 발생합니다” 안내를 표시한다.</li>
+        <li>상대 몬스터와 내 몬스터의 ATK/HP 차이를 전투 전 미리 보여준다.</li>
+        <li>피해가 발생하면 라인 중앙에 <code>ATK 차이만큼 HP 감소</code>라는 짧은 설명을 띄운다.</li>
+      </ul>
+
+      <h3>4단계: 마법 이해</h3>
+      <ul>
+        <li>앞면 마법을 배치하면 라인 위에 <code>1T</code> 카운터가 붙는 것을 보여준다.</li>
+        <li>뒷면 마법은 “조건이 맞으면 공개”라는 안내와 함께 뒤집힌 카드로 표현한다.</li>
+      </ul>
+
+      <h3>5단계: 제물 소환</h3>
+      <ul>
+        <li>제물 몬스터가 손패에 있을 때 필요한 제물 수를 크게 표시한다.</li>
+        <li>제물이 부족하면 카드 오버 시 “제물 1장이 필요합니다”를 표시한다.</li>
+        <li>제물이 충분하면 자동 제물 후보 라인을 노란색으로 표시한다.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>화면별 안내 문구</h2>
+      <table>
+        <thead>
+          <tr><th>상황</th><th>추천 문구</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>게임 시작</td><td>초록색으로 빛나는 카드는 지금 낼 수 있습니다.</td></tr>
+          <tr><td>라인 잠김 클릭</td><td>이 라인은 아직 잠겨 있습니다. 다음 턴에 열립니다.</td></tr>
+          <tr><td>몬스터 선택</td><td>빈 라인에 소환할 수 있습니다. 제물이 필요한 카드는 조건을 먼저 확인하세요.</td></tr>
+          <tr><td>마법 선택</td><td>마법은 라인에 설치되고, 조건이나 턴이 맞으면 발동합니다.</td></tr>
+          <tr><td>커밋 가능</td><td>배치가 끝났다면 COMMIT을 눌러 턴을 진행하세요.</td></tr>
+          <tr><td>커밋 후</td><td>상대 행동을 기다리는 중입니다.</td></tr>
+          <tr><td>전투 시작</td><td>정면 전투는 ATK 차이만큼 HP를 잃습니다.</td></tr>
+          <tr><td>직접 공격</td><td>상대 라인이 비어 있어 LP에 직접 피해를 줍니다.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>우선순위</h2>
+      <table>
+        <thead>
+          <tr><th>순위</th><th>작업</th><th>이유</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>손패 가능/불가능 사유 툴팁</td><td>현재 가장 큰 혼란은 “왜 안 되는지 모름”이다.</td></tr>
+          <tr><td>2</td><td>카드 선택 후 배치 가능 라인 강조</td><td>플레이 입력을 자연스럽게 유도한다.</td></tr>
+          <tr><td>3</td><td>첫 판 튜토리얼 오버레이</td><td>첫 판 이탈을 줄인다.</td></tr>
+          <tr><td>4</td><td>전투 예측 UI</td><td>규칙 이해와 전략성을 동시에 높인다.</td></tr>
+          <tr><td>5</td><td>마법 카운터/조건 아이콘</td><td>지연 마법과 뒷면 마법의 정체성을 강화한다.</td></tr>
+        </tbody>
+      </table>
+      <div class="note">가장 먼저 할 일은 튜토리얼 전체를 크게 만드는 것이 아니라, 매 입력 순간에 “가능한 행동”과 “불가능한 이유”를 바로 보여주는 것이다.</div>
+    </section>
+
+    <section>
+      <h2>구현 체크리스트</h2>
+      <ul>
+        <li>손패 카드 상태: playable, blocked, selected, queued 4단계로 분리한다.</li>
+        <li>카드 오버 시 상태 문구를 우측 패널 또는 하단 상태 영역에 표시한다.</li>
+        <li>선택 카드 기준으로 라인 하이라이트를 재계산한다.</li>
+        <li>처음 1판만 튜토리얼을 자동 표시하고, 이후에는 설정에서 다시 볼 수 있게 한다.</li>
+        <li>튜토리얼 중에도 실제 게임 규칙을 그대로 사용한다.</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>
