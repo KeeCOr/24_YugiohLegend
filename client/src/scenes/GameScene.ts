@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { ART_KEYS, addSceneBackdrop } from '../art/ProceduralArt';
+import { ART_KEYS, addSceneBackdrop, cardArtKey } from '../art/ProceduralArt';
 import { Field } from '../components/Field';
 import { HandArea } from '../components/HandArea';
 import { LPDisplay } from '../components/LPDisplay';
@@ -45,6 +45,11 @@ export class GameScene extends Phaser.Scene {
   private submitTxt!: Phaser.GameObjects.Text;
   private statusTxt!: Phaser.GameObjects.Text;
   private turnTxt!: Phaser.GameObjects.Text;
+  private myDeckTxt!: Phaser.GameObjects.Text;
+  private opDeckTxt!: Phaser.GameObjects.Text;
+  private startingDeckSize = 0;
+  private myDeckCount = 0;
+  private opDeckCount = 0;
 
   constructor() { super('GameScene'); }
 
@@ -62,9 +67,11 @@ export class GameScene extends Phaser.Scene {
     addSceneBackdrop(this);
 
     const deck: Card[] = data.deck ?? ALL_CARDS.slice(0, 8).concat(ALL_CARDS.slice(0, 2));
+    this.startingDeckSize = deck.length;
     this.socket = new SocketManager();
-    const boardX = width * 0.56;
-    const sideX = width * 0.83;
+    const boardX = width * 0.52;
+    const sideX = width - 390;
+    this.createTopHud(boardX, width);
 
     this.add.image(boardX, height * 0.47, ART_KEYS.panel).setDisplaySize(850, 90).setAlpha(0.58);
     this.add.text(boardX, height * 0.47, 'BATTLE LINE', {
@@ -77,10 +84,15 @@ export class GameScene extends Phaser.Scene {
     this.myField = new Field(this, boardX, height * 0.685, 0);
     this.updateLaneUnlocks();
 
-    this.myLP = new LPDisplay(this, sideX, height * 0.54, 'YOU');
-    this.myLP.setScale(1.32);
-    this.opLP = new LPDisplay(this, sideX, height * 0.21, 'RIVAL');
-    this.opLP.setScale(1.32);
+    this.createDuelistPanel(width - 132, height * 0.205, 'RIVAL', 'dark_knight', 0xff6f92);
+    this.createDuelistPanel(width - 132, height * 0.545, 'YOU', 'hero_warrior', 0x6ebcff);
+
+    this.myLP = new LPDisplay(this, sideX, height * 0.58, 'YOU');
+    this.myLP.setScale(1.18);
+    this.opLP = new LPDisplay(this, sideX, height * 0.24, 'RIVAL');
+    this.opLP.setScale(1.18);
+    this.opDeckTxt = this.createDeckCounter(width - 254, height * 0.38, 'RIVAL DECK');
+    this.myDeckTxt = this.createDeckCounter(width - 254, height * 0.72, 'YOUR DECK');
 
     this.handArea = new HandArea(this, 235, height * 0.52, (card, _sprite) => {
       this.selectedCard = card;
@@ -130,6 +142,88 @@ export class GameScene extends Phaser.Scene {
     } catch {
       this.statusTxt.setText('Connection failed. Restart the game executable.');
     }
+  }
+
+  private createTopHud(boardX: number, width: number): void {
+    this.add.image(200, 48, ART_KEYS.panel).setDisplaySize(330, 66).setAlpha(0.88);
+    this.add.text(200, 37, 'YugiohLegend', {
+      fontSize: '24px',
+      color: '#fff0c8',
+      fontStyle: 'bold',
+      stroke: '#120912',
+      strokeThickness: 3,
+    }).setOrigin(0.5);
+    this.add.text(200, 61, '3-LANE SUMMON DUEL', {
+      fontSize: '10px',
+      color: '#8fd8ff',
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
+
+    const phases = [
+      { label: 'DRAW', x: boardX - 150 },
+      { label: 'MAIN', x: boardX },
+      { label: 'BATTLE', x: boardX + 150 },
+    ];
+    for (const phase of phases) {
+      const bg = this.add.image(phase.x, 47, ART_KEYS.button).setDisplaySize(130, 44).setAlpha(0.72);
+      if (phase.label === 'MAIN') bg.setTint(0xffd36f);
+      this.add.text(phase.x, 47, phase.label, {
+        fontSize: '15px',
+        color: phase.label === 'MAIN' ? '#101525' : '#d8e7ff',
+        fontStyle: 'bold',
+      }).setOrigin(0.5);
+    }
+
+    this.add.image(width - 184, 48, ART_KEYS.panel).setDisplaySize(292, 66).setAlpha(0.78);
+    this.add.text(width - 184, 38, 'PLAYABLE CARDS GLOW', {
+      fontSize: '14px',
+      color: '#bfffe2',
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
+    this.add.text(width - 184, 62, 'Click a card, then choose an open lane', {
+      fontSize: '11px',
+      color: '#d8e7ff',
+    }).setOrigin(0.5);
+  }
+
+  private createDuelistPanel(x: number, y: number, label: string, cardId: string, accent: number): void {
+    this.add.image(x, y, ART_KEYS.panel).setDisplaySize(190, 238).setAlpha(0.72);
+    const glow = this.add.image(x, y - 9, ART_KEYS.glow).setDisplaySize(176, 220).setAlpha(0.2).setTint(accent);
+    const portrait = this.add.image(x, y - 12, cardArtKey(cardId)).setDisplaySize(156, 194);
+    portrait.setCrop(0, 0, portrait.width, portrait.height * 0.86);
+    this.add.rectangle(x, y - 12, 164, 202, 0x000000, 0).setStrokeStyle(3, accent, 0.72);
+    this.add.text(x, y + 105, label, {
+      fontSize: '16px',
+      color: '#ffffff',
+      fontStyle: 'bold',
+      stroke: '#090b12',
+      strokeThickness: 3,
+    }).setOrigin(0.5);
+    this.tweens.add({
+      targets: glow,
+      alpha: { from: 0.14, to: 0.34 },
+      duration: 1200,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
+  }
+
+  private createDeckCounter(x: number, y: number, label: string): Phaser.GameObjects.Text {
+    this.add.image(x - 58, y, ART_KEYS.cardBack).setDisplaySize(58, 82).setAngle(-4);
+    this.add.image(x - 46, y + 4, ART_KEYS.cardBack).setDisplaySize(58, 82).setAngle(3);
+    this.add.text(x + 14, y - 17, label, {
+      fontSize: '12px',
+      color: '#a6bed8',
+      fontStyle: 'bold',
+    }).setOrigin(0, 0.5);
+    return this.add.text(x + 14, y + 10, '0', {
+      fontSize: '28px',
+      color: '#fff0c8',
+      fontStyle: 'bold',
+      stroke: '#090b12',
+      strokeThickness: 4,
+    }).setOrigin(0, 0.5);
   }
 
   private setupLaneInteraction(): void {
@@ -229,6 +323,9 @@ export class GameScene extends Phaser.Scene {
       case 'game_start':
         this.myIndex = msg.yourIndex;
         this.myHand = [...msg.yourHand];
+        this.myDeckCount = Math.max(0, this.startingDeckSize - msg.yourHand.length);
+        this.opDeckCount = Math.max(0, this.startingDeckSize - msg.opponentHandCount);
+        this.updateDeckCounters();
         this.handArea.setHand(this.myHand);
         this.turn = msg.turn;
         this.turnTxt.setText(`TURN ${this.turn} / ${GameScene.MAX_TURNS}`);
@@ -241,6 +338,9 @@ export class GameScene extends Phaser.Scene {
         this.submitted = false;
         this.pendingAction = { spells: [] };
         this.turn = msg.turn;
+        this.myDeckCount = Math.max(0, this.myDeckCount - 1);
+        this.opDeckCount = Math.max(0, this.opDeckCount - 1);
+        this.updateDeckCounters();
         this.turnTxt.setText(`TURN ${this.turn} / ${GameScene.MAX_TURNS}`);
         this.updateLaneUnlocks();
         this.myHand.push(msg.drawnCard);
@@ -331,6 +431,11 @@ export class GameScene extends Phaser.Scene {
       if (this.canPlayCardNow(card)) playable.add(card.id);
     }
     this.handArea.setPlayableCards(playable);
+  }
+
+  private updateDeckCounters(): void {
+    this.myDeckTxt?.setText(String(this.myDeckCount));
+    this.opDeckTxt?.setText(String(this.opDeckCount));
   }
 
   private canPlayCardNow(card: Card): boolean {

@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { ART_KEYS } from '../art/ProceduralArt';
+import { ART_KEYS, cardArtKey } from '../art/ProceduralArt';
 import { CardSprite } from './CardSprite';
 import type { Card, LaneIndex, LaneState, PlayerIndex } from '../data/CardTypes';
 
@@ -77,7 +77,15 @@ export class Field extends Phaser.GameObjects.Container {
       }
 
       this.faceDownSpellIndicators[i].setVisible(lane.faceDownSpell !== null);
+      const faceDownArt = this.faceDownSpellIndicators[i].getByName('face-down-art') as Phaser.GameObjects.Image | null;
+      if (lane.faceDownSpell) {
+        faceDownArt?.setTexture(cardArtKey(lane.faceDownSpell.id));
+      }
       this.spellIndicators[i].setVisible(lane.spell !== null);
+      const spellArt = this.spellIndicators[i].getByName('spell-art') as Phaser.GameObjects.Image | null;
+      if (lane.spell) {
+        spellArt?.setTexture(cardArtKey(lane.spell.card.id));
+      }
       const spellText = this.spellIndicators[i].getByName('spell-count') as Phaser.GameObjects.Text | null;
       spellText?.setText(lane.spell ? String(lane.spell.remainingTurns) : '');
     }
@@ -125,28 +133,37 @@ export class Field extends Phaser.GameObjects.Container {
 
   private createFaceDownSpellIndicator(scene: Phaser.Scene, x: number, y: number): Phaser.GameObjects.Container {
     const c = scene.add.container(x, y);
-    const diamond = scene.add.polygon(0, 0, [0, -14, 16, 0, 0, 14, -16, 0], 0xd281ee, 0.85);
-    diamond.setStrokeStyle(2, 0xffe0ff, 0.85);
+    const back = scene.add.image(0, 0, ART_KEYS.cardBack).setDisplaySize(36, 50).setAlpha(0.96);
+    const diamond = scene.add.polygon(0, 0, [0, -18, 20, 0, 0, 18, -20, 0], 0xd281ee, 0.28);
+    diamond.setStrokeStyle(2, 0xffe0ff, 0.95);
+    const art = scene.add.image(0, 0, ART_KEYS.cardBack).setDisplaySize(30, 40).setAlpha(0.45);
+    art.setName('face-down-art');
     const text = scene.add.text(0, 0, '?', {
       fontSize: '11px',
-      color: '#170d1b',
+      color: '#ffffff',
       fontStyle: 'bold',
+      stroke: '#14071b',
+      strokeThickness: 3,
     }).setOrigin(0.5);
-    c.add([diamond, text]);
+    c.add([back, art, diamond, text]);
     return c;
   }
 
   private createSpellIndicator(scene: Phaser.Scene, x: number, y: number): Phaser.GameObjects.Container {
     const c = scene.add.container(x, y);
-    const circle = scene.add.circle(0, 0, 16, 0x61d79d, 0.88);
-    circle.setStrokeStyle(2, 0xd6ffe8, 0.9);
+    const art = scene.add.image(0, 0, ART_KEYS.glow).setDisplaySize(40, 40);
+    art.setName('spell-art');
+    const circle = scene.add.circle(0, 0, 19, 0x61d79d, 0.24);
+    circle.setStrokeStyle(2, 0xd6ffe8, 0.95);
     const text = scene.add.text(0, 0, '', {
       fontSize: '12px',
-      color: '#082217',
+      color: '#ffffff',
       fontStyle: 'bold',
+      stroke: '#062013',
+      strokeThickness: 3,
     }).setOrigin(0.5);
     text.setName('spell-count');
-    c.add([circle, text]);
+    c.add([art, circle, text]);
     return c;
   }
 

@@ -48,12 +48,12 @@ export class CardSprite extends Phaser.GameObjects.Container {
 
     const tint = typeTint(card.type);
     const roleColor = this.getRoleColor(card);
-    const typeBar = new Phaser.GameObjects.Rectangle(scene, 0, -70, 106, 18, tint, 0.92);
+    const typeBar = new Phaser.GameObjects.Rectangle(scene, 0, -80, 116, 18, tint, 0.92);
     typeBar.setStrokeStyle(1, 0x0e1117, 0.8);
     this.add(typeBar);
 
-    const typeText = new Phaser.GameObjects.Text(scene, 0, -70, this.getTypeLabel(card), {
-      fontSize: '10px',
+    const typeText = new Phaser.GameObjects.Text(scene, 0, -80, this.getTypeLabel(card), {
+      fontSize: '9px',
       color: '#101014',
       fontStyle: 'bold',
     }).setOrigin(0.5);
@@ -61,7 +61,7 @@ export class CardSprite extends Phaser.GameObjects.Container {
 
     const roleLabel = this.getRoleLabel(card);
     if (card.type === 'monster' && roleLabel) {
-      const role = new Phaser.GameObjects.Text(scene, 0, -54, roleLabel, {
+      const role = new Phaser.GameObjects.Text(scene, 0, -63, roleLabel, {
         fontSize: '8px',
         color: '#111111',
         backgroundColor: Phaser.Display.Color.IntegerToColor(roleColor).rgba,
@@ -70,7 +70,7 @@ export class CardSprite extends Phaser.GameObjects.Container {
       this.add(role);
     }
 
-    const nameText = new Phaser.GameObjects.Text(scene, 0, 25, card.name, {
+    const nameText = new Phaser.GameObjects.Text(scene, 0, 23, card.name, {
       fontSize: '13px',
       color: '#f8f0d8',
       wordWrap: { width: CardSprite.W - 12 },
@@ -234,13 +234,13 @@ export class CardSprite extends Phaser.GameObjects.Container {
 
   private addCardArtwork(scene: Phaser.Scene, card: Card): void {
     const key = cardArtKey(card.id);
-    const artFrame = new Phaser.GameObjects.Rectangle(scene, 0, -30, 106, 72, 0x05070c, 0.38);
+    const artFrame = new Phaser.GameObjects.Rectangle(scene, 0, -30, 112, 88, 0x05070c, 0.38);
     artFrame.setStrokeStyle(2, typeTint(card.type), 0.58);
     this.add(artFrame);
 
     if (scene.textures.exists(key)) {
       const art = new Phaser.GameObjects.Image(scene, 0, -30, key);
-      art.setDisplaySize(102, 68);
+      art.setDisplaySize(108, 84);
       this.add(art);
       return;
     }
