@@ -16,6 +16,7 @@ export class Field extends Phaser.GameObjects.Container {
   private lockedOverlays: Phaser.GameObjects.Container[] = [];
   private spellIndicators: Phaser.GameObjects.Container[] = [];
   private faceDownSpellIndicators: Phaser.GameObjects.Container[] = [];
+  private guidedLanes = new Set<number>();
 
   constructor(scene: Phaser.Scene, x: number, y: number, public playerIndex: PlayerIndex) {
     super(scene, x, y);
@@ -27,9 +28,10 @@ export class Field extends Phaser.GameObjects.Container {
     for (let i = 0; i < LANE_COUNT; i++) {
       const lx = this.getLaneLocalX(i);
       const glow = scene.add.image(lx, 0, ART_KEYS.glow).setDisplaySize(258, 334).setAlpha(0);
+      const laneFrame = scene.add.image(lx, 0, ART_KEYS.laneFrame).setDisplaySize(224, 316).setAlpha(0.9);
       const lane = scene.add.image(lx, 0, this.playerIndex === 0 ? ART_KEYS.lane : ART_KEYS.laneEnemy);
       lane.setDisplaySize(LANE_W, LANE_H);
-      this.add([glow, lane]);
+      this.add([glow, laneFrame, lane]);
       this.laneGlows.push(glow);
       this.laneImages.push(lane);
 
@@ -127,8 +129,22 @@ export class Field extends Phaser.GameObjects.Container {
 
   highlightLane(laneIndex: number, on: boolean): void {
     if (this.lockedOverlays[laneIndex].visible) return;
-    this.laneGlows[laneIndex].setAlpha(on ? 0.65 : 0);
-    this.laneImages[laneIndex].setTint(on ? 0xfff1a6 : 0xffffff);
+    const guided = this.guidedLanes.has(laneIndex);
+    this.laneGlows[laneIndex].setAlpha(on ? 0.72 : guided ? 0.36 : 0);
+    this.laneImages[laneIndex].setTint(on ? 0xfff1a6 : guided ? 0x9cffc8 : 0xffffff);
+  }
+
+  setGuidedLanes(lanes: LaneIndex[] = []): void {
+    this.guidedLanes = new Set(lanes);
+    for (let i = 0; i < LANE_COUNT; i++) {
+      if (this.lockedOverlays[i].visible) {
+        this.laneGlows[i].setAlpha(0);
+        continue;
+      }
+      const guided = this.guidedLanes.has(i);
+      this.laneGlows[i].setAlpha(guided ? 0.36 : 0);
+      this.laneImages[i].setTint(guided ? 0x9cffc8 : 0xffffff);
+    }
   }
 
   private createFaceDownSpellIndicator(scene: Phaser.Scene, x: number, y: number): Phaser.GameObjects.Container {

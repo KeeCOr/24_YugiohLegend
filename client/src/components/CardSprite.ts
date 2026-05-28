@@ -119,6 +119,10 @@ export class CardSprite extends Phaser.GameObjects.Container {
     this.playableGlow.setAlpha(on ? 0.72 : 0);
   }
 
+  setBlocked(on: boolean): void {
+    this.setAlpha(on ? 0.62 : 1);
+  }
+
   private getActionLabel(card: Card): string {
     if (card.type === 'monster') {
       const tributeCost = card.tributeCost ?? 0;

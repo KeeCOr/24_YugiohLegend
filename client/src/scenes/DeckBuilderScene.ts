@@ -56,7 +56,7 @@ export class DeckBuilderScene extends Phaser.Scene {
     this.add.text(width * 0.71, 96, 'Current Deck', { fontSize: '24px', color: '#f2c86a', fontStyle: 'bold' });
     this.countText = this.add.text(width * 0.71, 132, '', { fontSize: '18px', color: '#ffffff' });
 
-    this.saveBtn = this.add.image(width * 0.84, height - 70, ART_KEYS.button).setDisplaySize(300, 62).setInteractive();
+    this.saveBtn = this.add.image(width * 0.84, height - 70, ART_KEYS.buttonPrimary).setDisplaySize(320, 76).setInteractive();
     this.add.text(width * 0.84, height - 70, 'SAVE AND DUEL', {
       fontSize: '16px',
       color: '#ffffff',

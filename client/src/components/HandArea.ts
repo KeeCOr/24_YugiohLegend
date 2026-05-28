@@ -21,12 +21,14 @@ export class HandArea extends Phaser.GameObjects.Container {
     scene: Phaser.Scene,
     x: number,
     y: number,
-    private onCardSelect: (card: Card, sprite: CardSprite) => void
+    private onCardSelect: (card: Card, sprite: CardSprite) => void,
+    private onCardHover?: (card: Card, sprite: CardSprite) => void,
+    private onCardOut?: () => void
   ) {
     super(scene, x, y);
     scene.add.existing(this);
     this.setDepth(1000);
-    this.rail = scene.add.image(0, 0, ART_KEYS.panel).setDisplaySize(HAND_RAIL_W, HAND_RAIL_H).setAlpha(0.86);
+    this.rail = scene.add.image(0, 0, ART_KEYS.handRail).setDisplaySize(HAND_RAIL_W, HAND_RAIL_H).setAlpha(0.96);
     const title = scene.add.text(0, -HAND_RAIL_H / 2 + 32, 'HAND', {
       fontSize: '24px',
       color: '#f2c86a',
@@ -53,7 +55,9 @@ export class HandArea extends Phaser.GameObjects.Container {
   setPlayableCards(cardIds: Set<string>): void {
     this.playableIds = new Set(cardIds);
     for (const sprite of this.sprites) {
-      sprite.setPlayable(this.playableIds.has(sprite.card.id));
+      const playable = this.playableIds.has(sprite.card.id);
+      sprite.setPlayable(playable);
+      sprite.setBlocked(!playable);
     }
   }
 
@@ -86,12 +90,20 @@ export class HandArea extends Phaser.GameObjects.Container {
       );
       sprite.setBaseScale(layout.scale);
       sprite.setRotation(Phaser.Math.DegToRad(offset * layout.angle));
-      sprite.setPlayable(this.playableIds.has(hand[i].id));
+      const playable = this.playableIds.has(hand[i].id);
+      sprite.setPlayable(playable);
+      sprite.setBlocked(!playable);
       sprite.setInteractive(new Phaser.Geom.Rectangle(-CardSprite.W / 2, -CardSprite.H / 2, CardSprite.W, CardSprite.H), Phaser.Geom.Rectangle.Contains);
       sprite.setDepth(i + 1);
       sprite.on('pointerdown', () => this.selectCard(hand[i], sprite));
-      sprite.on('pointerover', () => sprite.highlight(true));
-      sprite.on('pointerout', () => { if (this.selectedSprite !== sprite) sprite.highlight(false); });
+      sprite.on('pointerover', () => {
+        sprite.highlight(true);
+        this.onCardHover?.(hand[i], sprite);
+      });
+      sprite.on('pointerout', () => {
+        if (this.selectedSprite !== sprite) sprite.highlight(false);
+        this.onCardOut?.();
+      });
       this.add(sprite);
       this.sprites.push(sprite);
     }
@@ -113,6 +125,7 @@ export class HandArea extends Phaser.GameObjects.Container {
     this.sprites.forEach((s, i) => {
       const offset = i - (total - 1) / 2;
       s.setBaseScale(layout.scale);
+      s.setBlocked(!this.playableIds.has(s.card.id));
       s.setDepth(i + 1);
       this.scene.tweens.add({
         targets: s,

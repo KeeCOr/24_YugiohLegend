@@ -50,6 +50,7 @@ export class GameScene extends Phaser.Scene {
   private startingDeckSize = 0;
   private myDeckCount = 0;
   private opDeckCount = 0;
+  private commitReady = false;
 
   constructor() { super('GameScene'); }
 
@@ -73,7 +74,7 @@ export class GameScene extends Phaser.Scene {
     const sideX = width - 390;
     this.createTopHud(boardX, width);
 
-    this.add.image(boardX, height * 0.47, ART_KEYS.panel).setDisplaySize(850, 90).setAlpha(0.58);
+    this.add.image(boardX, height * 0.47, ART_KEYS.hudFrame).setDisplaySize(850, 104).setAlpha(0.58);
     this.add.text(boardX, height * 0.47, 'BATTLE LINE', {
       fontSize: '13px',
       color: '#d8b56a',
@@ -105,9 +106,14 @@ export class GameScene extends Phaser.Scene {
         const summonText = this.getSummonText(card);
         this.statusTxt.setText(`${card.name}: ${summonText}. Click one of your lanes.`);
       }
+      this.updateLaneGuidanceForSelectedCard(card);
+    }, (card) => this.showCardHelp(card), () => {
+      if (!this.selectedCard && this.statusTxt) {
+        this.statusTxt.setText('Green cards can be played now. Select one, then choose a glowing lane.');
+      }
     });
 
-    this.submitBtn = this.add.image(width - 178, height * 0.82, ART_KEYS.button).setDisplaySize(250, 86).setInteractive();
+    this.submitBtn = this.add.image(width - 178, height * 0.82, ART_KEYS.buttonPrimary).setDisplaySize(270, 92).setInteractive();
     this.submitTxt = this.add.text(width - 178, height * 0.82, 'COMMIT', {
       fontSize: '24px',
       color: '#ffffff',
@@ -115,7 +121,11 @@ export class GameScene extends Phaser.Scene {
     }).setOrigin(0.5);
     this.submitBtn.on('pointerdown', () => this.submitAction());
     this.submitBtn.on('pointerover', () => this.submitBtn.setTint(0xffe29a));
-    this.submitBtn.on('pointerout', () => this.submitBtn.clearTint());
+    this.submitBtn.on('pointerout', () => {
+      if (this.commitReady) this.submitBtn.setTint(0xffe29a);
+      else this.submitBtn.clearTint();
+    });
+    this.setCommitReady(false);
 
     this.statusTxt = this.add.text(boardX, height * 0.93, 'Preparing duel...', {
       fontSize: '18px',
@@ -145,7 +155,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createTopHud(boardX: number, width: number): void {
-    this.add.image(200, 48, ART_KEYS.panel).setDisplaySize(330, 66).setAlpha(0.88);
+    this.add.image(200, 48, ART_KEYS.hudFrame).setDisplaySize(350, 80).setAlpha(0.88);
     this.add.text(200, 37, 'YugiohLegend', {
       fontSize: '24px',
       color: '#fff0c8',
@@ -165,7 +175,7 @@ export class GameScene extends Phaser.Scene {
       { label: 'BATTLE', x: boardX + 150 },
     ];
     for (const phase of phases) {
-      const bg = this.add.image(phase.x, 47, ART_KEYS.button).setDisplaySize(130, 44).setAlpha(0.72);
+      const bg = this.add.image(phase.x, 47, ART_KEYS.buttonPrimary).setDisplaySize(142, 48).setAlpha(0.72);
       if (phase.label === 'MAIN') bg.setTint(0xffd36f);
       this.add.text(phase.x, 47, phase.label, {
         fontSize: '15px',
@@ -174,7 +184,7 @@ export class GameScene extends Phaser.Scene {
       }).setOrigin(0.5);
     }
 
-    this.add.image(width - 184, 48, ART_KEYS.panel).setDisplaySize(292, 66).setAlpha(0.78);
+    this.add.image(width - 184, 48, ART_KEYS.hudFrame).setDisplaySize(312, 80).setAlpha(0.78);
     this.add.text(width - 184, 38, 'PLAYABLE CARDS GLOW', {
       fontSize: '14px',
       color: '#bfffe2',
@@ -187,7 +197,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createDuelistPanel(x: number, y: number, label: string, cardId: string, accent: number): void {
-    this.add.image(x, y, ART_KEYS.panel).setDisplaySize(190, 238).setAlpha(0.72);
+    this.add.image(x, y, ART_KEYS.hudFrame).setDisplaySize(206, 254).setAlpha(0.78);
     const glow = this.add.image(x, y - 9, ART_KEYS.glow).setDisplaySize(176, 220).setAlpha(0.2).setTint(accent);
     const portrait = this.add.image(x, y - 12, cardArtKey(cardId)).setDisplaySize(156, 194);
     portrait.setCrop(0, 0, portrait.width, portrait.height * 0.86);
@@ -245,7 +255,11 @@ export class GameScene extends Phaser.Scene {
   }
 
   private onLaneClick(laneIndex: LaneIndex): void {
-    if (!this.selectedCard || this.submitted) return;
+    if (this.submitted) return;
+    if (!this.selectedCard) {
+      this.statusTxt.setText('Select a glowing card in your hand first.');
+      return;
+    }
     if (!this.isLaneUnlocked(laneIndex)) {
       this.statusTxt.setText(`Lane ${laneIndex + 1} is locked this turn.`);
       return;
@@ -272,6 +286,7 @@ export class GameScene extends Phaser.Scene {
       this.myHand = this.myHand.filter(c => c.id !== card.id);
       this.handArea.removeCard(card.id);
       this.updatePlayableHandCards();
+      this.setCommitReady(true);
       const tributeText = tributeCost > 0 ? ` Tribute lanes: ${tributeLaneIndices.map(i => i + 1).join(', ')}.` : '';
       this.statusTxt.setText(`${card.name} queued in lane ${laneIndex + 1}.${tributeText} Press COMMIT.`);
     } else if (card.type === 'spell') {
@@ -293,6 +308,7 @@ export class GameScene extends Phaser.Scene {
       this.myHand = this.myHand.filter(c => c.id !== card.id);
       this.handArea.removeCard(card.id);
       this.updatePlayableHandCards();
+      this.setCommitReady(true);
       this.statusTxt.setText(faceDown
         ? `${card.name} set face-down in lane ${laneIndex + 1}. Press COMMIT.`
         : `${card.name} set face-up in lane ${laneIndex + 1}. It will resolve later.`);
@@ -300,10 +316,15 @@ export class GameScene extends Phaser.Scene {
 
     this.selectedCard = null;
     this.handArea.deselectAll();
+    this.myField.setGuidedLanes();
   }
 
   private submitAction(): void {
     if (this.submitted) return;
+    if (!this.commitReady) {
+      this.statusTxt.setText('Play at least one card before pressing COMMIT.');
+      return;
+    }
     this.submitted = true;
     this.submitBtn.setAlpha(0.5);
     this.submitTxt.setText('WAIT');
@@ -331,6 +352,7 @@ export class GameScene extends Phaser.Scene {
         this.turnTxt.setText(`TURN ${this.turn} / ${GameScene.MAX_TURNS}`);
         this.updateLaneUnlocks();
         this.updatePlayableHandCards();
+        this.setCommitReady(false);
         this.statusTxt.setText('Setup turn: place cards. Attacks start on turn 2.');
         break;
 
@@ -345,8 +367,8 @@ export class GameScene extends Phaser.Scene {
         this.updateLaneUnlocks();
         this.myHand.push(msg.drawnCard);
         this.handArea.setHand(this.myHand);
-        this.submitBtn.setAlpha(1);
         this.submitTxt.setText('COMMIT');
+        this.setCommitReady(false);
         this.statusTxt.setText('New draw. Prepare your lane.');
         this.updatePlayableHandCards();
         break;
@@ -431,6 +453,63 @@ export class GameScene extends Phaser.Scene {
       if (this.canPlayCardNow(card)) playable.add(card.id);
     }
     this.handArea.setPlayableCards(playable);
+  }
+
+  private updateLaneGuidanceForSelectedCard(card: Card): void {
+    const lanes = this.getPlayableLaneIndices(card);
+    this.myField.setGuidedLanes(lanes);
+    if (lanes.length === 0) {
+      this.statusTxt.setText(`${card.name}: ${this.getPlayBlockReason(card)}`);
+    }
+  }
+
+  private getPlayableLaneIndices(card: Card): LaneIndex[] {
+    if (this.submitted) return [];
+    if (card.type === 'monster') {
+      const tributeCost = card.tributeCost ?? 0;
+      if (this.pendingAction.summon) return [];
+      if (this.getAutoTributeLaneIndices(tributeCost).length < tributeCost) return [];
+    }
+    return GameScene.getUnlockedLanes(this.turn).filter(laneIndex => {
+      const lane = this.myLanes?.[laneIndex];
+      const pending = this.myField?.hasPending(laneIndex);
+      if (pending) return false;
+      if (card.type === 'monster') return !lane?.monster;
+      if (card.spellMode === 'face_down') return !lane?.faceDownSpell;
+      return !lane?.spell;
+    });
+  }
+
+  private getPlayBlockReason(card: Card): string {
+    if (this.submitted) return 'Waiting for the rival move.';
+    if (card.type === 'monster') {
+      if (this.pendingAction.summon) return 'Only one monster can be summoned each turn.';
+      const tributeCost = card.tributeCost ?? 0;
+      if (this.getAutoTributeLaneIndices(tributeCost).length < tributeCost) {
+        return `Needs ${tributeCost} tribute monster${tributeCost > 1 ? 's' : ''}.`;
+      }
+      return 'No open unlocked monster lane.';
+    }
+    return 'No open unlocked spell slot for this card.';
+  }
+
+  private showCardHelp(card: Card): void {
+    const reason = this.getPlayBlockReason(card);
+    if (this.canPlayCardNow(card)) {
+      const lanes = this.getPlayableLaneIndices(card).map(i => i + 1).join(', ');
+      this.statusTxt.setText(`${card.name}: playable now. Valid lane${lanes.includes(',') ? 's' : ''}: ${lanes}.`);
+      return;
+    }
+    this.statusTxt.setText(`${card.name}: cannot play now. ${reason}`);
+  }
+
+  private setCommitReady(on: boolean): void {
+    this.commitReady = on;
+    if (!this.submitBtn || !this.submitTxt) return;
+    this.submitBtn.setAlpha(on ? 1 : 0.46);
+    this.submitTxt.setColor(on ? '#ffffff' : '#9aa8bd');
+    if (on) this.submitBtn.setTint(0xffe29a);
+    else this.submitBtn.clearTint();
   }
 
   private updateDeckCounters(): void {

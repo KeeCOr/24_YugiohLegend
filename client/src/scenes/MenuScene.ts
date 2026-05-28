@@ -31,7 +31,7 @@ export class MenuScene extends Phaser.Scene {
   }
 
   private createButton(x: number, y: number, label: string, onClick: () => void): void {
-    const btn = this.add.image(x, y, ART_KEYS.button).setDisplaySize(300, 58).setInteractive();
+    const btn = this.add.image(x, y, ART_KEYS.buttonPrimary).setDisplaySize(320, 76).setInteractive();
     const txt = this.add.text(x, y, label, {
       fontSize: '18px',
       color: '#ffffff',

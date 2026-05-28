@@ -21,7 +21,7 @@ export class ResultScene extends Phaser.Scene {
     const label = isDraw ? 'DRAW' : isWin ? 'VICTORY' : 'DEFEAT';
     const color = isDraw ? '#d8e7ff' : isWin ? '#f2c86a' : '#ff667c';
 
-    this.add.image(width / 2, height * 0.39, ART_KEYS.panel).setDisplaySize(520, 210);
+    this.add.image(width / 2, height * 0.39, ART_KEYS.hudFrame).setDisplaySize(540, 230);
     this.add.text(width / 2, height * 0.32, label, {
       fontSize: '70px',
       color,
@@ -46,7 +46,7 @@ export class ResultScene extends Phaser.Scene {
   }
 
   private createTextButton(x: number, y: number, label: string, onClick: () => void): void {
-    const btn = this.add.image(x, y, ART_KEYS.button).setDisplaySize(260, 50).setInteractive();
+    const btn = this.add.image(x, y, ART_KEYS.buttonPrimary).setDisplaySize(280, 68).setInteractive();
     const txt = this.add.text(x, y, label, {
       fontSize: '17px',
       color: '#ffffff',

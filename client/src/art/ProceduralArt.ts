@@ -10,6 +10,10 @@ export const ART_KEYS = {
   laneEnemy: 'art_lane_enemy',
   panel: 'art_panel',
   button: 'art_button',
+  buttonPrimary: 'art_button_primary',
+  hudFrame: 'art_hud_frame',
+  handRail: 'art_hand_rail',
+  laneFrame: 'art_lane_frame',
   glow: 'art_glow',
   slash: 'art_slash',
 } as const;
@@ -25,6 +29,10 @@ export function registerProceduralArt(scene: Phaser.Scene): void {
   createLane(scene, ART_KEYS.laneEnemy, 0x351d2c, 0xff6692);
   createPanel(scene);
   createButton(scene);
+  createButtonPrimary(scene);
+  createHudFrame(scene);
+  createHandRail(scene);
+  createLaneFrame(scene);
   createGlow(scene);
   createSlash(scene);
 }
@@ -153,13 +161,93 @@ function createPanel(scene: Phaser.Scene): void {
 
 function createButton(scene: Phaser.Scene): void {
   const g = scene.make.graphics({ x: 0, y: 0 }, false);
-  g.fillGradientStyle(0x27496d, 0x356b9d, 0x17253e, 0x27496d, 1);
+  g.fillGradientStyle(0x1d3656, 0x2d5b86, 0x101d31, 0x203957, 1);
   g.fillRoundedRect(0, 0, 300, 58, 8);
-  g.lineStyle(2, 0xd8b56a, 0.78);
+  g.lineStyle(2, 0x8fd8ff, 0.62);
   g.strokeRoundedRect(2, 2, 296, 54, 7);
   g.lineStyle(1, 0xffffff, 0.22);
   g.lineBetween(18, 11, 282, 11);
+  g.lineStyle(1, 0x000000, 0.38);
+  g.lineBetween(18, 49, 282, 49);
   g.generateTexture(ART_KEYS.button, 300, 58);
+  g.destroy();
+}
+
+function createButtonPrimary(scene: Phaser.Scene): void {
+  const g = scene.make.graphics({ x: 0, y: 0 }, false);
+  g.fillStyle(0x070912, 1);
+  g.fillRoundedRect(0, 0, 330, 86, 10);
+  g.fillGradientStyle(0x5c3217, 0xb26d29, 0x1c2745, 0x3d1c2c, 1);
+  g.fillRoundedRect(5, 5, 320, 76, 9);
+  g.lineStyle(3, 0xf2c86a, 0.94);
+  g.strokeRoundedRect(8, 8, 314, 70, 7);
+  g.lineStyle(1, 0xffffff, 0.32);
+  g.lineBetween(28, 17, 302, 17);
+  g.lineStyle(1, 0x11070a, 0.5);
+  g.lineBetween(28, 69, 302, 69);
+  g.fillStyle(0xffe29a, 0.95);
+  g.fillCircle(26, 43, 7);
+  g.fillCircle(304, 43, 7);
+  g.lineStyle(2, 0x101525, 0.74);
+  g.strokeCircle(26, 43, 11);
+  g.strokeCircle(304, 43, 11);
+  g.generateTexture(ART_KEYS.buttonPrimary, 330, 86);
+  g.destroy();
+}
+
+function createHudFrame(scene: Phaser.Scene): void {
+  const g = scene.make.graphics({ x: 0, y: 0 }, false);
+  g.fillStyle(0x05070c, 0.92);
+  g.fillRoundedRect(0, 0, 320, 240, 10);
+  g.fillGradientStyle(0x121a2c, 0x243756, 0x090c15, 0x111827, 0.96);
+  g.fillRoundedRect(6, 6, 308, 228, 8);
+  g.lineStyle(3, 0xd8b56a, 0.74);
+  g.strokeRoundedRect(8, 8, 304, 224, 7);
+  g.lineStyle(1, 0x8fd8ff, 0.28);
+  g.strokeRoundedRect(18, 18, 284, 204, 4);
+  g.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.08);
+  g.fillRoundedRect(18, 18, 284, 42, 4);
+  g.generateTexture(ART_KEYS.hudFrame, 320, 240);
+  g.destroy();
+}
+
+function createHandRail(scene: Phaser.Scene): void {
+  const g = scene.make.graphics({ x: 0, y: 0 }, false);
+  g.fillStyle(0x060814, 0.96);
+  g.fillRoundedRect(0, 0, 430, 760, 12);
+  g.fillGradientStyle(0x171425, 0x213655, 0x080b14, 0x110c1b, 0.96);
+  g.fillRoundedRect(8, 8, 414, 744, 10);
+  g.lineStyle(4, 0xd8b56a, 0.68);
+  g.strokeRoundedRect(10, 10, 410, 740, 8);
+  g.lineStyle(1, 0x8fd8ff, 0.22);
+  g.strokeRoundedRect(25, 82, 380, 652, 6);
+  g.fillGradientStyle(0x0b1020, 0x1f304d, 0x0a0c14, 0x0b1020, 0.9);
+  g.fillRoundedRect(24, 18, 382, 74, 8);
+  g.lineStyle(1, 0xffffff, 0.16);
+  for (let y = 118; y < 714; y += 74) {
+    g.lineBetween(42, y, 388, y);
+  }
+  g.fillStyle(0xf2c86a, 0.9);
+  g.fillCircle(36, 52, 6);
+  g.fillCircle(394, 52, 6);
+  g.generateTexture(ART_KEYS.handRail, 430, 760);
+  g.destroy();
+}
+
+function createLaneFrame(scene: Phaser.Scene): void {
+  const g = scene.make.graphics({ x: 0, y: 0 }, false);
+  g.fillStyle(0x03050a, 0.82);
+  g.fillRoundedRect(0, 0, 224, 316, 12);
+  g.lineStyle(4, 0xd8b56a, 0.52);
+  g.strokeRoundedRect(4, 4, 216, 308, 10);
+  g.lineStyle(2, 0x8fd8ff, 0.24);
+  g.strokeRoundedRect(15, 15, 194, 286, 6);
+  g.fillStyle(0xf2c86a, 0.78);
+  g.fillCircle(23, 23, 4);
+  g.fillCircle(201, 23, 4);
+  g.fillCircle(23, 293, 4);
+  g.fillCircle(201, 293, 4);
+  g.generateTexture(ART_KEYS.laneFrame, 224, 316);
   g.destroy();
 }
 
