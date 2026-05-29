@@ -70,6 +70,21 @@ export class CardSprite extends Phaser.GameObjects.Container {
       this.add(role);
     }
 
+    const tributeCost = card.tributeCost ?? 0;
+    if (tributeCost > 0) {
+      const starBg = new Phaser.GameObjects.Rectangle(scene, CardSprite.W / 2 - 2, -82, tributeCost * 16 + 6, 16, 0x0c0810, 0.72);
+      starBg.setOrigin(1, 0.5);
+      this.add(starBg);
+      const starText = new Phaser.GameObjects.Text(scene, CardSprite.W / 2 - 5, -82, '★'.repeat(tributeCost), {
+        fontSize: '11px',
+        color: '#f2c86a',
+        fontStyle: 'bold',
+        stroke: '#14090a',
+        strokeThickness: 2,
+      }).setOrigin(1, 0.5);
+      this.add(starText);
+    }
+
     const nameText = new Phaser.GameObjects.Text(scene, 0, 23, card.name, {
       fontSize: '13px',
       color: '#f8f0d8',

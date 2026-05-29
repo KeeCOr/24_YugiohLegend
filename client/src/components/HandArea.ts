@@ -3,11 +3,11 @@ import { ART_KEYS } from '../art/ProceduralArt';
 import { CardSprite } from './CardSprite';
 import type { Card } from '../data/CardTypes';
 
-const HAND_RAIL_W = 430;
-const HAND_RAIL_H = 760;
+const HAND_RAIL_W = 960;
+const HAND_RAIL_H = 200;
 const HAND_LAYOUTS = {
-  few: { scale: 1.22, gapY: 154, spreadX: 28, angle: 5.2 },
-  many: { scale: 1.02, gapY: 126, spreadX: 24, angle: 3.5 },
+  few: { scale: 0.88, gapX: 148, angle: 4.5 },
+  many: { scale: 0.78, gapX: 112, angle: 3.4 },
 };
 
 export class HandArea extends Phaser.GameObjects.Container {
@@ -29,15 +29,15 @@ export class HandArea extends Phaser.GameObjects.Container {
     scene.add.existing(this);
     this.setDepth(1000);
     this.rail = scene.add.image(0, 0, ART_KEYS.handRail).setDisplaySize(HAND_RAIL_W, HAND_RAIL_H).setAlpha(0.96);
-    const title = scene.add.text(0, -HAND_RAIL_H / 2 + 32, 'HAND', {
-      fontSize: '24px',
+    const title = scene.add.text(-HAND_RAIL_W / 2 + 65, -HAND_RAIL_H / 2 + 30, 'HAND', {
+      fontSize: '20px',
       color: '#f2c86a',
       fontStyle: 'bold',
       stroke: '#120912',
       strokeThickness: 4,
     }).setOrigin(0.5);
-    this.countText = scene.add.text(0, -HAND_RAIL_H / 2 + 62, '0 CARDS', {
-      fontSize: '14px',
+    this.countText = scene.add.text(-HAND_RAIL_W / 2 + 65, -HAND_RAIL_H / 2 + 55, '0 CARDS', {
+      fontSize: '13px',
       color: '#d8e7ff',
       fontStyle: 'bold',
     }).setOrigin(0.5);
@@ -77,15 +77,14 @@ export class HandArea extends Phaser.GameObjects.Container {
   private layoutCards(hand: Card[]): void {
     const total = hand.length;
     const layout = total <= 5 ? HAND_LAYOUTS.few : HAND_LAYOUTS.many;
-    const startY = -((total - 1) * layout.gapY) / 2 + 24;
     this.rail.setDisplaySize(HAND_RAIL_W, HAND_RAIL_H);
 
     for (let i = 0; i < total; i++) {
       const offset = i - (total - 1) / 2;
       const sprite = new CardSprite(
         this.scene,
-        offset * layout.spreadX,
-        startY + i * layout.gapY,
+        offset * layout.gapX,
+        0,
         hand[i]
       );
       sprite.setBaseScale(layout.scale);
@@ -120,7 +119,6 @@ export class HandArea extends Phaser.GameObjects.Container {
   private reflow(): void {
     const total = this.sprites.length;
     const layout = total <= 5 ? HAND_LAYOUTS.few : HAND_LAYOUTS.many;
-    const startY = -((total - 1) * layout.gapY) / 2 + 24;
     this.rail.setDisplaySize(HAND_RAIL_W, HAND_RAIL_H);
     this.sprites.forEach((s, i) => {
       const offset = i - (total - 1) / 2;
@@ -129,8 +127,8 @@ export class HandArea extends Phaser.GameObjects.Container {
       s.setDepth(i + 1);
       this.scene.tweens.add({
         targets: s,
-        x: offset * layout.spreadX,
-        y: startY + i * layout.gapY,
+        x: offset * layout.gapX,
+        y: 0,
         rotation: Phaser.Math.DegToRad(offset * layout.angle),
         duration: 180,
         ease: 'Sine.easeOut',

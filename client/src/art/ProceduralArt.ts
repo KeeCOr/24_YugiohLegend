@@ -214,23 +214,21 @@ function createHudFrame(scene: Phaser.Scene): void {
 function createHandRail(scene: Phaser.Scene): void {
   const g = scene.make.graphics({ x: 0, y: 0 }, false);
   g.fillStyle(0x060814, 0.96);
-  g.fillRoundedRect(0, 0, 430, 760, 12);
+  g.fillRoundedRect(0, 0, 960, 200, 12);
   g.fillGradientStyle(0x171425, 0x213655, 0x080b14, 0x110c1b, 0.96);
-  g.fillRoundedRect(8, 8, 414, 744, 10);
+  g.fillRoundedRect(8, 8, 944, 184, 10);
   g.lineStyle(4, 0xd8b56a, 0.68);
-  g.strokeRoundedRect(10, 10, 410, 740, 8);
+  g.strokeRoundedRect(10, 10, 940, 180, 8);
   g.lineStyle(1, 0x8fd8ff, 0.22);
-  g.strokeRoundedRect(25, 82, 380, 652, 6);
+  g.strokeRoundedRect(25, 25, 910, 150, 6);
   g.fillGradientStyle(0x0b1020, 0x1f304d, 0x0a0c14, 0x0b1020, 0.9);
-  g.fillRoundedRect(24, 18, 382, 74, 8);
-  g.lineStyle(1, 0xffffff, 0.16);
-  for (let y = 118; y < 714; y += 74) {
-    g.lineBetween(42, y, 388, y);
-  }
+  g.fillRoundedRect(24, 18, 130, 68, 8);
   g.fillStyle(0xf2c86a, 0.9);
-  g.fillCircle(36, 52, 6);
-  g.fillCircle(394, 52, 6);
-  g.generateTexture(ART_KEYS.handRail, 430, 760);
+  g.fillCircle(26, 26, 6);
+  g.fillCircle(934, 26, 6);
+  g.fillCircle(26, 174, 6);
+  g.fillCircle(934, 174, 6);
+  g.generateTexture(ART_KEYS.handRail, 960, 200);
   g.destroy();
 }
 
