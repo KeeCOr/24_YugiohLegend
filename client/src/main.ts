@@ -4,6 +4,7 @@ import { MenuScene } from './scenes/MenuScene';
 import { DeckBuilderScene } from './scenes/DeckBuilderScene';
 import { GameScene } from './scenes/GameScene';
 import { ResultScene } from './scenes/ResultScene';
+import { OnboardingScene } from './scenes/OnboardingScene';
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -14,7 +15,7 @@ const config: Phaser.Types.Core.GameConfig = {
     height: 900,
   },
   backgroundColor: '#1a1a2e',
-  scene: [BootScene, MenuScene, DeckBuilderScene, GameScene, ResultScene],
+  scene: [BootScene, MenuScene, DeckBuilderScene, GameScene, OnboardingScene, ResultScene],
   parent: document.body,
 };
 

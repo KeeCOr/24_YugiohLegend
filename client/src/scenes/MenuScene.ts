@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { ART_KEYS, addSceneBackdrop } from '../art/ProceduralArt';
+import { hasSeenOnboarding } from './OnboardingScene';
 
 export class MenuScene extends Phaser.Scene {
   constructor() { super('MenuScene'); }
@@ -22,7 +23,11 @@ export class MenuScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     this.createButton(width / 2, height * 0.47, 'SOLO DUEL', () => {
-      this.scene.start('GameScene', { mode: 'single' });
+      if (hasSeenOnboarding()) {
+        this.scene.start('GameScene', { mode: 'single' });
+      } else {
+        this.scene.start('OnboardingScene', { nextScene: 'GameScene', nextData: { mode: 'single' } });
+      }
     });
 
     this.createButton(width / 2, height * 0.58, 'DECK BUILDER', () => {
