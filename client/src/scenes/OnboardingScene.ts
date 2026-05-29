@@ -49,7 +49,7 @@ export class OnboardingScene extends Phaser.Scene {
 
     // ── Modal panel ──────────────────────────────────────────────────────────
     const panelW = 860;
-    const panelH = 660;
+    const panelH = 700;
     const panelY = height / 2;
 
     // outer border
@@ -82,7 +82,7 @@ export class OnboardingScene extends Phaser.Scene {
 
     // ── Content sections ─────────────────────────────────────────────────────
     const startY = panelY - panelH / 2 + 134;
-    const lineH = 26;
+    const lineH = 23;
 
     this.addSection(cx, startY, panelW,
       '① 페이즈 순서',
@@ -171,7 +171,7 @@ export class OnboardingScene extends Phaser.Scene {
     accentColor: number,
   ): void {
     const leftX = cx - panelW / 2 + 48;
-    const lineH = 26;
+    const lineH = 23;
     const accentHex = '#' + accentColor.toString(16).padStart(6, '0');
 
     // accent bar

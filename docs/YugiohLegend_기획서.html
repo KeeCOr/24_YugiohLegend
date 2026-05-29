@@ -133,6 +133,7 @@
         </div>
       </section>
       <div class="art" aria-label="생성된 카드 아트 아틀라스"></div>
+      <img src="./YugiohLegend_gameplay_preview.png" alt="플레이 미리보기" style="max-width:100%;border-radius:8px;margin:16px 0 0;">
     </header>
 
     <h2>핵심 규칙</h2>
@@ -184,12 +185,13 @@
     <ul>
       <li>왼쪽 손패, 중앙 3라인 전장, 오른쪽 상대/플레이어 HUD와 커밋 버튼으로 구성한다.</li>
       <li>손패는 세로 팬 형태로 펼쳐 카드 겹침을 줄이고, 플레이 가능한 카드는 글로우 처리한다.</li>
-      <li>전장 상단에 게임명, 턴, 단계, 입력 가이드를 표시한다.</li>
-      <li>오른쪽 HUD에 생성 카드 이미지를 활용한 상대/플레이어 초상과 덱 카운터를 추가한다.</li>
+      <li>전장 상단에 현재 턴(y=20 최상단), 단계 알약(y=50 중앙), 입력 가이드(우상단)를 겹치지 않게 배치한다.</li>
+      <li>오른쪽 HUD는 상대 LP → 상대 초상 → 덱 카운터 → 플레이어 LP → 플레이어 초상 → COMMIT 순서로 수직 배치하며 각 요소 간 최소 15px 여백을 유지한다.</li>
       <li>앞면/뒷면 마법 슬롯에도 해당 카드 이미지를 작은 아이콘으로 표시한다.</li>
       <li>버튼, HUD, 손패 보관대, 라인 외곽은 전용 절차형 프레임 텍스처를 사용한다.</li>
       <li>주요 실행 버튼은 금색 장식과 보석 포인트가 있는 <code>buttonPrimary</code> 프레임을 사용한다.</li>
       <li>손패 영역은 <code>handRail</code>, 전장 라인은 <code>laneFrame</code>, LP/초상/상단 가이드는 <code>hudFrame</code>을 사용한다.</li>
+      <li>온보딩 모달은 860×700 패널로 확장해 3개 섹션의 텍스트가 확인 버튼과 겹치지 않는다.</li>
     </ul>
 
     <h2>카드 아트 적용</h2>

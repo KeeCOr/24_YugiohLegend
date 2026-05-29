@@ -71,29 +71,30 @@ export class GameScene extends Phaser.Scene {
     this.startingDeckSize = deck.length;
     this.socket = new SocketManager();
     const boardX = width * 0.52;
-    const sideX = width - 390;
-    this.createTopHud(boardX, width);
+    const sideCenter = width - 205;
+    const lpX = sideCenter - 119;
+    this.createTopHud(boardX, width, sideCenter);
 
-    this.add.image(boardX, height * 0.47, ART_KEYS.hudFrame).setDisplaySize(850, 104).setAlpha(0.58);
-    this.add.text(boardX, height * 0.47, 'BATTLE LINE', {
+    this.add.image(boardX, height * 0.495, ART_KEYS.hudFrame).setDisplaySize(850, 80).setAlpha(0.58);
+    this.add.text(boardX, height * 0.495, 'BATTLE LINE', {
       fontSize: '13px',
       color: '#d8b56a',
       fontStyle: 'bold',
     }).setOrigin(0.5);
 
-    this.opField = new Field(this, boardX, height * 0.245, 1);
-    this.myField = new Field(this, boardX, height * 0.685, 0);
+    this.opField = new Field(this, boardX, height * 0.275, 1);
+    this.myField = new Field(this, boardX, height * 0.715, 0);
     this.updateLaneUnlocks();
 
-    this.createDuelistPanel(width - 132, height * 0.205, 'RIVAL', 'dark_knight', 0xff6f92);
-    this.createDuelistPanel(width - 132, height * 0.545, 'YOU', 'hero_warrior', 0x6ebcff);
+    this.createDuelistPanel(sideCenter, height * 0.289, 'RIVAL', 'dark_knight', 0xff6f92);
+    this.createDuelistPanel(sideCenter, height * 0.756, 'YOU', 'hero_warrior', 0x6ebcff);
 
-    this.myLP = new LPDisplay(this, sideX, height * 0.58, 'YOU');
-    this.myLP.setScale(1.18);
-    this.opLP = new LPDisplay(this, sideX, height * 0.24, 'RIVAL');
-    this.opLP.setScale(1.18);
-    this.opDeckTxt = this.createDeckCounter(width - 254, height * 0.38, 'RIVAL DECK');
-    this.myDeckTxt = this.createDeckCounter(width - 254, height * 0.72, 'YOUR DECK');
+    this.myLP = new LPDisplay(this, lpX, height * 0.600, 'YOU');
+    this.myLP.setScale(1.0);
+    this.opLP = new LPDisplay(this, lpX, height * 0.120, 'RIVAL');
+    this.opLP.setScale(1.0);
+    this.opDeckTxt = this.createDeckCounter(sideCenter - 44, height * 0.444, 'RIVAL DECK');
+    this.myDeckTxt = this.createDeckCounter(sideCenter - 44, height * 0.522, 'YOUR DECK');
 
     this.handArea = new HandArea(this, 235, height * 0.52, (card, _sprite) => {
       this.selectedCard = card;
@@ -113,8 +114,8 @@ export class GameScene extends Phaser.Scene {
       }
     });
 
-    this.submitBtn = this.add.image(width - 178, height * 0.82, ART_KEYS.buttonPrimary).setDisplaySize(270, 92).setInteractive();
-    this.submitTxt = this.add.text(width - 178, height * 0.82, 'COMMIT', {
+    this.submitBtn = this.add.image(sideCenter, height * 0.928, ART_KEYS.buttonPrimary).setDisplaySize(265, 84).setInteractive();
+    this.submitTxt = this.add.text(sideCenter, height * 0.928, 'COMMIT', {
       fontSize: '24px',
       color: '#ffffff',
       fontStyle: 'bold',
@@ -125,9 +126,10 @@ export class GameScene extends Phaser.Scene {
       if (this.commitReady) this.submitBtn.setTint(0xffe29a);
       else this.submitBtn.clearTint();
     });
+
     this.setCommitReady(false);
 
-    this.statusTxt = this.add.text(boardX, height * 0.93, 'Preparing duel...', {
+    this.statusTxt = this.add.text(boardX, height * 0.945, 'Preparing duel...', {
       fontSize: '18px',
       color: '#d8e7ff',
       stroke: '#080b12',
@@ -135,8 +137,8 @@ export class GameScene extends Phaser.Scene {
       wordWrap: { width: 820 },
       align: 'center',
     }).setOrigin(0.5);
-    this.turnTxt = this.add.text(boardX, height * 0.055, `TURN 1 / ${GameScene.MAX_TURNS}`, {
-      fontSize: '24px',
+    this.turnTxt = this.add.text(boardX, 20, `TURN 1 / ${GameScene.MAX_TURNS}`, {
+      fontSize: '18px',
       color: '#f2c86a',
       fontStyle: 'bold',
       stroke: '#120912',
@@ -154,16 +156,16 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private createTopHud(boardX: number, width: number): void {
-    this.add.image(200, 48, ART_KEYS.hudFrame).setDisplaySize(350, 80).setAlpha(0.88);
-    this.add.text(200, 37, 'YugiohLegend', {
+  private createTopHud(boardX: number, _width: number, sideCenter: number): void {
+    this.add.image(190, 46, ART_KEYS.hudFrame).setDisplaySize(340, 76).setAlpha(0.88);
+    this.add.text(190, 36, 'YugiohLegend', {
       fontSize: '24px',
       color: '#fff0c8',
       fontStyle: 'bold',
       stroke: '#120912',
       strokeThickness: 3,
     }).setOrigin(0.5);
-    this.add.text(200, 61, '3-LANE SUMMON DUEL', {
+    this.add.text(190, 60, '3-LANE SUMMON DUEL', {
       fontSize: '10px',
       color: '#8fd8ff',
       fontStyle: 'bold',
@@ -175,35 +177,35 @@ export class GameScene extends Phaser.Scene {
       { label: 'BATTLE', x: boardX + 150 },
     ];
     for (const phase of phases) {
-      const bg = this.add.image(phase.x, 47, ART_KEYS.buttonPrimary).setDisplaySize(142, 48).setAlpha(0.72);
+      const bg = this.add.image(phase.x, 50, ART_KEYS.buttonPrimary).setDisplaySize(138, 44).setAlpha(0.72);
       if (phase.label === 'MAIN') bg.setTint(0xffd36f);
-      this.add.text(phase.x, 47, phase.label, {
+      this.add.text(phase.x, 50, phase.label, {
         fontSize: '15px',
         color: phase.label === 'MAIN' ? '#101525' : '#d8e7ff',
         fontStyle: 'bold',
       }).setOrigin(0.5);
     }
 
-    this.add.image(width - 184, 48, ART_KEYS.hudFrame).setDisplaySize(312, 80).setAlpha(0.78);
-    this.add.text(width - 184, 38, 'PLAYABLE CARDS GLOW', {
+    this.add.image(sideCenter, 46, ART_KEYS.hudFrame).setDisplaySize(300, 76).setAlpha(0.78);
+    this.add.text(sideCenter, 36, 'PLAYABLE CARDS GLOW', {
       fontSize: '14px',
       color: '#bfffe2',
       fontStyle: 'bold',
     }).setOrigin(0.5);
-    this.add.text(width - 184, 62, 'Click a card, then choose an open lane', {
+    this.add.text(sideCenter, 60, 'Click a card, then choose an open lane', {
       fontSize: '11px',
       color: '#d8e7ff',
     }).setOrigin(0.5);
   }
 
   private createDuelistPanel(x: number, y: number, label: string, cardId: string, accent: number): void {
-    this.add.image(x, y, ART_KEYS.hudFrame).setDisplaySize(206, 254).setAlpha(0.78);
-    const glow = this.add.image(x, y - 9, ART_KEYS.glow).setDisplaySize(176, 220).setAlpha(0.2).setTint(accent);
-    const portrait = this.add.image(x, y - 12, cardArtKey(cardId)).setDisplaySize(156, 194);
-    portrait.setCrop(0, 0, portrait.width, portrait.height * 0.86);
-    this.add.rectangle(x, y - 12, 164, 202, 0x000000, 0).setStrokeStyle(3, accent, 0.72);
-    this.add.text(x, y + 105, label, {
-      fontSize: '16px',
+    this.add.image(x, y, ART_KEYS.hudFrame).setDisplaySize(172, 152).setAlpha(0.78);
+    const glow = this.add.image(x, y - 6, ART_KEYS.glow).setDisplaySize(148, 118).setAlpha(0.2).setTint(accent);
+    const portrait = this.add.image(x, y - 10, cardArtKey(cardId)).setDisplaySize(130, 110);
+    portrait.setCrop(0, 0, portrait.width, portrait.height * 0.84);
+    this.add.rectangle(x, y - 10, 140, 120, 0x000000, 0).setStrokeStyle(3, accent, 0.72);
+    this.add.text(x, y + 62, label, {
+      fontSize: '14px',
       color: '#ffffff',
       fontStyle: 'bold',
       stroke: '#090b12',
