@@ -212,6 +212,26 @@
       <li>라인을 먼저 누른 경우에도 조용히 무시하지 않고 손패 카드를 먼저 선택하라는 안내를 표시한다.</li>
     </ul>
 
+    <h2>OnboardingScene <small style="font-size:14px;color:#aab7cc;">(v0.1.0 추가)</small></h2>
+    <p>게임 첫 실행 시 OnboardingScene이 자동으로 표시되어 TCG 입문자도 즉시 게임을 이해할 수 있도록 안내한다.</p>
+
+    <table>
+      <tr><th>섹션</th><th>제목</th><th>내용</th></tr>
+      <tr><td>1</td><td>TCG 페이즈 순서</td><td>드로우 → 배치 → 커밋 → 공개 → 전투 순서 설명. 1턴은 공격하지 않는 배치 전용 턴 안내.</td></tr>
+      <tr><td>2</td><td>공수 전환</td><td>상대 라인이 비어 있으면 LP에 직접 피해. 양측 몬스터가 있으면 전투력 차이로 생명력 감소.</td></tr>
+      <tr><td>3</td><td>마법/함정 타이밍</td><td>앞면 마법은 라인 배치 후 지정 턴에 발동. 뒷면 마법은 조건 달성 시 자동 공개되어 강한 효과 발동.</td></tr>
+    </table>
+
+    <div class="note" style="border-color:#7fd8ff;background:rgba(127,216,255,.07);color:#d9f4ff;">
+      첫 실행 시 BootScene 직후 자동 표시. 로컬스토리지 플래그로 재표시 방지. 마지막 섹션 "시작하기" 클릭 시 GameScene으로 전환.
+    </div>
+
+    <h2>변경 이력</h2>
+    <table>
+      <tr><th>버전</th><th>날짜</th><th>내용</th></tr>
+      <tr><td>v0.1.0</td><td>2026-05-29</td><td>UX 온보딩 추가 — OnboardingScene 추가(TCG 페이즈 순서, 공수 전환, 마법/함정 타이밍 설명)</td></tr>
+    </table>
+
     <div class="note">
       최신 실행파일은 <code>C:\Development\24_YL\YugiohLegend_v0.1.0_portable.exe</code>이며, 모든 기능 변경 후 실행파일과 본 기획서를 함께 최신화한다.
     </div>
