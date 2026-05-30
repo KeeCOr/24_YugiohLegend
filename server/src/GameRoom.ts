@@ -225,9 +225,17 @@ export class GameRoom {
       const { card, laneIndex, tributeLaneIndices = [] } = action.summon;
       const tributeCost = card.tributeCost ?? 0;
       const uniqueTributes = [...new Set(tributeLaneIndices)];
-      const validTributes = uniqueTributes.filter(tributeLane =>
+      const requestedTributes = uniqueTributes.filter(tributeLane =>
         tributeLane !== laneIndex && player.lanes[tributeLane]?.monster
       );
+      const autoTributes = LANE_INDICES
+        .filter(tributeLane =>
+          tributeLane !== laneIndex
+          && player.lanes[tributeLane]?.monster
+          && !requestedTributes.includes(tributeLane)
+        )
+        .sort((a, b) => (player.lanes[a].monster?.atk ?? 0) - (player.lanes[b].monster?.atk ?? 0));
+      const validTributes = [...requestedTributes, ...autoTributes].slice(0, tributeCost);
       const canPayTribute = tributeCost === 0 || validTributes.length >= tributeCost;
 
       if (isLaneUnlocked(this.state.turn, laneIndex) && !player.lanes[laneIndex].monster && canPayTribute) {

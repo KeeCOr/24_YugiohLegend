@@ -23,7 +23,7 @@ describe('monster card catalog', () => {
     expect(strikers.length).toBeGreaterThanOrEqual(2);
     for (const card of strikers) {
       expect(card.atk ?? 0).toBeGreaterThanOrEqual(1800);
-      expect(card.hp ?? 99).toBeLessThanOrEqual(2);
+      expect(card.hp ?? 9999).toBeLessThanOrEqual(1200);
     }
   });
 
@@ -32,7 +32,7 @@ describe('monster card catalog', () => {
     expect(guardians.length).toBeGreaterThanOrEqual(2);
     for (const card of guardians) {
       expect(card.atk ?? 99).toBeLessThanOrEqual(1000);
-      expect(card.hp ?? 0).toBeGreaterThanOrEqual(4);
+      expect(card.hp ?? 0).toBeGreaterThanOrEqual(2000);
     }
   });
 
@@ -41,7 +41,7 @@ describe('monster card catalog', () => {
     expect(utilities.length).toBeGreaterThanOrEqual(2);
     for (const card of utilities) {
       expect(card.atk ?? 99).toBeLessThanOrEqual(1200);
-      expect(card.hp ?? 99).toBeLessThanOrEqual(2);
+      expect(card.hp ?? 9999).toBeLessThanOrEqual(1000);
       expect(card.monsterAbility).toBeDefined();
       expect(card.abilityText).toBeTruthy();
     }
@@ -71,7 +71,7 @@ describe('monster card catalog', () => {
     expect(bruisers.length).toBeGreaterThanOrEqual(1);
     for (const card of bruisers) {
       expect(card.atk ?? 0).toBeGreaterThanOrEqual(2200);
-      expect(card.hp ?? 0).toBeGreaterThanOrEqual(4);
+      expect(card.hp ?? 0).toBeGreaterThanOrEqual(2200);
     }
   });
 

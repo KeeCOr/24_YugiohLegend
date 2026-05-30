@@ -243,7 +243,7 @@ describe('GameRoom', () => {
     expect(room.getState().players[0].lanes[0].monster?.id).toBe(monsterCard.id);
   });
 
-  it('tribute summon requires and consumes tribute monsters', () => {
+  it('tribute summon automatically consumes valid tribute monsters', () => {
     const room = new GameRoom('room1');
     room.addPlayer('p0', makeDeck());
     room.addPlayer('p1', makeDeck());
@@ -254,11 +254,6 @@ describe('GameRoom', () => {
     (room.getState() as GameState).players[0].hand.push(tributeMonster);
 
     room.submitAction(0, { summon: { card: tributeMonster, laneIndex: 0 }, spells: [] });
-    room.submitAction(1, emptyAction());
-    expect(room.getState().players[0].lanes[0].monster).toBeNull();
-    expect(room.getState().players[0].lanes[1].monster?.id).toBe(material.id);
-
-    room.submitAction(0, { summon: { card: tributeMonster, laneIndex: 0, tributeLaneIndices: [1] }, spells: [] });
     room.submitAction(1, emptyAction());
     expect(room.getState().players[0].lanes[0].monster?.id).toBe(tributeMonster.id);
     expect(room.getState().players[0].lanes[1].monster).toBeNull();
