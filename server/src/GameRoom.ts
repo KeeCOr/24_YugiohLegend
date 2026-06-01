@@ -111,6 +111,15 @@ export class GameRoom {
     return [];
   }
 
+  forfeit(playerIndex: PlayerIndex): OutgoingMessage[] {
+    if (this.state.phase === 'game_over') return [];
+    const winner = playerIndex === 0 ? 1 : 0;
+    this.state.winner = winner;
+    this.state.phase = 'game_over';
+    const lps: [number, number] = [this.state.players[0].lp, this.state.players[1].lp];
+    return [{ playerIndex: 'both', message: { type: 'game_over', winner, finalLPs: lps } }];
+  }
+
   submitAction(playerIndex: PlayerIndex, action: TurnAction): OutgoingMessage[] {
     if (this.state.phase !== 'action') return [];
     this.state.pendingActions[playerIndex] = action;

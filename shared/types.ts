@@ -81,7 +81,8 @@ export interface GameState {
 
 export type ClientMessage =
   | { type: 'join_room'; mode: 'single' | 'multi'; deck: Card[] }
-  | { type: 'submit_action'; action: TurnAction };
+  | { type: 'submit_action'; action: TurnAction }
+  | { type: 'forfeit' };
 
 export type ServerMessage =
   | { type: 'game_start'; yourIndex: PlayerIndex; yourHand: Card[]; opponentHandCount: number; turn: number }

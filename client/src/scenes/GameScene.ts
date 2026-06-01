@@ -51,6 +51,9 @@ export class GameScene extends Phaser.Scene {
   private myDeckCount = 0;
   private opDeckCount = 0;
   private commitReady = false;
+  private surrenderBtn!: Phaser.GameObjects.Text;
+  private surrenderPending = false;
+  private surrenderTimer?: Phaser.Time.TimerEvent;
 
   constructor() { super('GameScene'); }
 
@@ -123,6 +126,21 @@ export class GameScene extends Phaser.Scene {
       if (this.commitReady) this.submitBtn.setTint(0xffe29a);
       else this.submitBtn.clearTint();
     });
+
+    this.surrenderBtn = this.add.text(sideCenter, height * 0.974, '항복', {
+      fontSize: '14px',
+      color: '#6a7a8d',
+      fontStyle: 'bold',
+      stroke: '#080b12',
+      strokeThickness: 2,
+    }).setOrigin(0.5).setInteractive();
+    this.surrenderBtn.on('pointerover', () => {
+      if (!this.surrenderPending) this.surrenderBtn.setColor('#ff667c');
+    });
+    this.surrenderBtn.on('pointerout', () => {
+      if (!this.surrenderPending) this.surrenderBtn.setColor('#6a7a8d');
+    });
+    this.surrenderBtn.on('pointerdown', () => this.onSurrenderClick());
 
     this.setCommitReady(false);
 
@@ -330,6 +348,25 @@ export class GameScene extends Phaser.Scene {
     this.selectedCard = null;
     this.handArea.deselectAll();
     this.myField.setGuidedLanes();
+  }
+
+  private onSurrenderClick(): void {
+    if (this.surrenderPending) {
+      this.surrenderTimer?.destroy();
+      this.surrenderBtn.setText('항복 중...');
+      this.surrenderBtn.setColor('#ff667c');
+      this.surrenderBtn.disableInteractive();
+      this.socket.send({ type: 'forfeit' });
+    } else {
+      this.surrenderPending = true;
+      this.surrenderBtn.setText('확인?');
+      this.surrenderBtn.setColor('#ff667c');
+      this.surrenderTimer = this.time.delayedCall(3000, () => {
+        this.surrenderPending = false;
+        this.surrenderBtn.setText('항복');
+        this.surrenderBtn.setColor('#6a7a8d');
+      });
+    }
   }
 
   private submitAction(): void {

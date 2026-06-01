@@ -28,7 +28,6 @@ export class RoomManager {
 
     ws.on('close', () => {
       this.connections.delete(ws);
-      // 대기 중인 멀티플레이어가 연결 해제되면 대기실 정리
       if (this.waitingRoom?.ws === ws) {
         this.rooms.delete(this.waitingRoom.roomId);
         this.waitingRoom = null;
@@ -46,6 +45,18 @@ export class RoomManager {
       if (!room) return;
       const outMsgs = room.submitAction(conn.playerIndex, msg.action);
       this.broadcast(conn.roomId, outMsgs);
+      // human 제출로 새 턴이 시작됐고 AI 방이면 다음 턴 AI 액션 트리거
+      const newTurnStarted = outMsgs.some(m => m.message.type === 'turn_start');
+      if (newTurnStarted && this.aiCancelFlags.has(conn.roomId)) {
+        this.triggerAIAction(room, conn.roomId);
+      }
+    } else if (msg.type === 'forfeit') {
+      const conn = this.connections.get(ws);
+      if (!conn) return;
+      const room = this.rooms.get(conn.roomId);
+      if (!room) return;
+      const outMsgs = room.forfeit(conn.playerIndex);
+      this.broadcast(conn.roomId, outMsgs);
     }
   }
 
@@ -58,12 +69,11 @@ export class RoomManager {
       const conn: PlayerConnection = { ws, roomId, playerIndex: 0 };
       this.connections.set(ws, conn);
 
-      // 두 플레이어 참가 → game_start 메시지 포함된 msgs 반환
-      room.addPlayer('human', deck);         // p0 단독 → []
-      const msgs = room.addPlayer('ai', [...deck]); // p1 → [p0_start, p1_start]
+      room.addPlayer('human', deck);
+      const msgs = room.addPlayer('ai', [...deck]);
       this.broadcast(roomId, msgs);
 
-      this.scheduleAIAction(room, roomId);
+      this.initAI(room, roomId);
     } else {
       if (this.waitingRoom) {
         const { roomId } = this.waitingRoom;
@@ -87,32 +97,30 @@ export class RoomManager {
     }
   }
 
-  private scheduleAIAction(room: GameRoom, roomId: string): void {
+  private initAI(room: GameRoom, roomId: string): void {
     const flag = { cancelled: false };
     this.aiCancelFlags.set(roomId, flag);
+    this.triggerAIAction(room, roomId);
+  }
 
-    const tryAISubmit = () => {
+  private triggerAIAction(room: GameRoom, roomId: string): void {
+    const flag = this.aiCancelFlags.get(roomId);
+    if (!flag) return;
+
+    const delay = 500 + Math.random() * 1000;
+    setTimeout(() => {
       if (flag.cancelled) return;
       const state = room.getState();
-      if (state.phase !== 'action') return;
-      if (state.submitted[1]) return;
-
-      const delay = 500 + Math.random() * 1000;
-      setTimeout(() => {
-        if (flag.cancelled) return;
-        // 딜레이 직전이 아닌 직후에 최신 상태로 행동 결정
-        const latestState = room.getState();
-        if (latestState.phase !== 'action' || latestState.submitted[1]) return;
-        const action = greedyAction(latestState.players[1], latestState.turn);
-        const outMsgs = room.submitAction(1, action);
-        this.broadcast(roomId, outMsgs);
-        if (room.getState().phase === 'action') {
-          tryAISubmit();
-        }
-      }, delay);
-    };
-
-    setTimeout(tryAISubmit, 100);
+      if (state.phase !== 'action' || state.submitted[1]) return;
+      const action = greedyAction(state.players[1], state.turn);
+      const outMsgs = room.submitAction(1, action);
+      this.broadcast(roomId, outMsgs);
+      // AI 제출로 새 턴이 시작됐으면 다음 턴 AI 액션 트리거
+      const newTurnStarted = outMsgs.some(m => m.message.type === 'turn_start');
+      if (newTurnStarted) {
+        this.triggerAIAction(room, roomId);
+      }
+    }, delay);
   }
 
   broadcast(roomId: string, msgs: OutgoingMessage[]): void {
@@ -129,7 +137,6 @@ export class RoomManager {
       }
     }
 
-    // game_over 메시지가 포함된 경우 방 정리
     if (msgs.some(m => m.message.type === 'game_over')) {
       this.cleanupRoom(roomId);
     }
