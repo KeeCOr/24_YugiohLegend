@@ -79,7 +79,7 @@ export class CardSprite extends Phaser.GameObjects.Container {
     this.add(nameText);
 
     const actionLabel = this.getActionLabel(card);
-    const actionText = new Phaser.GameObjects.Text(scene, 0, card.abilityText ? 49 : 53, actionLabel, {
+    const actionText = new Phaser.GameObjects.Text(scene, 0, card.abilityText ? 43 : 53, actionLabel, {
       fontSize: card.type === 'monster' && (card.tributeCost ?? 0) > 0 ? '10px' : '9px',
       color: card.type === 'monster' && (card.tributeCost ?? 0) > 0 ? '#ffb1c0' : '#a9f4d0',
       fontStyle: 'bold',
@@ -89,19 +89,21 @@ export class CardSprite extends Phaser.GameObjects.Container {
     this.add(actionText);
 
     if (card.abilityText) {
-      const ability = new Phaser.GameObjects.Text(scene, 0, 65, card.abilityText.toUpperCase(), {
+      const ability = new Phaser.GameObjects.Text(scene, 0, 57, card.abilityText.toUpperCase(), {
         fontSize: '8px',
         color: '#c8d9ff',
         fontStyle: 'bold',
         stroke: '#10090d',
         strokeThickness: 2,
+        wordWrap: { width: CardSprite.W - 28 },
+        align: 'center',
       }).setOrigin(0.5);
       this.add(ability);
     }
 
     if (card.type === 'monster') {
-      this.addStatGem(scene, -43, 72, String(card.atk ?? 0), 0xf2b94b, 'ATK');
-      this.addStatGem(scene, 43, 72, String(card.hp ?? 1), 0xe94d64, 'HP');
+      this.addStatGem(scene, -55, 80, String(card.atk ?? 0), 0xf2b94b, 'ATK');
+      this.addStatGem(scene, 55, 80, String(card.hp ?? 1), 0xe94d64, 'HP');
     }
   }
 
@@ -189,12 +191,12 @@ export class CardSprite extends Phaser.GameObjects.Container {
     color: number,
     label: string
   ): void {
-    const gem = new Phaser.GameObjects.Arc(scene, x, y, 20, 0, 360, false, color, 1);
-    gem.setStrokeStyle(2, 0x1b1117, 0.9);
+    const gem = new Phaser.GameObjects.Arc(scene, x, y, 13, 0, 360, false, color, 1);
+    gem.setStrokeStyle(1.5, 0x1b1117, 0.9);
     this.add(gem);
 
     const valueText = new Phaser.GameObjects.Text(scene, x, y - 1, value, {
-      fontSize: '14px',
+      fontSize: '11px',
       color: '#ffffff',
       fontStyle: 'bold',
       stroke: '#160d12',
@@ -202,8 +204,8 @@ export class CardSprite extends Phaser.GameObjects.Container {
     }).setOrigin(0.5);
     this.add(valueText);
 
-    const labelText = new Phaser.GameObjects.Text(scene, x, y + 19, label, {
-      fontSize: '8px',
+    const labelText = new Phaser.GameObjects.Text(scene, x, y + 13, label, {
+      fontSize: '7px',
       color: '#d8e7ff',
       fontStyle: 'bold',
     }).setOrigin(0.5);
