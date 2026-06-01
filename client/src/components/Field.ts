@@ -74,6 +74,7 @@ export class Field extends Phaser.GameObjects.Container {
       if (lane.monster) {
         const lx = this.getLaneLocalX(i);
         const sprite = new CardSprite(this.scene, lx, -4, lane.monster);
+        sprite.setBaseScale(1.4);
         this.add(sprite);
         this.monsterSprites[i] = sprite;
       }
@@ -112,6 +113,7 @@ export class Field extends Phaser.GameObjects.Container {
     this.clearPending(laneIndex);
     const lx = this.getLaneLocalX(laneIndex);
     const sprite = new CardSprite(this.scene, lx, -4, card, faceDown);
+    sprite.setBaseScale(1.4);
     sprite.setPreview(true);
     this.add(sprite);
     this.pendingSprites[laneIndex] = sprite;
