@@ -75,44 +75,41 @@ export class GameScene extends Phaser.Scene {
     const lpX = sideCenter - 119;
     this.createTopHud(boardX, width, sideCenter);
 
-    this.add.image(boardX, height * 0.436, ART_KEYS.hudFrame).setDisplaySize(850, 80).setAlpha(0.58);
-    this.add.text(boardX, height * 0.436, 'BATTLE LINE', {
+    this.add.image(boardX, height * 0.435, ART_KEYS.hudFrame).setDisplaySize(850, 60).setAlpha(0.58);
+    this.add.text(boardX, height * 0.435, 'BATTLE LINE', {
       fontSize: '13px',
       color: '#d8b56a',
       fontStyle: 'bold',
     }).setOrigin(0.5);
 
-    this.opField = new Field(this, boardX, height * 0.242, 1);
-    this.myField = new Field(this, boardX, height * 0.629, 0);
+    this.opField = new Field(this, boardX, height * 0.270, 1);
+    this.myField = new Field(this, boardX, height * 0.600, 0);
     this.updateLaneUnlocks();
 
-    this.createDuelistPanel(sideCenter, height * 0.242, 'RIVAL', 'dark_knight', 0xff6f92);
-    this.createDuelistPanel(sideCenter, height * 0.720, 'YOU', 'hero_warrior', 0x6ebcff);
-
-    this.myLP = new LPDisplay(this, lpX, height * 0.580, 'YOU');
+    this.myLP = new LPDisplay(this, lpX, height * 0.560, 'YOU');
     this.myLP.setScale(1.0);
     this.opLP = new LPDisplay(this, lpX, height * 0.106, 'RIVAL');
     this.opLP.setScale(1.0);
-    this.opDeckTxt = this.createDeckCounter(sideCenter - 44, height * 0.385, 'RIVAL DECK');
-    this.myDeckTxt = this.createDeckCounter(sideCenter - 44, height * 0.495, 'YOUR DECK');
+    this.opDeckTxt = this.createDeckCounter(sideCenter - 44, height * 0.375, 'RIVAL DECK');
+    this.myDeckTxt = this.createDeckCounter(sideCenter - 44, height * 0.475, 'YOUR DECK');
 
-    this.handArea = new HandArea(this, boardX, height * 0.880, (card, _sprite) => {
+    this.handArea = new HandArea(this, boardX, height * 0.905, (card, _sprite) => {
       this.selectedCard = card;
       if (card.type === 'spell') {
         const text = card.spellMode === 'face_down'
-          ? `${card.name}: set face-down. It triggers on condition. Click one of your lanes.`
-          : `${card.name}: resolves after ${card.spellDelayTurns ?? 1} turn. Click one of your lanes.`;
+          ? `${card.name}: set face-down. It triggers on condition. Click or drag to your lane.`
+          : `${card.name}: resolves after ${card.spellDelayTurns ?? 1} turn. Click or drag to your lane.`;
         this.statusTxt.setText(text);
       } else {
         const summonText = this.getSummonText(card);
-        this.statusTxt.setText(`${card.name}: ${summonText}. Click one of your lanes.`);
+        this.statusTxt.setText(`${card.name}: ${summonText}. Click or drag to your lane.`);
       }
       this.updateLaneGuidanceForSelectedCard(card);
     }, (card) => this.showCardHelp(card), () => {
       if (!this.selectedCard && this.statusTxt) {
-        this.statusTxt.setText('Green cards can be played now. Select one, then choose a glowing lane.');
+        this.statusTxt.setText('Green cards can be played. Click or drag to a glowing lane.');
       }
-    });
+    }, (card, worldX, worldY) => this.onCardDroppedOnLane(card, worldX, worldY));
 
     this.submitBtn = this.add.image(sideCenter, height * 0.928, ART_KEYS.buttonPrimary).setDisplaySize(265, 84).setInteractive();
     this.submitTxt = this.add.text(sideCenter, height * 0.928, 'COMMIT', {
@@ -129,12 +126,12 @@ export class GameScene extends Phaser.Scene {
 
     this.setCommitReady(false);
 
-    this.statusTxt = this.add.text(sideCenter, height * 0.845, 'Preparing duel...', {
+    this.statusTxt = this.add.text(sideCenter, height * 0.760, 'Preparing duel...', {
       fontSize: '15px',
       color: '#d8e7ff',
       stroke: '#080b12',
       strokeThickness: 3,
-      wordWrap: { width: 275 },
+      wordWrap: { width: 280 },
       align: 'center',
     }).setOrigin(0.5);
     this.turnTxt = this.add.text(boardX, 20, `TURN 1 / ${GameScene.MAX_TURNS}`, {
@@ -236,6 +233,20 @@ export class GameScene extends Phaser.Scene {
       stroke: '#090b12',
       strokeThickness: 4,
     }).setOrigin(0, 0.5);
+  }
+
+  private onCardDroppedOnLane(card: Card, worldX: number, worldY: number): void {
+    for (let i = 0; i < LANE_COUNT; i++) {
+      const laneX = this.myField.getLaneWorldX(i as LaneIndex);
+      const laneY = this.myField.y;
+      if (Math.abs(worldX - laneX) < 111 && Math.abs(worldY - laneY) < 148) {
+        this.onLaneClick(i as LaneIndex);
+        return;
+      }
+    }
+    this.selectedCard = null;
+    this.handArea.deselectAll();
+    this.myField.setGuidedLanes();
   }
 
   private setupLaneInteraction(): void {

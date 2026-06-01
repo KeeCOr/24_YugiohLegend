@@ -47,39 +47,24 @@ export class CardSprite extends Phaser.GameObjects.Container {
     this.addCardArtwork(scene, card);
 
     const tint = typeTint(card.type);
-    const roleColor = this.getRoleColor(card);
+    const tributeCost = card.tributeCost ?? 0;
     const typeBar = new Phaser.GameObjects.Rectangle(scene, 0, -80, 116, 18, tint, 0.92);
     typeBar.setStrokeStyle(1, 0x0e1117, 0.8);
     this.add(typeBar);
 
-    const typeText = new Phaser.GameObjects.Text(scene, 0, -80, this.getTypeLabel(card), {
+    const typeText = new Phaser.GameObjects.Text(scene, tributeCost > 0 ? -18 : 0, -80, this.getTypeLabel(card), {
       fontSize: '9px',
       color: '#101014',
       fontStyle: 'bold',
     }).setOrigin(0.5);
     this.add(typeText);
 
-    const roleLabel = this.getRoleLabel(card);
-    if (card.type === 'monster' && roleLabel) {
-      const role = new Phaser.GameObjects.Text(scene, 0, -63, roleLabel, {
-        fontSize: '8px',
-        color: '#111111',
-        backgroundColor: Phaser.Display.Color.IntegerToColor(roleColor).rgba,
-        padding: { left: 3, right: 3, top: 1, bottom: 1 },
-      }).setOrigin(0.5);
-      this.add(role);
-    }
-
-    const tributeCost = card.tributeCost ?? 0;
     if (tributeCost > 0) {
-      const starBg = new Phaser.GameObjects.Rectangle(scene, CardSprite.W / 2 - 2, -82, tributeCost * 16 + 6, 16, 0x0c0810, 0.72);
-      starBg.setOrigin(1, 0.5);
-      this.add(starBg);
-      const starText = new Phaser.GameObjects.Text(scene, CardSprite.W / 2 - 5, -82, '★'.repeat(tributeCost), {
+      const starText = new Phaser.GameObjects.Text(scene, 54, -80, '★'.repeat(tributeCost), {
         fontSize: '11px',
         color: '#f2c86a',
         fontStyle: 'bold',
-        stroke: '#14090a',
+        stroke: '#201008',
         strokeThickness: 2,
       }).setOrigin(1, 0.5);
       this.add(starText);
@@ -150,9 +135,7 @@ export class CardSprite extends Phaser.GameObjects.Container {
   }
 
   private getTypeLabel(card: Card): string {
-    if (card.type === 'monster') {
-      return (card.tributeCost ?? 0) > 0 ? 'MONSTER - TRIBUTE' : 'MONSTER - FREE';
-    }
+    if (card.type === 'monster') return 'MONSTER';
     return card.spellMode === 'face_down' ? 'FACE-DOWN SPELL' : 'FACE-UP SPELL';
   }
 
