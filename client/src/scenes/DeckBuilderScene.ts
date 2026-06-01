@@ -69,7 +69,7 @@ export class DeckBuilderScene extends Phaser.Scene {
 
   private addToDeck(card: Card): void {
     const count = this.deck.filter(c => c.id === card.id).length;
-    if (count >= 2 || this.deck.length >= 12) return;
+    if (count >= 1 || this.deck.length >= 12) return;
     this.deck.push(card);
     this.refreshDeckList();
   }

@@ -1,21 +1,16 @@
 import Phaser from 'phaser';
-import { ART_KEYS } from '../art/ProceduralArt';
 import { CardSprite } from './CardSprite';
 import type { Card } from '../data/CardTypes';
 
-const HAND_RAIL_W = 1060;
-const HAND_RAIL_H = 240;
 const HAND_LAYOUTS = {
-  few: { scale: 1.05, gapX: 152, angle: 4.0 },
-  many: { scale: 0.88, gapX: 118, angle: 3.2 },
+  few: { scale: 1.15, gapX: 160, angle: 3.8 },
+  many: { scale: 0.96, gapX: 124, angle: 3.0 },
 };
 const DRAG_THRESHOLD = 8;
 
 export class HandArea extends Phaser.GameObjects.Container {
   private sprites: CardSprite[] = [];
   private selectedSprite: CardSprite | null = null;
-  private rail: Phaser.GameObjects.Image;
-  private countText: Phaser.GameObjects.Text;
   private playableIds = new Set<string>();
 
   private dragGhost: CardSprite | null = null;
@@ -36,20 +31,6 @@ export class HandArea extends Phaser.GameObjects.Container {
     super(scene, x, y);
     scene.add.existing(this);
     this.setDepth(1000);
-    this.rail = scene.add.image(0, 0, ART_KEYS.handRail).setDisplaySize(HAND_RAIL_W, HAND_RAIL_H).setAlpha(0.96);
-    const title = scene.add.text(-HAND_RAIL_W / 2 + 65, -HAND_RAIL_H / 2 + 30, 'HAND', {
-      fontSize: '20px',
-      color: '#f2c86a',
-      fontStyle: 'bold',
-      stroke: '#120912',
-      strokeThickness: 4,
-    }).setOrigin(0.5);
-    this.countText = scene.add.text(-HAND_RAIL_W / 2 + 65, -HAND_RAIL_H / 2 + 55, '0 CARDS', {
-      fontSize: '13px',
-      color: '#d8e7ff',
-      fontStyle: 'bold',
-    }).setOrigin(0.5);
-    this.add([this.rail, title, this.countText]);
   }
 
   setHand(hand: Card[]): void {
@@ -57,7 +38,6 @@ export class HandArea extends Phaser.GameObjects.Container {
     for (const s of this.sprites) s.destroy();
     this.sprites = [];
     this.selectedSprite = null;
-    this.countText.setText(`${hand.length} CARD${hand.length === 1 ? '' : 'S'}`);
     this.layoutCards(hand);
   }
 
@@ -86,7 +66,6 @@ export class HandArea extends Phaser.GameObjects.Container {
   private layoutCards(hand: Card[]): void {
     const total = hand.length;
     const layout = total <= 5 ? HAND_LAYOUTS.few : HAND_LAYOUTS.many;
-    this.rail.setDisplaySize(HAND_RAIL_W, HAND_RAIL_H);
 
     for (let i = 0; i < total; i++) {
       const offset = i - (total - 1) / 2;
@@ -175,7 +154,6 @@ export class HandArea extends Phaser.GameObjects.Container {
   private reflow(): void {
     const total = this.sprites.length;
     const layout = total <= 5 ? HAND_LAYOUTS.few : HAND_LAYOUTS.many;
-    this.rail.setDisplaySize(HAND_RAIL_W, HAND_RAIL_H);
     this.sprites.forEach((s, i) => {
       const offset = i - (total - 1) / 2;
       s.setBaseScale(layout.scale);

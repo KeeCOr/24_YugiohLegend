@@ -93,7 +93,7 @@ export class GameScene extends Phaser.Scene {
     this.opDeckTxt = this.createDeckCounter(sideCenter - 44, height * 0.375, 'RIVAL DECK');
     this.myDeckTxt = this.createDeckCounter(sideCenter - 44, height * 0.475, 'YOUR DECK');
 
-    this.handArea = new HandArea(this, boardX, height * 0.905, (card, _sprite) => {
+    this.handArea = new HandArea(this, boardX, height * 0.870, (card, _sprite) => {
       this.selectedCard = card;
       if (card.type === 'spell') {
         const text = card.spellMode === 'face_down'
