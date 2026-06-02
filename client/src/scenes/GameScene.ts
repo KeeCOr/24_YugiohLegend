@@ -89,7 +89,7 @@ export class GameScene extends Phaser.Scene {
     this.myField = new Field(this, boardX, height * 0.600, 0);
     this.updateLaneUnlocks();
 
-    this.myLP = new LPDisplay(this, lpX, height * 0.560, 'YOU');
+    this.myLP = new LPDisplay(this, 20, height * 0.880, 'YOU');
     this.myLP.setScale(1.0);
     this.opLP = new LPDisplay(this, lpX, height * 0.106, 'RIVAL');
     this.opLP.setScale(1.0);
