@@ -40,4 +40,17 @@ describe('deck building flow wiring', () => {
     expect(deckBuilder).toContain('deckStatsTxt');
     expect(deckBuilder).toContain('getDeckSummary');
   });
+
+  it('uses visual deck slots and drag-to-slot deck construction', () => {
+    const deckBuilder = readProjectFile('client/src/scenes/DeckBuilderScene.ts');
+
+    expect(deckBuilder).toContain('deckSlots');
+    expect(deckBuilder).toContain('deckSlotSprites');
+    expect(deckBuilder).toContain('createDeckSlots');
+    expect(deckBuilder).toContain('startArchiveDrag');
+    expect(deckBuilder).toContain('finishArchiveDrag');
+    expect(deckBuilder).toContain('getSlotIndexAt');
+    expect(deckBuilder).toContain('placeCardInSlot');
+    expect(deckBuilder).not.toContain('deckTexts');
+  });
 });

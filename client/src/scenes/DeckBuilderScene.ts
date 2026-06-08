@@ -14,13 +14,19 @@ import {
 import { ALL_CARDS } from './BootScene';
 
 export class DeckBuilderScene extends Phaser.Scene {
-  private deck: Card[] = [];
-  private deckTexts: Phaser.GameObjects.Text[] = [];
+  private deckCards: (Card | null)[] = Array(MAX_DECK_SIZE).fill(null);
+  private deckSlots: Phaser.GameObjects.Container[] = [];
+  private deckSlotSprites: (CardSprite | null)[] = Array(MAX_DECK_SIZE).fill(null);
   private countText!: Phaser.GameObjects.Text;
   private deckStatsTxt!: Phaser.GameObjects.Text;
   private statusTxt!: Phaser.GameObjects.Text;
   private saveDeckBtn!: Phaser.GameObjects.Image;
   private duelBtn!: Phaser.GameObjects.Image;
+  private dragCard: Card | null = null;
+  private dragGhost: CardSprite | null = null;
+  private dragStartX = 0;
+  private dragStartY = 0;
+  private isDragging = false;
 
   constructor() { super('DeckBuilderScene'); }
 
@@ -28,7 +34,7 @@ export class DeckBuilderScene extends Phaser.Scene {
     const { width, height } = this.scale;
     addSceneBackdrop(this);
 
-    this.deck = getSavedDeck();
+    this.setDeckCards(getSavedDeck());
 
     this.add.text(26, 18, 'DECK BUILDER', {
       fontSize: '30px',
@@ -63,7 +69,7 @@ export class DeckBuilderScene extends Phaser.Scene {
       sprite.setBaseScale(0.86);
       this.add.existing(sprite);
       sprite.setInteractive();
-      sprite.on('pointerdown', () => this.addToDeck(card));
+      sprite.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.startArchiveDrag(card, pointer));
       sprite.on('pointerover', () => sprite.highlight(true));
       sprite.on('pointerout', () => sprite.highlight(false));
     });
@@ -80,6 +86,7 @@ export class DeckBuilderScene extends Phaser.Scene {
       color: '#fff3bf',
       wordWrap: { width: 390 },
     });
+    this.createDeckSlots();
 
     this.createButton(width * 0.84, height - 138, 320, 58, 'AUTO FILL', () => this.autoFillDeck());
     this.saveDeckBtn = this.createButton(width * 0.77, height - 70, 190, 58, 'SAVE DECK', () => this.saveDeckOnly());
@@ -89,40 +96,148 @@ export class DeckBuilderScene extends Phaser.Scene {
   }
 
   private addToDeck(card: Card): void {
-    const count = this.deck.filter(c => c.id === card.id).length;
-    if (count >= 1) {
-      this.statusTxt.setText('Each card can be added once in this prototype.');
-      return;
-    }
-    if (this.deck.length >= MAX_DECK_SIZE) {
+    const emptySlot = this.deckCards.findIndex(slot => slot === null);
+    if (emptySlot < 0) {
       this.statusTxt.setText(`Deck limit is ${MAX_DECK_SIZE} cards.`);
       return;
     }
-    this.deck.push(card);
-    this.statusTxt.setText(`${card.name} added.`);
+    this.placeCardInSlot(card, emptySlot);
+  }
+
+  private placeCardInSlot(card: Card, slotIndex: number): void {
+    if (slotIndex < 0 || slotIndex >= MAX_DECK_SIZE) return;
+    if (this.deckCards.some(slot => slot?.id === card.id)) {
+      this.statusTxt.setText('Each card can be added once in this prototype.');
+      return;
+    }
+    if (this.deckCards[slotIndex]) {
+      this.statusTxt.setText('That slot already has a card. Pick an empty slot.');
+      return;
+    }
+    this.deckCards[slotIndex] = card;
+    this.statusTxt.setText(`${card.name} added to slot ${slotIndex + 1}.`);
     this.refreshDeckList();
   }
 
   private removeFromDeck(index: number): void {
-    const [removed] = this.deck.splice(index, 1);
+    const removed = this.deckCards[index];
+    if (!removed) return;
+    this.deckCards[index] = null;
     this.statusTxt.setText(`${removed.name} removed.`);
     this.refreshDeckList();
   }
 
   private autoFillDeck(): void {
-    this.deck = getStarterDeck();
+    this.setDeckCards(getStarterDeck());
     this.statusTxt.setText('Starter deck loaded. You can swap cards before saving.');
     this.refreshDeckList();
   }
 
   private saveDeckOnly(): void {
-    if (!isValidDeck(this.deck)) {
+    const deck = this.getDeck();
+    if (!isValidDeck(deck)) {
       this.statusTxt.setText(`Build a ${MIN_DECK_SIZE}-${MAX_DECK_SIZE} card deck before saving.`);
       return;
     }
-    saveDeck(this.deck);
+    saveDeck(deck);
     this.statusTxt.setText('Deck saved. Solo Duel will use this deck.');
     this.refreshDeckList();
+  }
+
+  private createDeckSlots(): void {
+    const { width } = this.scale;
+    for (let i = 0; i < MAX_DECK_SIZE; i++) {
+      const col = i % 3;
+      const row = Math.floor(i / 3);
+      const x = width * 0.71 + col * 134;
+      const y = 246 + row * 112;
+      const slot = this.add.container(x, y);
+      const bg = this.add.image(0, 0, ART_KEYS.hudFrame).setDisplaySize(94, 106).setAlpha(0.82);
+      const outline = this.add.rectangle(0, 0, 86, 98, 0x000000, 0).setStrokeStyle(2, 0xd8b56a, 0.52);
+      const label = this.add.text(0, 0, String(i + 1), {
+        fontSize: '18px',
+        color: '#6f8096',
+        fontStyle: 'bold',
+        stroke: '#080b12',
+        strokeThickness: 3,
+      }).setOrigin(0.5);
+      slot.add([bg, outline, label]);
+      slot.setInteractive(new Phaser.Geom.Rectangle(-47, -53, 94, 106), Phaser.Geom.Rectangle.Contains);
+      slot.on('pointerdown', () => this.removeFromDeck(i));
+      this.deckSlots.push(slot);
+    }
+  }
+
+  private renderDeckSlots(): void {
+    for (const sprite of this.deckSlotSprites) sprite?.destroy();
+    this.deckSlotSprites = Array(MAX_DECK_SIZE).fill(null);
+
+    this.deckCards.forEach((card, index) => {
+      if (!card) return;
+      const slot = this.deckSlots[index];
+      const sprite = new CardSprite(this, slot.x, slot.y, card);
+      sprite.setBaseScale(0.52);
+      sprite.setInteractive();
+      sprite.on('pointerdown', () => this.removeFromDeck(index));
+      sprite.on('pointerover', () => sprite.highlight(true));
+      sprite.on('pointerout', () => sprite.highlight(false));
+      this.add.existing(sprite);
+      this.deckSlotSprites[index] = sprite;
+    });
+  }
+
+  private startArchiveDrag(card: Card, pointer: Phaser.Input.Pointer): void {
+    this.dragCard = card;
+    this.dragStartX = pointer.x;
+    this.dragStartY = pointer.y;
+    this.isDragging = false;
+    this.input.on('pointermove', this.onArchiveDragMove, this);
+    this.input.on('pointerup', this.finishArchiveDrag, this);
+  }
+
+  private onArchiveDragMove(pointer: Phaser.Input.Pointer): void {
+    if (!this.dragCard) return;
+    const dist = Phaser.Math.Distance.Between(pointer.x, pointer.y, this.dragStartX, this.dragStartY);
+    if (!this.isDragging && dist > 8) {
+      this.isDragging = true;
+      this.dragGhost = new CardSprite(this, pointer.worldX, pointer.worldY, this.dragCard);
+      this.dragGhost.setBaseScale(0.62);
+      this.dragGhost.setAlpha(0.82);
+      this.dragGhost.setDepth(2000);
+      this.add.existing(this.dragGhost);
+    }
+    if (this.dragGhost) {
+      this.dragGhost.x = pointer.worldX;
+      this.dragGhost.y = pointer.worldY;
+    }
+  }
+
+  private finishArchiveDrag(pointer: Phaser.Input.Pointer): void {
+    this.input.off('pointermove', this.onArchiveDragMove, this);
+    this.input.off('pointerup', this.finishArchiveDrag, this);
+    const card = this.dragCard;
+    const wasDragging = this.isDragging;
+    this.dragCard = null;
+    this.isDragging = false;
+    this.dragGhost?.destroy();
+    this.dragGhost = null;
+
+    if (!card) return;
+    if (!wasDragging) {
+      this.addToDeck(card);
+      return;
+    }
+
+    const slotIndex = this.getSlotIndexAt(pointer.worldX, pointer.worldY);
+    if (slotIndex < 0) {
+      this.statusTxt.setText('Drop cards onto an empty deck slot.');
+      return;
+    }
+    this.placeCardInSlot(card, slotIndex);
+  }
+
+  private getSlotIndexAt(worldX: number, worldY: number): number {
+    return this.deckSlots.findIndex(slot => Math.abs(worldX - slot.x) <= 48 && Math.abs(worldY - slot.y) <= 54);
   }
 
   private createButton(x: number, y: number, width: number, height: number, label: string, onClick: () => void): Phaser.GameObjects.Image {
@@ -145,25 +260,10 @@ export class DeckBuilderScene extends Phaser.Scene {
     return btn;
   }
 
-  private clearDeckTexts(): void {
-    for (const t of this.deckTexts) t.destroy();
-    this.deckTexts = [];
-  }
-
-  private describeCard(card: Card): string {
-    if (card.type === 'monster') {
-      const grade = (card.tributeCost ?? 0) > 0 ? `TRIBUTE ${card.tributeCost}` : 'FREE';
-      return `${card.name}  ${grade}  ${card.atk}/${card.hp}`;
-    }
-    const mode = card.spellMode === 'face_down' ? 'SET' : 'FACE';
-    return `${card.name}  SPELL-${mode}`;
-  }
-
   private refreshDeckList(): void {
-    this.clearDeckTexts();
-
-    const { width } = this.scale;
-    const summary = getDeckSummary(this.deck);
+    this.renderDeckSlots();
+    const deck = this.getDeck();
+    const summary = getDeckSummary(deck);
     this.countText.setText(`${summary.total} / ${MIN_DECK_SIZE}-${MAX_DECK_SIZE} cards`);
     this.deckStatsTxt.setText([
       `Monsters ${summary.monsters}  Free ${summary.basicMonsters}  Tribute ${summary.tributeMonsters}`,
@@ -171,29 +271,28 @@ export class DeckBuilderScene extends Phaser.Scene {
       summary.warning,
     ]);
 
-    this.deck.forEach((card, i) => {
-      const col = Math.floor(i / 6);
-      const row = i % 6;
-      const t = this.add.text(width * 0.71 + col * 205, 236 + row * 42, `${i + 1}. ${this.describeCard(card)}`, {
-        fontSize: '13px',
-        color: card.type === 'monster' ? '#d8e7ff' : '#c9ffe1',
-      }).setInteractive();
-      t.on('pointerdown', () => this.removeFromDeck(i));
-      t.on('pointerover', () => t.setColor('#ff9ab7'));
-      t.on('pointerout', () => t.setColor(card.type === 'monster' ? '#d8e7ff' : '#c9ffe1'));
-      this.deckTexts.push(t);
-    });
-
     this.saveDeckBtn.setAlpha(summary.valid ? 1 : 0.45);
     this.duelBtn.setAlpha(summary.valid ? 1 : 0.45);
   }
 
   private saveAndStart(): void {
-    if (!isValidDeck(this.deck)) {
+    const deck = this.getDeck();
+    if (!isValidDeck(deck)) {
       this.statusTxt.setText(`Build a ${MIN_DECK_SIZE}-${MAX_DECK_SIZE} card deck before dueling.`);
       return;
     }
-    saveDeck(this.deck);
-    this.scene.start('GameScene', { mode: 'single', deck: this.deck });
+    saveDeck(deck);
+    this.scene.start('GameScene', { mode: 'single', deck });
+  }
+
+  private getDeck(): Card[] {
+    return this.deckCards.filter((card): card is Card => card !== null);
+  }
+
+  private setDeckCards(cards: Card[]): void {
+    this.deckCards = Array(MAX_DECK_SIZE).fill(null);
+    cards.slice(0, MAX_DECK_SIZE).forEach((card, index) => {
+      this.deckCards[index] = card;
+    });
   }
 }
