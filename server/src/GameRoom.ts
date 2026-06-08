@@ -90,9 +90,9 @@ export class GameRoom {
   getState(): Readonly<GameState> { return this.state; }
 
   addPlayer(playerId: string, deck: Card[]): OutgoingMessage[] {
-    if (deck.length < 8 || deck.length > 12) {
+    if (deck.length !== 12) {
       const idx = this.playerIds[0] === null ? 0 : 1;
-      return [{ playerIndex: idx as PlayerIndex, message: { type: 'error', message: 'Deck must contain 8 to 12 cards.' } }];
+      return [{ playerIndex: idx as PlayerIndex, message: { type: 'error', message: 'Deck must contain exactly 12 cards.' } }];
     }
     const index = this.playerIds[0] === null ? 0 : 1;
     this.playerIds[index] = playerId;

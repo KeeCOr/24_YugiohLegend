@@ -25,7 +25,7 @@ export class MenuScene extends Phaser.Scene {
 
     const savedDeck = getSavedDeck();
     const hasSavedDeck = isValidDeck(savedDeck);
-    this.add.text(width / 2, height * 0.38, hasSavedDeck ? `Saved Deck: ${savedDeck.length} cards ready` : 'Saved Deck: build 8-12 cards first', {
+    this.add.text(width / 2, height * 0.38, hasSavedDeck ? `Saved Deck: ${savedDeck.length} cards ready` : 'Saved Deck: fill all 12 slots first', {
       fontSize: '16px',
       color: hasSavedDeck ? '#8ef2ba' : '#fff3bf',
       fontStyle: 'bold',

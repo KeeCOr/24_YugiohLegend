@@ -2,7 +2,7 @@ import cards from '../../../shared/cards.json';
 import type { Card } from './CardTypes';
 
 export const STORAGE_KEY = 'yugioh_deck';
-export const MIN_DECK_SIZE = 8;
+export const MIN_DECK_SIZE = 12;
 export const MAX_DECK_SIZE = 12;
 
 const ALL_CARDS = cards as Card[];
@@ -62,7 +62,9 @@ export function getStarterDeck(): Card[] {
     'sky_lancer',
     'shield_mason',
     'iron_golem',
+    'hero_warrior',
     'power_boost',
+    'battle_fervor',
     'monster_smash',
     'backrow_break',
   ];

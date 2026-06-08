@@ -49,6 +49,18 @@ describe('UI art references', () => {
     expect(cardSprite).toContain('setBlocked');
   });
 
+  it('supports manual tribute selection after placing a tribute monster', () => {
+    const gameScene = readProjectFile('client/src/scenes/GameScene.ts');
+
+    expect(gameScene).toContain('pendingTributeSummon');
+    expect(gameScene).toContain('selectedTributeLanes');
+    expect(gameScene).toContain('beginTributeSelection');
+    expect(gameScene).toContain('selectTributeLane');
+    expect(gameScene).toContain('getTributeCandidateLaneIndices');
+    expect(gameScene).toContain('updateTributeCommitState');
+    expect(gameScene).not.toContain('getAutoTributeLaneIndices');
+  });
+
   it('keeps HUD guide text inside its frame and avoids abandoned mana UI', () => {
     const gameScene = readProjectFile('client/src/scenes/GameScene.ts');
     const field = readProjectFile('client/src/components/Field.ts');

@@ -4,7 +4,6 @@ import { CardSprite } from '../components/CardSprite';
 import type { Card } from '../data/CardTypes';
 import {
   MAX_DECK_SIZE,
-  MIN_DECK_SIZE,
   getDeckSummary,
   getSavedDeck,
   getStarterDeck,
@@ -12,6 +11,9 @@ import {
   saveDeck,
 } from '../data/DeckStorage';
 import { ALL_CARDS } from './BootScene';
+
+const ARCHIVE_CARD_SCALE = 0.94;
+const SLOT_CARD_SCALE = 0.62;
 
 export class DeckBuilderScene extends Phaser.Scene {
   private deckCards: (Card | null)[] = Array(MAX_DECK_SIZE).fill(null);
@@ -51,7 +53,7 @@ export class DeckBuilderScene extends Phaser.Scene {
       .on('pointerdown', () => this.scene.start('MenuScene'));
 
     this.add.text(48, 56, 'Deck Process', { fontSize: '15px', color: '#f2c86a', fontStyle: 'bold' });
-    this.add.text(48, 78, '1 Pick unique cards  >  2 Build 8-12  >  3 Save deck  >  4 Duel', {
+    this.add.text(48, 78, '1 Pick unique cards  >  2 Fill all 12 slots  >  3 Save deck  >  4 Duel', {
       fontSize: '14px',
       color: '#b8c7e8',
     });
@@ -66,7 +68,7 @@ export class DeckBuilderScene extends Phaser.Scene {
       const x = 135 + col * 185;
       const y = 214 + row * 170;
       const sprite = new CardSprite(this, x, y, card);
-      sprite.setBaseScale(0.86);
+      sprite.setBaseScale(ARCHIVE_CARD_SCALE);
       this.add.existing(sprite);
       sprite.setInteractive();
       sprite.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.startArchiveDrag(card, pointer));
@@ -136,7 +138,7 @@ export class DeckBuilderScene extends Phaser.Scene {
   private saveDeckOnly(): void {
     const deck = this.getDeck();
     if (!isValidDeck(deck)) {
-      this.statusTxt.setText(`Build a ${MIN_DECK_SIZE}-${MAX_DECK_SIZE} card deck before saving.`);
+      this.statusTxt.setText(`Build a ${MAX_DECK_SIZE} card deck before saving.`);
       return;
     }
     saveDeck(deck);
@@ -176,7 +178,7 @@ export class DeckBuilderScene extends Phaser.Scene {
       if (!card) return;
       const slot = this.deckSlots[index];
       const sprite = new CardSprite(this, slot.x, slot.y, card);
-      sprite.setBaseScale(0.52);
+      sprite.setBaseScale(SLOT_CARD_SCALE);
       sprite.setInteractive();
       sprite.on('pointerdown', () => this.removeFromDeck(index));
       sprite.on('pointerover', () => sprite.highlight(true));
@@ -264,7 +266,7 @@ export class DeckBuilderScene extends Phaser.Scene {
     this.renderDeckSlots();
     const deck = this.getDeck();
     const summary = getDeckSummary(deck);
-    this.countText.setText(`${summary.total} / ${MIN_DECK_SIZE}-${MAX_DECK_SIZE} cards`);
+    this.countText.setText(`${summary.total} / ${MAX_DECK_SIZE} cards`);
     this.deckStatsTxt.setText([
       `Monsters ${summary.monsters}  Free ${summary.basicMonsters}  Tribute ${summary.tributeMonsters}`,
       `Spells ${summary.spells}  Face ${summary.faceUpSpells}  Set ${summary.faceDownSpells}`,
@@ -278,7 +280,7 @@ export class DeckBuilderScene extends Phaser.Scene {
   private saveAndStart(): void {
     const deck = this.getDeck();
     if (!isValidDeck(deck)) {
-      this.statusTxt.setText(`Build a ${MIN_DECK_SIZE}-${MAX_DECK_SIZE} card deck before dueling.`);
+      this.statusTxt.setText(`Build a ${MAX_DECK_SIZE} card deck before dueling.`);
       return;
     }
     saveDeck(deck);

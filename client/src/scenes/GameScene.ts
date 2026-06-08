@@ -17,6 +17,12 @@ interface GameSceneData {
   deck?: Card[];
 }
 
+interface PendingTributeSummon {
+  card: Card;
+  laneIndex: LaneIndex;
+  tributeCost: number;
+}
+
 export class GameScene extends Phaser.Scene {
   private static readonly MAX_TURNS = 4;
   private static getUnlockedLanes(turn: number): LaneIndex[] {
@@ -34,6 +40,8 @@ export class GameScene extends Phaser.Scene {
   private opLanes: LaneState[] | null = null;
   private pendingAction: TurnAction = { spells: [] };
   private selectedCard: Card | null = null;
+  private pendingTributeSummon: PendingTributeSummon | null = null;
+  private selectedTributeLanes = new Set<LaneIndex>();
   private submitted = false;
 
   private myField!: Field;
@@ -60,6 +68,8 @@ export class GameScene extends Phaser.Scene {
   init(_data: GameSceneData): void {
     this.pendingAction = { spells: [] };
     this.selectedCard = null;
+    this.pendingTributeSummon = null;
+    this.selectedTributeLanes.clear();
     this.submitted = false;
     this.myHand = [];
     this.myLanes = null;
@@ -296,6 +306,10 @@ export class GameScene extends Phaser.Scene {
 
   private onLaneClick(laneIndex: LaneIndex): void {
     if (this.submitted) return;
+    if (this.pendingTributeSummon && !this.selectedCard) {
+      this.selectTributeLane(laneIndex);
+      return;
+    }
     if (!this.selectedCard) {
       this.statusTxt.setText('Select a glowing card in your hand first.');
       return;
@@ -312,8 +326,8 @@ export class GameScene extends Phaser.Scene {
         return;
       }
       const tributeCost = card.tributeCost ?? 0;
-      const tributeLaneIndices = this.getAutoTributeLaneIndices(tributeCost);
-      if (tributeLaneIndices.length < tributeCost) {
+      const tributeCandidates = this.getTributeCandidateLaneIndices();
+      if (tributeCandidates.length < tributeCost) {
         this.statusTxt.setText(`${card.name} needs ${tributeCost} tribute monster${tributeCost > 1 ? 's' : ''}.`);
         return;
       }
@@ -321,14 +335,19 @@ export class GameScene extends Phaser.Scene {
         this.statusTxt.setText('That lane already has a monster. Choose an empty lane.');
         return;
       }
-      this.pendingAction.summon = tributeCost > 0 ? { card, laneIndex, tributeLaneIndices } : { card, laneIndex };
+      this.pendingAction.summon = tributeCost > 0 ? { card, laneIndex, tributeLaneIndices: [] } : { card, laneIndex };
       this.myField.setPendingCard(laneIndex, card);
       this.myHand = this.myHand.filter(c => c.id !== card.id);
       this.handArea.removeCard(card.id);
       this.updatePlayableHandCards();
+      if (tributeCost > 0) {
+        this.selectedCard = null;
+        this.handArea.deselectAll();
+        this.beginTributeSelection(card, laneIndex, tributeCost);
+        return;
+      }
       this.setCommitReady(true);
-      const tributeText = tributeCost > 0 ? ` Tribute lanes: ${tributeLaneIndices.map(i => i + 1).join(', ')}.` : '';
-      this.statusTxt.setText(`${card.name} queued in lane ${laneIndex + 1}.${tributeText} Press COMMIT.`);
+      this.statusTxt.setText(`${card.name} queued in lane ${laneIndex + 1}. Press COMMIT.`);
     } else if (card.type === 'spell') {
       if (card.spellMode === 'face_down' && this.myLanes?.[laneIndex].faceDownSpell) {
         this.statusTxt.setText('That lane already has a face-down spell.');
@@ -402,6 +421,8 @@ export class GameScene extends Phaser.Scene {
   private handleServerMessage(msg: ServerMessage): void {
     switch (msg.type) {
       case 'game_start':
+        this.pendingTributeSummon = null;
+        this.selectedTributeLanes.clear();
         this.myIndex = msg.yourIndex;
         this.myHand = [...msg.yourHand];
         this.myDeckCount = Math.max(0, this.startingDeckSize - msg.yourHand.length);
@@ -420,6 +441,8 @@ export class GameScene extends Phaser.Scene {
       case 'turn_start':
         this.submitted = false;
         this.pendingAction = { spells: [] };
+        this.pendingTributeSummon = null;
+        this.selectedTributeLanes.clear();
         this.turn = msg.turn;
         this.myDeckCount = Math.max(0, this.myDeckCount - 1);
         this.opDeckCount = Math.max(0, this.opDeckCount - 1);
@@ -501,12 +524,53 @@ export class GameScene extends Phaser.Scene {
     this.opField.setUnlockedLanes(unlocked);
   }
 
-  private getAutoTributeLaneIndices(cost: number): LaneIndex[] {
-    if (cost <= 0 || !this.myLanes) return [];
-    return LANE_INDICES
-      .filter(laneIndex => this.myLanes?.[laneIndex].monster)
-      .sort((a, b) => (this.myLanes?.[a].monster?.atk ?? 0) - (this.myLanes?.[b].monster?.atk ?? 0))
-      .slice(0, cost);
+  private getTributeCandidateLaneIndices(): LaneIndex[] {
+    if (!this.myLanes) return [];
+    return LANE_INDICES.filter(laneIndex => Boolean(this.myLanes?.[laneIndex].monster));
+  }
+
+  private beginTributeSelection(card: Card, laneIndex: LaneIndex, tributeCost: number): void {
+    this.pendingTributeSummon = { card, laneIndex, tributeCost };
+    this.selectedTributeLanes.clear();
+    this.myField.setGuidedLanes();
+    this.myField.setTributeLanes(this.getTributeCandidateLaneIndices());
+    this.setCommitReady(false);
+    this.statusTxt.setText(`${card.name}: choose ${tributeCost} tribute monster${tributeCost > 1 ? 's' : ''} on your field.`);
+  }
+
+  private selectTributeLane(laneIndex: LaneIndex): void {
+    if (!this.pendingTributeSummon || !this.pendingAction.summon) return;
+    const candidates = this.getTributeCandidateLaneIndices();
+    if (!candidates.includes(laneIndex)) {
+      this.statusTxt.setText('Choose a glowing monster on your field as tribute.');
+      return;
+    }
+
+    if (this.selectedTributeLanes.has(laneIndex)) {
+      this.selectedTributeLanes.delete(laneIndex);
+    } else if (this.selectedTributeLanes.size < this.pendingTributeSummon.tributeCost) {
+      this.selectedTributeLanes.add(laneIndex);
+    }
+
+    this.pendingAction.summon.tributeLaneIndices = Array.from(this.selectedTributeLanes);
+    this.updateTributeCommitState();
+  }
+
+  private updateTributeCommitState(): void {
+    if (!this.pendingTributeSummon) return;
+    const selected = this.selectedTributeLanes.size;
+    const needed = this.pendingTributeSummon.tributeCost;
+    this.myField.setTributeLanes(this.getTributeCandidateLaneIndices());
+
+    if (selected >= needed) {
+      this.setCommitReady(true);
+      const lanes = Array.from(this.selectedTributeLanes).map(i => i + 1).join(', ');
+      this.statusTxt.setText(`Tribute selected: lane ${lanes}. Press COMMIT.`);
+      return;
+    }
+
+    this.setCommitReady(false);
+    this.statusTxt.setText(`Select ${needed - selected} more tribute monster${needed - selected > 1 ? 's' : ''}.`);
   }
 
   private updatePlayableHandCards(): void {
@@ -522,7 +586,7 @@ export class GameScene extends Phaser.Scene {
     const lanes = this.getPlayableLaneIndices(card);
     this.myField.setGuidedLanes(lanes);
     if (card.type === 'monster' && (card.tributeCost ?? 0) > 0) {
-      this.myField.setTributeLanes(this.getAutoTributeLaneIndices(card.tributeCost ?? 0));
+      this.myField.setTributeLanes(this.getTributeCandidateLaneIndices());
     } else {
       this.myField.setTributeLanes();
     }
@@ -536,7 +600,7 @@ export class GameScene extends Phaser.Scene {
     if (card.type === 'monster') {
       const tributeCost = card.tributeCost ?? 0;
       if (this.pendingAction.summon) return [];
-      if (this.getAutoTributeLaneIndices(tributeCost).length < tributeCost) return [];
+      if (this.getTributeCandidateLaneIndices().length < tributeCost) return [];
     }
     return GameScene.getUnlockedLanes(this.turn).filter(laneIndex => {
       const lane = this.myLanes?.[laneIndex];
@@ -553,7 +617,7 @@ export class GameScene extends Phaser.Scene {
     if (card.type === 'monster') {
       if (this.pendingAction.summon) return 'Only one monster can be summoned each turn.';
       const tributeCost = card.tributeCost ?? 0;
-      if (this.getAutoTributeLaneIndices(tributeCost).length < tributeCost) {
+      if (this.getTributeCandidateLaneIndices().length < tributeCost) {
         return `Needs ${tributeCost} tribute monster${tributeCost > 1 ? 's' : ''}.`;
       }
       return 'No open unlocked monster lane.';
@@ -587,6 +651,7 @@ export class GameScene extends Phaser.Scene {
 
   private canPlayCardNow(card: Card): boolean {
     if (this.submitted) return false;
+    if (this.pendingTributeSummon) return false;
     const unlocked = GameScene.getUnlockedLanes(this.turn);
     const hasOpenLane = unlocked.some(laneIndex => {
       const lane = this.myLanes?.[laneIndex];
@@ -604,7 +669,7 @@ export class GameScene extends Phaser.Scene {
     if (card.type !== 'monster') return true;
     if (this.pendingAction.summon) return false;
     const tributeCost = card.tributeCost ?? 0;
-    return this.getAutoTributeLaneIndices(tributeCost).length >= tributeCost;
+    return this.getTributeCandidateLaneIndices().length >= tributeCost;
   }
 
   private showBattleEvents(events: BattleEvent[]): void {

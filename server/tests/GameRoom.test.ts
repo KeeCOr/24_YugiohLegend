@@ -6,7 +6,7 @@ import cards from '../../shared/cards.json';
 const allCards = cards as Card[];
 
 function makeDeck(): Card[] {
-  return allCards.slice(0, 8).concat(allCards.slice(0, 2));
+  return allCards.slice(0, 12);
 }
 
 function emptyAction(): TurnAction {
@@ -226,7 +226,7 @@ describe('GameRoom', () => {
     expect(room.getState().players[1].lanes[0].faceDownSpell).toBeNull();
   });
 
-  it('rejects deck sizes outside 8 to 12 cards', () => {
+  it('rejects deck sizes that are not exactly 12 cards', () => {
     const room = new GameRoom('room1');
     const msgs = room.addPlayer('p0', allCards.slice(0, 5));
     expect(msgs.some(m => m.message.type === 'error')).toBe(true);

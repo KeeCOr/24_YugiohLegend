@@ -13,6 +13,8 @@ describe('deck building flow wiring', () => {
     const storage = readProjectFile('client/src/data/DeckStorage.ts');
 
     expect(storage).toContain("STORAGE_KEY = 'yugioh_deck'");
+    expect(storage).toContain('MIN_DECK_SIZE = 12');
+    expect(storage).toContain('MAX_DECK_SIZE = 12');
     expect(storage).toContain('getSavedDeck');
     expect(storage).toContain('saveDeck');
     expect(storage).toContain('isValidDeck');
@@ -51,6 +53,8 @@ describe('deck building flow wiring', () => {
     expect(deckBuilder).toContain('finishArchiveDrag');
     expect(deckBuilder).toContain('getSlotIndexAt');
     expect(deckBuilder).toContain('placeCardInSlot');
+    expect(deckBuilder).toContain('ARCHIVE_CARD_SCALE = 0.94');
+    expect(deckBuilder).toContain('SLOT_CARD_SCALE = 0.62');
     expect(deckBuilder).not.toContain('deckTexts');
   });
 });
