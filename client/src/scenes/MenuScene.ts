@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { ART_KEYS, addSceneBackdrop } from '../art/ProceduralArt';
+import { getSavedDeck, isValidDeck } from '../data/DeckStorage';
 import { hasSeenOnboarding } from './OnboardingScene';
 
 export class MenuScene extends Phaser.Scene {
@@ -22,11 +23,25 @@ export class MenuScene extends Phaser.Scene {
       color: '#b8c7e8',
     }).setOrigin(0.5);
 
+    const savedDeck = getSavedDeck();
+    const hasSavedDeck = isValidDeck(savedDeck);
+    this.add.text(width / 2, height * 0.38, hasSavedDeck ? `Saved Deck: ${savedDeck.length} cards ready` : 'Saved Deck: build 8-12 cards first', {
+      fontSize: '16px',
+      color: hasSavedDeck ? '#8ef2ba' : '#fff3bf',
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
+
     this.createButton(width / 2, height * 0.47, 'SOLO DUEL', () => {
+      if (!hasSavedDeck) {
+        this.scene.start('DeckBuilderScene');
+        return;
+      }
+
+      const nextData = { mode: 'single', deck: savedDeck };
       if (hasSeenOnboarding()) {
-        this.scene.start('GameScene', { mode: 'single' });
+        this.scene.start('GameScene', nextData);
       } else {
-        this.scene.start('OnboardingScene', { nextScene: 'GameScene', nextData: { mode: 'single' } });
+        this.scene.start('OnboardingScene', { nextScene: 'GameScene', nextData: { mode: 'single', deck: savedDeck } });
       }
     });
 

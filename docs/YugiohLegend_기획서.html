@@ -8,12 +8,10 @@
     :root {
       --bg: #090c14;
       --panel: #121a2a;
-      --panel-2: #18243a;
       --line: #334866;
       --gold: #e1b96c;
       --cyan: #7fd8ff;
       --green: #8ef2ba;
-      --red: #ff7087;
       --text: #f2f5ff;
       --muted: #aab7cc;
     }
@@ -26,13 +24,13 @@
       line-height: 1.68;
     }
     main {
-      width: min(1100px, calc(100% - 40px));
+      width: min(1120px, calc(100% - 40px));
       margin: 0 auto;
       padding: 42px 0 72px;
     }
     header {
       display: grid;
-      grid-template-columns: 1.25fr .75fr;
+      grid-template-columns: 1.15fr .85fr;
       gap: 24px;
       padding: 28px;
       border: 1px solid var(--line);
@@ -45,14 +43,14 @@
     h2 { font-size: 24px; margin-top: 34px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
     h3 { font-size: 18px; margin-top: 22px; color: var(--cyan); }
     p { margin: 10px 0; }
-    ul { margin: 10px 0 0; padding-left: 22px; }
+    ul, ol { margin: 10px 0 0; padding-left: 22px; }
     li { margin: 4px 0; }
     table {
       width: 100%;
       margin-top: 12px;
       border-collapse: collapse;
-      overflow: hidden;
       border-radius: 8px;
+      overflow: hidden;
       border: 1px solid var(--line);
     }
     th, td {
@@ -85,11 +83,11 @@
       font-weight: 700;
     }
     .art {
-      min-height: 230px;
+      min-height: 250px;
       border-radius: 10px;
       border: 1px solid rgba(225,185,108,.45);
       background:
-        linear-gradient(rgba(9,12,20,.18), rgba(9,12,20,.72)),
+        linear-gradient(rgba(9,12,20,.12), rgba(9,12,20,.68)),
         url("../client/public/assets/cards/card_art_atlas.png") center / cover;
     }
     .grid {
@@ -123,24 +121,23 @@
     <header>
       <section>
         <h1>YugiohLegend 기획서</h1>
-        <p>3라인 자동 전투 카드 게임. 손패에서 카드를 고르고 라인에 배치한 뒤, 공개와 전투를 통해 4턴 안에 LP 우위를 만든다.</p>
+        <p>3라인 자동 전투 카드 게임. 플레이어는 덱에서 뽑은 몬스터와 마법을 라인에 배치하고, 공개 후 각 라인에서 자동 전투를 해결한다.</p>
         <div class="meta">
           <span class="pill">1600 x 900 가로 화면</span>
           <span class="pill">3라인 전장</span>
           <span class="pill">4턴 매치</span>
           <span class="pill">앞면/뒷면 마법</span>
-          <span class="pill">카드 아트 적용</span>
+          <span class="pill">덱 구성 과정 추가</span>
         </div>
       </section>
-      <div class="art" aria-label="생성된 카드 아트 아틀라스"></div>
-      <img src="./YugiohLegend_gameplay_preview.png" alt="플레이 미리보기" style="max-width:100%;border-radius:8px;margin:16px 0 0;">
+      <div class="art" aria-label="카드 아트 아틀라스"></div>
     </header>
 
     <h2>핵심 규칙</h2>
     <ul>
       <li>시작 LP는 4000이다.</li>
-      <li>시작 손패는 4장이고 매 턴 1장을 드로우한다.</li>
-      <li>총 4턴으로 진행하며, 1턴은 공격하지 않는 배치 전용 턴이다.</li>
+      <li>시작 손패는 4장이며 매 턴 1장을 드로우한다.</li>
+      <li>총 4턴으로 진행하고, 1턴은 공격하지 않는 배치 전용 턴이다.</li>
       <li>2턴부터 공개 후 라인별 자동 전투가 발생한다.</li>
       <li>4턴 종료 후 LP가 높은 쪽이 승리한다.</li>
     </ul>
@@ -149,124 +146,80 @@
     <table>
       <tr><th>턴</th><th>사용 가능한 라인</th></tr>
       <tr><td>1턴</td><td>중앙 1라인</td></tr>
-      <tr><td>2턴</td><td>왼쪽 + 중앙 2라인</td></tr>
-      <tr><td>3턴</td><td>왼쪽 + 중앙 + 오른쪽 3라인</td></tr>
+      <tr><td>2턴</td><td>좌측 + 중앙 2라인</td></tr>
+      <tr><td>3턴</td><td>좌측 + 중앙 + 우측 3라인</td></tr>
       <tr><td>4턴</td><td>전체 3라인</td></tr>
     </table>
 
     <h2>카드 구분</h2>
     <table>
       <tr><th>구분</th><th>설명</th></tr>
-      <tr><td>FREE</td><td>제물 없이 일반 소환 가능</td></tr>
-      <tr><td>TRIBUTE</td><td>제물이 필요한 상급 소환</td></tr>
-      <tr><td>STRIKER</td><td>전투력은 높지만 생명력이 낮은 기본 몬스터</td></tr>
-      <tr><td>GUARDIAN</td><td>생명력은 높지만 전투력이 낮은 기본 몬스터</td></tr>
-      <tr><td>UTILITY</td><td>능력치가 낮지만 이동 또는 특수효과가 있는 기본 몬스터</td></tr>
-      <tr><td>BRUISER / ALLY+ / FIELD+ / MOBILE / SCALE</td><td>제물을 요구하며 강한 능력치, 아군 강화, 필드 강화, 이동성, 제물 비례 성장 중 하나를 담당</td></tr>
+      <tr><td>FREE</td><td>제물 없이 일반 소환 가능한 몬스터</td></tr>
+      <tr><td>TRIBUTE</td><td>이미 필드에 소환된 아군 몬스터를 바쳐야 소환 가능한 몬스터</td></tr>
+      <tr><td>STRIKER</td><td>전투력이 높고 생명력이 낮은 기본 몬스터</td></tr>
+      <tr><td>GUARDIAN</td><td>생명력이 높고 전투력이 낮은 기본 몬스터</td></tr>
+      <tr><td>UTILITY</td><td>전투력과 생명력은 낮지만 이동 또는 특수효과가 있는 기본 몬스터</td></tr>
+      <tr><td>BRUISER / ALLY+ / FIELD+ / MOBILE / SCALE</td><td>강력한 제물 몬스터의 역할 구분</td></tr>
     </table>
-    <p>제물 소환은 손패 카드가 아니라 이미 필드에 소환되어 있는 아군 몬스터만 바칠 수 있다. 플레이어가 제물 라인을 직접 지정하지 않아도 서버가 소환 라인을 제외한 아군 필드 몬스터 중 낮은 전투력 순으로 필요한 수만큼 자동 선택한다. 클라이언트는 상급 몬스터를 선택했을 때 실제 제물 후보 라인에 <code>TRIBUTE</code> 표시를 띄운다.</p>
+    <p>제물 소환은 손패가 아니라 이미 필드에 소환된 아군 몬스터만 바칠 수 있다. 클라이언트는 제물 후보 라인을 <code>TRIBUTE</code> 오버레이로 안내한다.</p>
 
-    <h2>전투와 마법</h2>
+    <h2>마법 카드</h2>
     <div class="grid">
-      <section class="card">
-        <strong>전투</strong>
-        <p>같은 라인에 양측 몬스터가 있으면 전투력 차이만큼 약한 쪽이 생명력을 잃고, 생명력이 0 이하가 되면 파괴된다.</p>
-      </section>
       <section class="card">
         <strong>앞면 마법</strong>
         <p>라인에 공개 배치되며 몇 턴 뒤 효과가 발동한다. 발동 전에 제거되면 효과가 사라진다.</p>
       </section>
       <section class="card">
         <strong>뒷면 마법</strong>
-        <p>뒤집어 배치하고 조건을 만족하면 공개되며 강한 효과를 발동한다. 별도 함정 카드는 두지 않는다.</p>
+        <p>뒤집어 배치하고 조건이 달성되면 공개되며 강한 효과를 발동한다.</p>
+      </section>
+      <section class="card">
+        <strong>주요 효과</strong>
+        <p>전투력 상승, 상대 몬스터 제거, 상대 마법 제거를 중심으로 라인의 규칙을 바꾼다.</p>
       </section>
     </div>
 
+    <h2>덱 구성 과정</h2>
+    <ol>
+      <li>Deck Builder에서 카드 아카이브의 카드를 선택한다.</li>
+      <li>덱은 8장 이상 12장 이하로 구성한다.</li>
+      <li>현재 덱의 몬스터, 기본 몬스터, 제물 몬스터, 앞면 마법, 뒷면 마법 수를 즉시 확인한다.</li>
+      <li><code>AUTO FILL</code>로 초보자용 추천 덱을 자동 구성할 수 있다.</li>
+      <li><code>SAVE DECK</code>은 저장만 수행하고, <code>SAVE AND DUEL</code>은 저장 후 대전을 시작한다.</li>
+      <li>메인 메뉴의 <code>SOLO DUEL</code>은 유효한 저장 덱이 있으면 그 덱으로 시작하고, 없으면 Deck Builder로 이동한다.</li>
+    </ol>
+
+    <h2>전투 규칙</h2>
+    <ul>
+      <li>같은 라인에 양측 몬스터가 있으면 전투력 차이만큼 약한 쪽 몬스터의 생명력을 잃는다.</li>
+      <li>생명력이 0 이하가 된 몬스터는 파괴된다.</li>
+      <li>상대 라인이 비어 있으면 몬스터가 상대 LP에 직접 피해를 준다.</li>
+    </ul>
+
     <h2>최신 UI 구성</h2>
     <ul>
-      <li>왼쪽 손패, 중앙 3라인 전장, 오른쪽 상대/플레이어 HUD와 커밋 버튼으로 구성한다.</li>
-      <li>손패는 세로 팬 형태로 펼쳐 카드 겹침을 줄이고, 플레이 가능한 카드는 글로우 처리한다.</li>
-      <li>전장 상단에 현재 턴(y=20 최상단), 단계 알약(y=50 중앙), 입력 가이드(우상단)를 겹치지 않게 배치한다.</li>
-      <li>오른쪽 HUD는 상대 LP → 상대 초상 → 덱 카운터 → 플레이어 LP → 플레이어 초상 → COMMIT 순서로 수직 배치하며 각 요소 간 최소 15px 여백을 유지한다.</li>
-      <li>앞면/뒷면 마법 슬롯에도 해당 카드 이미지를 작은 아이콘으로 표시한다.</li>
-      <li>버튼, HUD, 손패 보관대, 라인 외곽은 전용 절차형 프레임 텍스처를 사용한다.</li>
-      <li>주요 실행 버튼은 금색 장식과 보석 포인트가 있는 <code>buttonPrimary</code> 프레임을 사용한다.</li>
-      <li>손패 영역은 <code>handRail</code>, 전장 라인은 <code>laneFrame</code>, LP/초상/상단 가이드는 <code>hudFrame</code>을 사용한다.</li>
-      <li>온보딩 모달은 860×700 패널로 확장해 3개 섹션의 텍스트가 확인 버튼과 겹치지 않는다.</li>
+      <li>가로형 전장 레이아웃을 사용한다.</li>
+      <li>소환 또는 배치 가능한 카드는 녹색 글로우로 표시한다.</li>
+      <li>카드에는 종류, 사용 방식, ATK/HP, 제물 필요 여부를 한눈에 보이게 표시한다.</li>
+      <li>버튼, HUD, 손패 보관대, 라인 프레임은 전용 텍스처를 사용한다.</li>
+      <li>상단 가이드 HUD는 짧은 2줄 안내로 고정해 프레임 밖으로 문구가 잘리지 않게 한다.</li>
+      <li>필드에 소환된 말은 라인 프레임보다 아주 살짝 크게 표시해 판 밖으로 조금 돌출되는 연출을 준다.</li>
+      <li>현재 버전에는 마나 비용/마나 게이지 개념을 사용하지 않는다.</li>
     </ul>
-
-    <h2>카드 아트 적용</h2>
-    <ul>
-      <li>현재 카드 구성 18종에 맞춰 AI 카드 일러스트를 생성했다.</li>
-      <li>원본 아틀라스: <code>client/public/assets/cards/card_art_atlas.png</code></li>
-      <li>카드별 경로: <code>client/public/assets/cards/{cardId}.png</code></li>
-      <li><code>BootScene</code>에서 모든 카드 이미지를 로드하고 <code>CardSprite</code>가 카드 ID에 맞는 이미지를 표시한다.</li>
-      <li>주요 HUD 초상과 마법 슬롯 아이콘에도 같은 이미지를 재사용한다.</li>
-    </ul>
-
-    <h2>UX 보강</h2>
-    <ul>
-      <li>사용할 수 없는 손패 카드는 어둡게 표시하고, 마우스를 올리면 사용할 수 없는 이유를 상태 메시지에 표시한다.</li>
-      <li>카드를 선택하면 실제 배치 가능한 라인만 녹색으로 안내한다.</li>
-      <li>배치한 카드가 없을 때는 COMMIT 버튼을 비활성처럼 표시하고, 누르면 먼저 카드를 내라는 메시지를 표시한다.</li>
-      <li>라인을 먼저 누른 경우에도 조용히 무시하지 않고 손패 카드를 먼저 선택하라는 안내를 표시한다.</li>
-    </ul>
-
-    <h2>OnboardingScene <small style="font-size:14px;color:#aab7cc;">(v0.1.0 추가)</small></h2>
-    <p>게임 첫 실행 시 OnboardingScene이 자동으로 표시되어 TCG 입문자도 즉시 게임을 이해할 수 있도록 안내한다.</p>
-
-    <table>
-      <tr><th>섹션</th><th>제목</th><th>내용</th></tr>
-      <tr><td>1</td><td>TCG 페이즈 순서</td><td>드로우 → 배치 → 커밋 → 공개 → 전투 순서 설명. 1턴은 공격하지 않는 배치 전용 턴 안내.</td></tr>
-      <tr><td>2</td><td>공수 전환</td><td>상대 라인이 비어 있으면 LP에 직접 피해. 양측 몬스터가 있으면 전투력 차이로 생명력 감소.</td></tr>
-      <tr><td>3</td><td>마법/함정 타이밍</td><td>앞면 마법은 라인 배치 후 지정 턴에 발동. 뒷면 마법은 조건 달성 시 자동 공개되어 강한 효과 발동.</td></tr>
-    </table>
-
-    <div class="note" style="border-color:#7fd8ff;background:rgba(127,216,255,.07);color:#d9f4ff;">
-      첫 실행 시 BootScene 직후 자동 표시. 로컬스토리지 플래그로 재표시 방지. 마지막 섹션 "시작하기" 클릭 시 GameScene으로 전환.
-    </div>
 
     <h2>변경 이력</h2>
     <table>
       <tr><th>버전</th><th>날짜</th><th>내용</th></tr>
-      <tr><td>v0.1.0</td><td>2026-05-29</td><td>UX 온보딩 추가 — OnboardingScene 추가(TCG 페이즈 순서, 공수 전환, 마법/함정 타이밍 설명)</td></tr>
+      <tr><td>v0.1.0</td><td>2026-05-29</td><td>3라인, 4턴, 앞면/뒷면 마법, 온보딩, 카드 아트 적용</td></tr>
+      <tr><td>v0.1.0</td><td>2026-06-08</td><td>덱 구성 과정 추가, 저장 덱 기반 솔로 듀얼 연결, 자동 추천 덱/덱 요약 UI 추가</td></tr>
+      <tr><td>v0.1.0</td><td>2026-06-08</td><td>HUD 안내문 잘림 수정, 마나 UI 제거, 필드 말 크기 소폭 확대</td></tr>
     </table>
 
     <div class="note">
-      최신 실행파일은 <code>C:\Development\24_YL\YugiohLegend_v0.1.0_portable.exe</code>이며, 모든 기능 변경 후 실행파일과 본 기획서를 함께 최신화한다.
+      최신 실행파일: <code>C:\Development\24_YL\YugiohLegend_v0.1.0_portable.exe</code><br>
+      최신 기획서: <code>docs/YugiohLegend_기획서.md</code><br>
+      최신 HTML 문서: <code>docs/YugiohLegend_기획서.html</code>
     </div>
   </main>
-<!-- RESOURCE_PREVIEWS_START -->
-<section class="resource-previews">
-  <h2>공유용 이미지 미리보기</h2>
-  <p>자동 갱신: 2026-06-04. 공유 시 문서와 함께 아래 이미지 경로가 포함되어야 합니다.</p>
-  <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;">
-<figure style="margin:12px 0;padding:12px;border:1px solid #e5e7eb;border-radius:8px;background:#fff;">
-  <img src="../client/public/assets/cards/backrow_break.png" alt="24_YL backrow_break" style="max-width:220px;max-height:160px;width:auto;height:auto;object-fit:contain;display:block;" />
-  <figcaption style="margin-top:8px;font-size:13px;color:#4b5563;"><code>client/public/assets/cards/backrow_break.png</code></figcaption>
-</figure>
-<figure style="margin:12px 0;padding:12px;border:1px solid #e5e7eb;border-radius:8px;background:#fff;">
-  <img src="../client/public/assets/cards/banner_titan.png" alt="24_YL banner_titan" style="max-width:220px;max-height:160px;width:auto;height:auto;object-fit:contain;display:block;" />
-  <figcaption style="margin-top:8px;font-size:13px;color:#4b5563;"><code>client/public/assets/cards/banner_titan.png</code></figcaption>
-</figure>
-<figure style="margin:12px 0;padding:12px;border:1px solid #e5e7eb;border-radius:8px;background:#fff;">
-  <img src="../client/public/assets/cards/battle_fervor.png" alt="24_YL battle_fervor" style="max-width:220px;max-height:160px;width:auto;height:auto;object-fit:contain;display:block;" />
-  <figcaption style="margin-top:8px;font-size:13px;color:#4b5563;"><code>client/public/assets/cards/battle_fervor.png</code></figcaption>
-</figure>
-<figure style="margin:12px 0;padding:12px;border:1px solid #e5e7eb;border-radius:8px;background:#fff;">
-  <img src="../client/public/assets/cards/card_art_atlas.png" alt="24_YL card_art_atlas" style="max-width:220px;max-height:160px;width:auto;height:auto;object-fit:contain;display:block;" />
-  <figcaption style="margin-top:8px;font-size:13px;color:#4b5563;"><code>client/public/assets/cards/card_art_atlas.png</code></figcaption>
-</figure>
-<figure style="margin:12px 0;padding:12px;border:1px solid #e5e7eb;border-radius:8px;background:#fff;">
-  <img src="../client/public/assets/cards/dark_knight.png" alt="24_YL dark_knight" style="max-width:220px;max-height:160px;width:auto;height:auto;object-fit:contain;display:block;" />
-  <figcaption style="margin-top:8px;font-size:13px;color:#4b5563;"><code>client/public/assets/cards/dark_knight.png</code></figcaption>
-</figure>
-<figure style="margin:12px 0;padding:12px;border:1px solid #e5e7eb;border-radius:8px;background:#fff;">
-  <img src="../client/public/assets/cards/direct_shield.png" alt="24_YL direct_shield" style="max-width:220px;max-height:160px;width:auto;height:auto;object-fit:contain;display:block;" />
-  <figcaption style="margin-top:8px;font-size:13px;color:#4b5563;"><code>client/public/assets/cards/direct_shield.png</code></figcaption>
-</figure>
-  </div>
-</section>
-<!-- RESOURCE_PREVIEWS_END -->
 </body>
 </html>

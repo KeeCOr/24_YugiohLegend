@@ -48,4 +48,15 @@ describe('UI art references', () => {
     expect(field).toContain('setTributeLanes');
     expect(cardSprite).toContain('setBlocked');
   });
+
+  it('keeps HUD guide text inside its frame and avoids abandoned mana UI', () => {
+    const gameScene = readProjectFile('client/src/scenes/GameScene.ts');
+    const field = readProjectFile('client/src/components/Field.ts');
+
+    expect(gameScene).toContain('Select a card,\\nthen choose a lane');
+    expect(gameScene).toContain('wordWrap: { width: 244');
+    expect(gameScene).not.toContain('MANA');
+    expect(gameScene).not.toContain('manaTxt');
+    expect(field).toContain('FIELD_CARD_SCALE = 1.48');
+  });
 });

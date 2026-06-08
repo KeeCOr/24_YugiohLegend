@@ -1,4 +1,4 @@
-import Phaser from 'phaser';
+﻿import Phaser from 'phaser';
 import { ART_KEYS, addSceneBackdrop, cardArtKey } from '../art/ProceduralArt';
 import { Field } from '../components/Field';
 import { HandArea } from '../components/HandArea';
@@ -89,12 +89,12 @@ export class GameScene extends Phaser.Scene {
     this.myField = new Field(this, boardX, height * 0.600, 0);
     this.updateLaneUnlocks();
 
-    this.myLP = new LPDisplay(this, 20, height * 0.880, 'YOU');
+    this.myLP = new LPDisplay(this, 20, height * 0.915, 'YOU');
     this.myLP.setScale(1.0);
-    this.opLP = new LPDisplay(this, lpX, height * 0.106, 'RIVAL');
+    this.opLP = new LPDisplay(this, lpX, height * 0.145, 'RIVAL');
     this.opLP.setScale(1.0);
-    this.opDeckTxt = this.createDeckCounter(sideCenter - 44, height * 0.375, 'RIVAL DECK');
-    this.myDeckTxt = this.createDeckCounter(sideCenter - 44, height * 0.475, 'YOUR DECK');
+    this.opDeckTxt = this.createDeckCounter(sideCenter - 44, height * 0.335, 'RIVAL DECK');
+    this.myDeckTxt = this.createDeckCounter(sideCenter - 44, height * 0.455, 'YOUR DECK');
 
     this.handArea = new HandArea(this, boardX, height * 0.870, (card, _sprite) => {
       this.selectedCard = card;
@@ -110,15 +110,28 @@ export class GameScene extends Phaser.Scene {
       this.updateLaneGuidanceForSelectedCard(card);
     }, (card) => this.showCardHelp(card), () => {
       if (!this.selectedCard && this.statusTxt) {
-        this.statusTxt.setText('Green cards can be played. Click or drag to a glowing lane.');
+        this.statusTxt.setText('Select a glowing card, then choose a glowing lane.');
       }
     }, (card, worldX, worldY) => this.onCardDroppedOnLane(card, worldX, worldY));
 
-    this.submitBtn = this.add.image(sideCenter, height * 0.928, ART_KEYS.buttonPrimary).setDisplaySize(265, 84).setInteractive();
-    this.submitTxt = this.add.text(sideCenter, height * 0.928, 'COMMIT', {
+    this.add.image(sideCenter, height * 0.725, ART_KEYS.hudFrame).setDisplaySize(300, 112).setAlpha(0.78);
+    this.statusTxt = this.add.text(sideCenter, height * 0.725, 'Preparing duel...', {
+      fontSize: '15px',
+      color: '#d8e7ff',
+      stroke: '#080b12',
+      strokeThickness: 3,
+      wordWrap: { width: 252, useAdvancedWrap: true },
+      align: 'center',
+      lineSpacing: 3,
+    }).setOrigin(0.5);
+
+    this.submitBtn = this.add.image(sideCenter, height * 0.875, ART_KEYS.buttonPrimary).setDisplaySize(265, 76).setInteractive();
+    this.submitTxt = this.add.text(sideCenter, height * 0.875, 'COMMIT', {
       fontSize: '24px',
       color: '#ffffff',
       fontStyle: 'bold',
+      stroke: '#120912',
+      strokeThickness: 4,
     }).setOrigin(0.5);
     this.submitBtn.on('pointerdown', () => this.submitAction());
     this.submitBtn.on('pointerover', () => this.submitBtn.setTint(0xffe29a));
@@ -127,7 +140,7 @@ export class GameScene extends Phaser.Scene {
       else this.submitBtn.clearTint();
     });
 
-    this.surrenderBtn = this.add.text(sideCenter, height * 0.974, '항복', {
+    this.surrenderBtn = this.add.text(sideCenter, height * 0.974, '??났', {
       fontSize: '14px',
       color: '#6a7a8d',
       fontStyle: 'bold',
@@ -144,14 +157,6 @@ export class GameScene extends Phaser.Scene {
 
     this.setCommitReady(false);
 
-    this.statusTxt = this.add.text(sideCenter, height * 0.760, 'Preparing duel...', {
-      fontSize: '15px',
-      color: '#d8e7ff',
-      stroke: '#080b12',
-      strokeThickness: 3,
-      wordWrap: { width: 280 },
-      align: 'center',
-    }).setOrigin(0.5);
     this.turnTxt = this.add.text(boardX, 20, `TURN 1 / ${GameScene.MAX_TURNS}`, {
       fontSize: '18px',
       color: '#f2c86a',
@@ -201,15 +206,18 @@ export class GameScene extends Phaser.Scene {
       }).setOrigin(0.5);
     }
 
-    this.add.image(sideCenter, 46, ART_KEYS.hudFrame).setDisplaySize(300, 76).setAlpha(0.78);
-    this.add.text(sideCenter, 36, 'PLAYABLE CARDS GLOW', {
+    this.add.image(sideCenter, 50, ART_KEYS.hudFrame).setDisplaySize(300, 86).setAlpha(0.78);
+    this.add.text(sideCenter, 30, 'CARD GUIDE', {
       fontSize: '14px',
       color: '#bfffe2',
       fontStyle: 'bold',
     }).setOrigin(0.5);
-    this.add.text(sideCenter, 60, 'Click a card, then choose an open lane', {
-      fontSize: '11px',
+    this.add.text(sideCenter, 58, 'Select a card,\nthen choose a lane', {
+      fontSize: '12px',
       color: '#d8e7ff',
+      align: 'center',
+      wordWrap: { width: 244, useAdvancedWrap: true },
+      lineSpacing: 2,
     }).setOrigin(0.5);
   }
 
@@ -355,17 +363,17 @@ export class GameScene extends Phaser.Scene {
   private onSurrenderClick(): void {
     if (this.surrenderPending) {
       this.surrenderTimer?.destroy();
-      this.surrenderBtn.setText('항복 중...');
+      this.surrenderBtn.setText('??났 以?..');
       this.surrenderBtn.setColor('#ff667c');
       this.surrenderBtn.disableInteractive();
       this.socket.send({ type: 'forfeit' });
     } else {
       this.surrenderPending = true;
-      this.surrenderBtn.setText('확인?');
+      this.surrenderBtn.setText('?뺤씤?');
       this.surrenderBtn.setColor('#ff667c');
       this.surrenderTimer = this.time.delayedCall(3000, () => {
         this.surrenderPending = false;
-        this.surrenderBtn.setText('항복');
+        this.surrenderBtn.setText('??났');
         this.surrenderBtn.setColor('#6a7a8d');
       });
     }
@@ -632,3 +640,4 @@ export class GameScene extends Phaser.Scene {
     }
   }
 }
+

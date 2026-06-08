@@ -7,6 +7,7 @@ const LANE_COUNT = 3;
 const LANE_W = 198;
 const LANE_H = 286;
 const LANE_GAP = 48;
+const FIELD_CARD_SCALE = 1.48;
 
 export class Field extends Phaser.GameObjects.Container {
   private laneImages: Phaser.GameObjects.Image[] = [];
@@ -81,7 +82,7 @@ export class Field extends Phaser.GameObjects.Container {
       if (lane.monster) {
         const lx = this.getLaneLocalX(i);
         const sprite = new CardSprite(this.scene, lx, -4, lane.monster);
-        sprite.setBaseScale(1.4);
+        sprite.setBaseScale(FIELD_CARD_SCALE);
         this.add(sprite);
         this.monsterSprites[i] = sprite;
       }
@@ -120,7 +121,7 @@ export class Field extends Phaser.GameObjects.Container {
     this.clearPending(laneIndex);
     const lx = this.getLaneLocalX(laneIndex);
     const sprite = new CardSprite(this.scene, lx, -4, card, faceDown);
-    sprite.setBaseScale(1.4);
+    sprite.setBaseScale(FIELD_CARD_SCALE);
     sprite.setPreview(true);
     this.add(sprite);
     this.pendingSprites[laneIndex] = sprite;
