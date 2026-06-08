@@ -265,6 +265,7 @@ export class GameScene extends Phaser.Scene {
     this.selectedCard = null;
     this.handArea.deselectAll();
     this.myField.setGuidedLanes();
+    this.myField.setTributeLanes();
   }
 
   private setupLaneInteraction(): void {
@@ -348,6 +349,7 @@ export class GameScene extends Phaser.Scene {
     this.selectedCard = null;
     this.handArea.deselectAll();
     this.myField.setGuidedLanes();
+    if (card.type !== 'monster' || (card.tributeCost ?? 0) <= 0) this.myField.setTributeLanes();
   }
 
   private onSurrenderClick(): void {
@@ -402,6 +404,7 @@ export class GameScene extends Phaser.Scene {
         this.turnTxt.setText(`TURN ${this.turn} / ${GameScene.MAX_TURNS}`);
         this.updateLaneUnlocks();
         this.updatePlayableHandCards();
+        this.myField.setTributeLanes();
         this.setCommitReady(false);
         this.statusTxt.setText('Setup turn: place cards. Attacks start on turn 2.');
         break;
@@ -415,6 +418,7 @@ export class GameScene extends Phaser.Scene {
         this.updateDeckCounters();
         this.turnTxt.setText(`TURN ${this.turn} / ${GameScene.MAX_TURNS}`);
         this.updateLaneUnlocks();
+        this.myField.setTributeLanes();
         this.myHand.push(msg.drawnCard);
         this.handArea.setHand(this.myHand);
         this.submitTxt.setText('COMMIT');
@@ -473,6 +477,7 @@ export class GameScene extends Phaser.Scene {
     this.opLanes = op;
     this.myField.updateLanes(my);
     this.opField.updateLanes(op);
+    this.myField.setTributeLanes();
     this.updateLaneUnlocks();
     this.updatePlayableHandCards();
   }
@@ -508,6 +513,11 @@ export class GameScene extends Phaser.Scene {
   private updateLaneGuidanceForSelectedCard(card: Card): void {
     const lanes = this.getPlayableLaneIndices(card);
     this.myField.setGuidedLanes(lanes);
+    if (card.type === 'monster' && (card.tributeCost ?? 0) > 0) {
+      this.myField.setTributeLanes(this.getAutoTributeLaneIndices(card.tributeCost ?? 0));
+    } else {
+      this.myField.setTributeLanes();
+    }
     if (lanes.length === 0) {
       this.statusTxt.setText(`${card.name}: ${this.getPlayBlockReason(card)}`);
     }

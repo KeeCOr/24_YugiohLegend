@@ -243,20 +243,45 @@ describe('GameRoom', () => {
     expect(room.getState().players[0].lanes[0].monster?.id).toBe(monsterCard.id);
   });
 
-  it('tribute summon automatically consumes valid tribute monsters', () => {
+  it('tribute summon automatically consumes a monster that was already summoned on the field', () => {
     const room = new GameRoom('room1');
     room.addPlayer('p0', makeDeck());
     room.addPlayer('p1', makeDeck());
     const tributeMonster = allCards.find(c => c.id === 'iron_golem')!;
     const material = allCards.find(c => c.id === 'village_guard')!;
 
-    (room.getState() as GameState).players[0].lanes[1].monster = material;
+    (room.getState() as GameState).players[0].hand.push(material);
+    (room.getState() as GameState).players[0].hand.push(tributeMonster);
+
+    room.submitAction(0, { summon: { card: material, laneIndex: 0 }, spells: [] });
+    room.submitAction(1, emptyAction());
+
+    expect(room.getState().turn).toBe(2);
+    expect(room.getState().players[0].lanes[0].monster?.id).toBe(material.id);
+
+    room.submitAction(0, { summon: { card: tributeMonster, laneIndex: 1 }, spells: [] });
+    room.submitAction(1, emptyAction());
+
+    expect(room.getState().players[0].lanes[0].monster).toBeNull();
+    expect(room.getState().players[0].lanes[1].monster?.id).toBe(tributeMonster.id);
+  });
+
+  it('tribute summon does not use monsters from hand as tribute material', () => {
+    const room = new GameRoom('room1');
+    room.addPlayer('p0', makeDeck());
+    room.addPlayer('p1', makeDeck());
+    const tributeMonster = allCards.find(c => c.id === 'iron_golem')!;
+    const handOnlyMaterial = allCards.find(c => c.id === 'village_guard')!;
+
+    (room.getState() as GameState).players[0].hand.push(handOnlyMaterial);
     (room.getState() as GameState).players[0].hand.push(tributeMonster);
 
     room.submitAction(0, { summon: { card: tributeMonster, laneIndex: 0 }, spells: [] });
     room.submitAction(1, emptyAction());
-    expect(room.getState().players[0].lanes[0].monster?.id).toBe(tributeMonster.id);
-    expect(room.getState().players[0].lanes[1].monster).toBeNull();
+
+    expect(room.getState().players[0].lanes[0].monster).toBeNull();
+    expect(room.getState().players[0].hand.map(card => card.id)).toContain(handOnlyMaterial.id);
+    expect(room.getState().players[0].hand.map(card => card.id)).toContain(tributeMonster.id);
   });
 
   it('reveal shows opponent face-up spells and hides face-down spells', () => {

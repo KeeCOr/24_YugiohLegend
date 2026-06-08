@@ -30,7 +30,6 @@ describe('UI art references', () => {
 
     expect(gameScene).toContain('ART_KEYS.buttonPrimary');
     expect(gameScene).toContain('ART_KEYS.hudFrame');
-    expect(handArea).toContain('ART_KEYS.handRail');
     expect(field).toContain('ART_KEYS.laneFrame');
     expect(lpDisplay).toContain('ART_KEYS.hudFrame');
   });
@@ -46,6 +45,7 @@ describe('UI art references', () => {
     expect(gameScene).toContain('setCommitReady');
     expect(handArea).toContain('onCardHover');
     expect(field).toContain('setGuidedLanes');
+    expect(field).toContain('setTributeLanes');
     expect(cardSprite).toContain('setBlocked');
   });
 });

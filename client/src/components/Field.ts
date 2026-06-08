@@ -16,7 +16,9 @@ export class Field extends Phaser.GameObjects.Container {
   private lockedOverlays: Phaser.GameObjects.Container[] = [];
   private spellIndicators: Phaser.GameObjects.Container[] = [];
   private faceDownSpellIndicators: Phaser.GameObjects.Container[] = [];
+  private tributeMarkers: Phaser.GameObjects.Container[] = [];
   private guidedLanes = new Set<number>();
+  private tributeLanes = new Set<number>();
 
   constructor(scene: Phaser.Scene, x: number, y: number, public playerIndex: PlayerIndex) {
     super(scene, x, y);
@@ -55,6 +57,11 @@ export class Field extends Phaser.GameObjects.Container {
       const locked = this.createLockedOverlay(scene, lx, i);
       this.add(locked);
       this.lockedOverlays.push(locked);
+
+      const tributeMarker = this.createTributeMarker(scene, lx);
+      tributeMarker.setVisible(false);
+      this.add(tributeMarker);
+      this.tributeMarkers.push(tributeMarker);
     }
   }
 
@@ -149,6 +156,16 @@ export class Field extends Phaser.GameObjects.Container {
     }
   }
 
+  setTributeLanes(lanes: LaneIndex[] = []): void {
+    this.tributeLanes = new Set(lanes);
+    for (let i = 0; i < LANE_COUNT; i++) {
+      const shouldShow = this.tributeLanes.has(i) && this.monsterSprites[i] !== null;
+      this.tributeMarkers[i].setVisible(shouldShow);
+      if (shouldShow) this.laneImages[i].setTint(0xffd36f);
+      else this.laneImages[i].setTint(this.guidedLanes.has(i) ? 0x9cffc8 : 0xffffff);
+    }
+  }
+
   private createFaceDownSpellIndicator(scene: Phaser.Scene, x: number, y: number): Phaser.GameObjects.Container {
     const c = scene.add.container(x, y);
     const back = scene.add.image(0, 0, ART_KEYS.cardBack).setDisplaySize(36, 50).setAlpha(0.96);
@@ -199,6 +216,23 @@ export class Field extends Phaser.GameObjects.Container {
       strokeThickness: 3,
     }).setOrigin(0.5);
     c.add([veil, label]);
+    return c;
+  }
+
+  private createTributeMarker(scene: Phaser.Scene, x: number): Phaser.GameObjects.Container {
+    const c = scene.add.container(x, 0);
+    const veil = scene.add.rectangle(0, 0, LANE_W, LANE_H, 0x2c0d11, 0.34);
+    veil.setStrokeStyle(4, 0xffd36f, 0.92);
+    const tag = scene.add.image(0, -LANE_H / 2 + 52, ART_KEYS.buttonPrimary).setDisplaySize(142, 38).setAlpha(0.94);
+    const label = scene.add.text(0, -LANE_H / 2 + 52, 'TRIBUTE', {
+      fontSize: '14px',
+      color: '#fff6d8',
+      fontStyle: 'bold',
+      stroke: '#17080a',
+      strokeThickness: 3,
+    }).setOrigin(0.5);
+    c.add([veil, tag, label]);
+    c.setDepth(50);
     return c;
   }
 
