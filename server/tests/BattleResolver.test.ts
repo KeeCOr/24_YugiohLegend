@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { resolveBattle } from '../src/BattleResolver';
 import type { Card, LaneState, PlayerState } from '../../shared/types';
 
-function monster(id: string, atk: number): Card {
-  return { id, type: 'monster', name: id, atk };
+function monster(id: string, atk: number, hp = 1000): Card {
+  return { id, type: 'monster', name: id, atk, hp };
 }
 
 function lane(mon: Card | null = null, trap: Card | null = null): LaneState {
@@ -44,24 +44,53 @@ describe('resolveBattle', () => {
     expect(result.p1LpDelta).toBe(0);
   });
 
-  it('higher ATK destroys lower ATK and deals the difference', () => {
+  it('higher ATK reduces lower monster HP by the difference without LP damage when it survives', () => {
     const result = resolveBattle(
-      player(0, 4000, lane(monster('a', 2000)), lane(), lane()),
-      player(1, 4000, lane(monster('b', 1500)), lane(), lane())
+      player(0, 4000, lane(monster('a', 2000, 500)), lane(), lane()),
+      player(1, 4000, lane(monster('b', 1500, 900)), lane(), lane())
     );
-    expect(result.p1LpDelta).toBe(-500);
+    expect(result.p1LpDelta).toBe(0);
     expect(result.p0LpDelta).toBe(0);
-    expect(result.events[0].destroyedCards).toEqual([{ playerIndex: 1, card: monster('b', 1500) }]);
+    expect(result.events[0].damage).toBe(500);
+    expect(result.events[0].destroyedCards).toEqual([]);
+    expect(result.events[0].hpChanges).toEqual([
+      { playerIndex: 1, card: monster('b', 1500, 900), hpBefore: 900, hpAfter: 400 },
+    ]);
   });
 
-  it('equal ATK destroys both monsters without LP damage', () => {
+  it('destroys a monster and deals overflow LP damage when ATK difference drops HP below zero', () => {
     const result = resolveBattle(
-      player(0, 4000, lane(monster('a', 1000)), lane(), lane()),
-      player(1, 4000, lane(monster('b', 1000)), lane(), lane())
+      player(0, 4000, lane(monster('a', 2000, 500)), lane(), lane()),
+      player(1, 4000, lane(monster('b', 1500, 400)), lane(), lane())
+    );
+    expect(result.p1LpDelta).toBe(-100);
+    expect(result.events[0].destroyedCards).toEqual([{ playerIndex: 1, card: monster('b', 1500, 400) }]);
+    expect(result.events[0].hpChanges).toEqual([
+      { playerIndex: 1, card: monster('b', 1500, 400), hpBefore: 400, hpAfter: -100 },
+    ]);
+  });
+
+  it('destroys a monster without LP damage when ATK difference drops HP exactly to zero', () => {
+    const result = resolveBattle(
+      player(0, 4000, lane(monster('a', 2000, 500)), lane(), lane()),
+      player(1, 4000, lane(monster('b', 1500, 500)), lane(), lane())
+    );
+    expect(result.p1LpDelta).toBe(0);
+    expect(result.events[0].destroyedCards).toEqual([{ playerIndex: 1, card: monster('b', 1500, 500) }]);
+    expect(result.events[0].hpChanges).toEqual([
+      { playerIndex: 1, card: monster('b', 1500, 500), hpBefore: 500, hpAfter: 0 },
+    ]);
+  });
+
+  it('equal ATK leaves both monsters standing without HP or LP damage', () => {
+    const result = resolveBattle(
+      player(0, 4000, lane(monster('a', 1000, 600)), lane(), lane()),
+      player(1, 4000, lane(monster('b', 1000, 600)), lane(), lane())
     );
     expect(result.p0LpDelta).toBe(0);
     expect(result.p1LpDelta).toBe(0);
-    expect(result.events[0].destroyedCards).toHaveLength(2);
+    expect(result.events[0].destroyedCards).toEqual([]);
+    expect(result.events[0].hpChanges).toEqual([]);
   });
 
   it('tempAtkBoost changes effective ATK', () => {
@@ -70,7 +99,10 @@ describe('resolveBattle', () => {
       player(0, 4000, boostedLane, lane(), lane()),
       player(1, 4000, lane(monster('b', 1200)), lane(), lane())
     );
-    expect(result.p1LpDelta).toBe(-300);
+    expect(result.p1LpDelta).toBe(0);
+    expect(result.events[0].hpChanges).toEqual([
+      { playerIndex: 1, card: monster('b', 1200), hpBefore: 1000, hpAfter: 700 },
+    ]);
   });
 
   it('on_attacked negate_attack face-down spell negates one attack', () => {
@@ -99,7 +131,13 @@ describe('resolveBattle', () => {
       player(0, 4000, lane(monster('a', 500)), lane(monster('b', 1000)), lane(monster('c', 1500)), lane()),
       player(1, 4000, lane(), lane(monster('d', 1500)), lane(monster('e', 1000)), lane(monster('f', 700)))
     );
-    expect(result.p1LpDelta).toBe(-1000);
-    expect(result.p0LpDelta).toBe(-1200);
+    expect(result.p1LpDelta).toBe(-500);
+    expect(result.p0LpDelta).toBe(-700);
+    expect(result.events[1].hpChanges).toEqual([
+      { playerIndex: 0, card: monster('b', 1000), hpBefore: 1000, hpAfter: 500 },
+    ]);
+    expect(result.events[2].hpChanges).toEqual([
+      { playerIndex: 1, card: monster('e', 1000), hpBefore: 1000, hpAfter: 500 },
+    ]);
   });
 });

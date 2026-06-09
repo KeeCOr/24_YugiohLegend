@@ -1,7 +1,14 @@
 export type CardType = 'monster' | 'spell';
 export type SpellMode = 'face_up' | 'face_down';
-export type EffectId = 'power_boost' | 'monster_smash' | 'backrow_break' | 'negate_attack' | 'reduce_damage_500';
-export type TriggerConditionId = 'on_attacked' | 'on_direct_attack';
+export type EffectId =
+  | 'power_boost'
+  | 'monster_smash'
+  | 'backrow_break'
+  | 'extra_summon_next_turn'
+  | 'negate_attack'
+  | 'reduce_damage_500'
+  | 'destroy_all_monsters';
+export type TriggerConditionId = 'on_attacked' | 'on_direct_attack' | 'on_opponent_summon_two_plus';
 export type MonsterRole = 'striker' | 'guardian' | 'utility';
 export type TributeRole = 'bruiser' | 'ally_booster' | 'field_booster' | 'mobile' | 'tribute_scaler';
 export type MonsterAbilityId =
@@ -55,8 +62,15 @@ export interface PlayerState {
   lanes: LaneState[];
 }
 
+export interface SummonAction {
+  card: Card;
+  laneIndex: LaneIndex;
+  tributeLaneIndices?: LaneIndex[];
+}
+
 export interface TurnAction {
-  summon?: { card: Card; laneIndex: LaneIndex; tributeLaneIndices?: LaneIndex[] };
+  summon?: SummonAction;
+  summons?: SummonAction[];
   spells: { card: Card; laneIndex: LaneIndex }[];
 }
 
@@ -65,6 +79,7 @@ export interface BattleEvent {
   type: 'monster_vs_monster' | 'direct_attack' | 'no_action';
   attackerIndex: PlayerIndex;
   damage: number;
+  hpChanges?: { playerIndex: PlayerIndex; card: Card; hpBefore: number; hpAfter: number }[];
   destroyedCards: { playerIndex: PlayerIndex; card: Card }[];
   triggeredSpell?: { playerIndex: PlayerIndex; card: Card };
   negated: boolean;

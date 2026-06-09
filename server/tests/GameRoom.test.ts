@@ -88,6 +88,31 @@ describe('GameRoom', () => {
     expect(room.getState().turn).toBe(2);
   });
 
+  it('applies ATK difference as monster HP loss without LP damage', () => {
+    const room = new GameRoom('room1');
+    room.addPlayer('p0', makeDeck());
+    room.addPlayer('p1', makeDeck());
+    const strong: Card = { id: 'strong_test_monster', type: 'monster', name: 'Strong', atk: 2000, hp: 500 };
+    const durable: Card = { id: 'durable_test_monster', type: 'monster', name: 'Durable', atk: 1500, hp: 900 };
+
+    room.submitAction(0, { summon: { card: strong, laneIndex: 0 }, spells: [] });
+    room.submitAction(1, { summon: { card: durable, laneIndex: 0 }, spells: [] });
+    room.submitAction(0, emptyAction());
+    const msgs = room.submitAction(1, emptyAction());
+    const result = msgs.find(m => m.message.type === 'battle_result')?.message;
+
+    expect(room.getState().players[0].lp).toBe(4000);
+    expect(room.getState().players[1].lp).toBe(4000);
+    expect(room.getState().players[1].lanes[0].monster?.hp).toBe(400);
+    expect(result?.type).toBe('battle_result');
+    if (result?.type === 'battle_result') {
+      expect(result.lanes[1][0].monster?.hp).toBe(400);
+      expect(result.events[0].hpChanges).toEqual([
+        { playerIndex: 1, card: durable, hpBefore: 900, hpAfter: 400 },
+      ]);
+    }
+  });
+
   it('only unlocks one additional lane each turn', () => {
     const room = new GameRoom('room1');
     room.addPlayer('p0', makeDeck());
@@ -133,7 +158,8 @@ describe('GameRoom', () => {
     room.submitAction(1, emptyAction());
 
     expect(room.getState().players[0].lanes[0].monster?.id).toBe(monster.id);
-    expect(room.getState().players[1].lanes[0].monster).toBeNull();
+    expect(room.getState().players[1].lanes[0].monster?.id).toBe(opponentMonster.id);
+    expect(room.getState().players[1].lanes[0].monster?.hp).toBe(1100);
     expect(room.getState().players[0].lanes[0].spell).toBeNull();
   });
 
@@ -241,6 +267,85 @@ describe('GameRoom', () => {
     room.submitAction(0, action);
     room.submitAction(1, emptyAction());
     expect(room.getState().players[0].lanes[0].monster?.id).toBe(monsterCard.id);
+  });
+
+  it('allows only one summon unless an extra summon spell resolves', () => {
+    const room = new GameRoom('room1');
+    room.addPlayer('p0', makeDeck());
+    room.addPlayer('p1', makeDeck());
+    const first: Card = { id: 'first_free', type: 'monster', name: 'First', atk: 700, hp: 700, tributeCost: 0 };
+    const second: Card = { id: 'second_free', type: 'monster', name: 'Second', atk: 800, hp: 700, tributeCost: 0 };
+
+    room.submitAction(0, {
+      summons: [
+        { card: first, laneIndex: 0 },
+        { card: second, laneIndex: 1 },
+      ],
+      spells: [],
+    });
+    room.submitAction(1, emptyAction());
+
+    expect(room.getState().players[0].lanes[0].monster?.id).toBe(first.id);
+    expect(room.getState().players[0].lanes[1].monster).toBeNull();
+  });
+
+  it('extra summon spell lets its owner summon twice on the next turn if it survives', () => {
+    const room = new GameRoom('room1');
+    room.addPlayer('p0', makeDeck());
+    room.addPlayer('p1', makeDeck());
+    const extraSummon = allCards.find(c => c.id === 'extra_summon')!;
+    const first: Card = { id: 'first_extra_free', type: 'monster', name: 'First Extra', atk: 700, hp: 700, tributeCost: 0 };
+    const second: Card = { id: 'second_extra_free', type: 'monster', name: 'Second Extra', atk: 800, hp: 700, tributeCost: 0 };
+
+    (room.getState() as GameState).players[0].hand.push(extraSummon, first, second);
+    room.submitAction(0, { spells: [{ card: extraSummon, laneIndex: 0 }] });
+    room.submitAction(1, emptyAction());
+
+    expect(room.getState().players[0].lanes[0].spell?.card.id).toBe(extraSummon.id);
+
+    room.submitAction(0, {
+      summons: [
+        { card: first, laneIndex: 0 },
+        { card: second, laneIndex: 1 },
+      ],
+      spells: [],
+    });
+    room.submitAction(1, emptyAction());
+
+    expect(room.getState().players[0].lanes[0].monster?.id).toBe(first.id);
+    expect(room.getState().players[0].lanes[1].monster?.id).toBe(second.id);
+    expect(room.getState().players[0].lanes[0].spell).toBeNull();
+  });
+
+  it('overextend trap destroys all monsters when the opponent summons two or more monsters this turn', () => {
+    const room = new GameRoom('room1');
+    room.addPlayer('p0', makeDeck());
+    room.addPlayer('p1', makeDeck());
+    const trap = allCards.find(c => c.id === 'overextend_collapse')!;
+    const extraSummon = allCards.find(c => c.id === 'extra_summon')!;
+    const p0Existing: Card = { id: 'p0_existing', type: 'monster', name: 'P0 Existing', atk: 700, hp: 700, tributeCost: 0 };
+    const p1Existing: Card = { id: 'p1_existing', type: 'monster', name: 'P1 Existing', atk: 700, hp: 700, tributeCost: 0 };
+    const first: Card = { id: 'first_overextend', type: 'monster', name: 'First Over', atk: 700, hp: 700, tributeCost: 0 };
+    const second: Card = { id: 'second_overextend', type: 'monster', name: 'Second Over', atk: 800, hp: 700, tributeCost: 0 };
+
+    (room.getState() as GameState).turn = 3;
+    (room.getState() as GameState).players[0].lanes[0].monster = p0Existing;
+    (room.getState() as GameState).players[1].lanes[0].monster = p1Existing;
+    (room.getState() as GameState).players[0].lanes[1].faceDownSpell = trap;
+    (room.getState() as GameState).players[1].lanes[1].spell = { card: extraSummon, remainingTurns: 1 };
+
+    room.submitAction(0, emptyAction());
+    room.submitAction(1, {
+      summons: [
+        { card: first, laneIndex: 1 },
+        { card: second, laneIndex: 2 },
+      ],
+      spells: [],
+    });
+
+    expect(room.getState().players[0].lanes.every(lane => lane.monster === null)).toBe(true);
+    expect(room.getState().players[1].lanes.every(lane => lane.monster === null)).toBe(true);
+    expect(room.getState().players[0].lanes[1].faceDownSpell).toBeNull();
   });
 
   it('tribute summon automatically consumes a monster that was already summoned on the field', () => {

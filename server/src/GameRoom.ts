@@ -1,6 +1,6 @@
 import { resolveBattle } from './BattleResolver';
 import type {
-  Card, GameState, LaneState, PlayerState, TurnAction,
+  Card, GameState, LaneState, PlayerState, SummonAction, TurnAction,
   ServerMessage, PlayerIndex, LaneIndex
 } from '../../shared/types';
 import { LANE_INDICES } from '../../shared/types';
@@ -45,9 +45,9 @@ function shuffle<T>(arr: T[]): T[] {
 function cloneLanes(state: GameState): [PlayerState['lanes'], PlayerState['lanes']] {
   return state.players.map(player =>
     player.lanes.map(lane => ({
-      monster: lane.monster,
-      spell: lane.spell,
-      faceDownSpell: lane.faceDownSpell,
+      monster: lane.monster ? { ...lane.monster } : null,
+      spell: lane.spell ? { card: { ...lane.spell.card }, remainingTurns: lane.spell.remainingTurns } : null,
+      faceDownSpell: lane.faceDownSpell ? { ...lane.faceDownSpell } : null,
       tempAtkBoost: lane.tempAtkBoost,
     })) as PlayerState['lanes']
   ) as [PlayerState['lanes'], PlayerState['lanes']];
@@ -60,17 +60,24 @@ function isLaneUnlocked(turn: number, laneIndex: LaneIndex): boolean {
 function maskActionForOpponent(action: TurnAction): TurnAction {
   return {
     summon: action.summon,
-    spells: action.spells.map(spell => ({
+    summons: action.summons,
+    spells: (action.spells ?? []).map(spell => ({
       ...spell,
       card: spell.card.spellMode === 'face_down' ? HIDDEN_FACE_DOWN_SPELL_CARD : spell.card,
     })),
   };
 }
 
+function normalizeSummons(action: TurnAction): SummonAction[] {
+  if (action.summons?.length) return action.summons;
+  return action.summon ? [action.summon] : [];
+}
+
 export class GameRoom {
   id: string;
   private state: GameState;
   private playerIds: [string | null, string | null] = [null, null];
+  private extraSummonsThisTurn: [number, number] = [0, 0];
 
   constructor(id: string) {
     this.id = id;
@@ -137,9 +144,13 @@ export class GameRoom {
     msgs.push({ playerIndex: 0, message: { type: 'reveal', yourAction: a0, opponentAction: maskActionForOpponent(a1) } });
     msgs.push({ playerIndex: 1, message: { type: 'reveal', yourAction: a1, opponentAction: maskActionForOpponent(a0) } });
 
+    this.extraSummonsThisTurn = [0, 0];
     this.resolveDelayedSpells();
-    this.applyAction(0, a0);
-    this.applyAction(1, a1);
+    const summonCounts: [number, number] = [
+      this.applyAction(0, a0),
+      this.applyAction(1, a1),
+    ];
+    this.resolveOverextendSpells(summonCounts);
 
     const { events, p0LpDelta, p1LpDelta } = this.state.turn === SETUP_TURN
       ? { events: [], p0LpDelta: 0, p1LpDelta: 0 }
@@ -186,6 +197,12 @@ export class GameRoom {
 
   private applyBattleResult(events: ReturnType<typeof resolveBattle>['events']): void {
     for (const ev of events) {
+      for (const hpChange of ev.hpChanges ?? []) {
+        const lane = this.state.players[hpChange.playerIndex].lanes[ev.laneIndex];
+        if (lane.monster?.id === hpChange.card.id) {
+          lane.monster = { ...lane.monster, hp: Math.max(0, hpChange.hpAfter) };
+        }
+      }
       for (const { playerIndex, card } of ev.destroyedCards) {
         const lane = this.state.players[playerIndex].lanes[ev.laneIndex];
         if (lane.monster?.id === card.id) lane.monster = null;
@@ -227,11 +244,13 @@ export class GameRoom {
     return msgs;
   }
 
-  private applyAction(playerIndex: PlayerIndex, action: TurnAction): void {
+  private applyAction(playerIndex: PlayerIndex, action: TurnAction): number {
     const player = this.state.players[playerIndex];
+    let successfulSummons = 0;
+    const summonLimit = 1 + this.extraSummonsThisTurn[playerIndex];
 
-    if (action.summon) {
-      const { card, laneIndex, tributeLaneIndices = [] } = action.summon;
+    for (const summon of normalizeSummons(action).slice(0, summonLimit)) {
+      const { card, laneIndex, tributeLaneIndices = [] } = summon;
       const tributeCost = card.tributeCost ?? 0;
       const uniqueTributes = [...new Set(tributeLaneIndices)];
       const requestedTributes = uniqueTributes.filter(tributeLane =>
@@ -251,12 +270,13 @@ export class GameRoom {
         for (const tributeLane of validTributes.slice(0, tributeCost)) {
           player.lanes[tributeLane].monster = null;
         }
-        player.lanes[laneIndex].monster = card;
+        player.lanes[laneIndex].monster = { ...card };
         player.hand = player.hand.filter(c => c.id !== card.id);
+        successfulSummons += 1;
       }
     }
 
-    for (const { card, laneIndex } of action.spells) {
+    for (const { card, laneIndex } of action.spells ?? []) {
       if (!isLaneUnlocked(this.state.turn, laneIndex)) continue;
 
       if (card.spellMode === 'face_down') {
@@ -274,6 +294,8 @@ export class GameRoom {
         player.hand = player.hand.filter(c => c.id !== card.id);
       }
     }
+
+    return successfulSummons;
   }
 
   private applySpell(playerIndex: PlayerIndex, spell: Card, laneIndex: LaneIndex): void {
@@ -320,6 +342,31 @@ export class GameRoom {
         if (faceDownLane?.faceDownSpell) faceDownLane.faceDownSpell = null;
         break;
       }
+      case 'extra_summon_next_turn':
+        this.extraSummonsThisTurn[playerIndex] += 1;
+        break;
+    }
+  }
+
+  private resolveOverextendSpells(summonCounts: [number, number]): void {
+    let shouldDestroyAllMonsters = false;
+
+    for (const playerIndex of [0, 1] as PlayerIndex[]) {
+      const opponentIndex: PlayerIndex = playerIndex === 0 ? 1 : 0;
+      if (summonCounts[opponentIndex] < 2) continue;
+
+      for (const lane of this.state.players[playerIndex].lanes) {
+        const spell = lane.faceDownSpell;
+        if (spell?.triggerCondition === 'on_opponent_summon_two_plus' && spell.effect === 'destroy_all_monsters') {
+          lane.faceDownSpell = null;
+          shouldDestroyAllMonsters = true;
+        }
+      }
+    }
+
+    if (!shouldDestroyAllMonsters) return;
+    for (const player of this.state.players) {
+      for (const lane of player.lanes) lane.monster = null;
     }
   }
 

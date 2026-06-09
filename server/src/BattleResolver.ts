@@ -11,6 +11,48 @@ function triggeredSpell(lane: LaneState, condition: Card['triggerCondition']): C
   return spell?.triggerCondition === condition ? spell : null;
 }
 
+function monsterHp(card: Card): number {
+  return card.hp ?? 1;
+}
+
+function applyAtkDifferenceDamage(
+  defenderIndex: PlayerIndex,
+  defender: Card,
+  damage: number,
+  hpChanges: NonNullable<BattleEvent['hpChanges']>,
+  destroyedCards: BattleEvent['destroyedCards']
+): { overflowDamage: number; overflowPlayerIndex: PlayerIndex | null } {
+  if (damage <= 0) return { overflowDamage: 0, overflowPlayerIndex: null };
+  const hpBefore = monsterHp(defender);
+  const hpAfter = hpBefore - damage;
+  hpChanges.push({ playerIndex: defenderIndex, card: defender, hpBefore, hpAfter });
+  if (hpAfter <= 0) destroyedCards.push({ playerIndex: defenderIndex, card: defender });
+  return { overflowDamage: Math.max(0, -hpAfter), overflowPlayerIndex: hpAfter < 0 ? defenderIndex : null };
+}
+
+function resolveAtkDifferenceDamage(
+  p0Mon: Card,
+  p1Mon: Card,
+  p0Atk: number,
+  p1Atk: number,
+  hpChanges: NonNullable<BattleEvent['hpChanges']>,
+  destroyedCards: BattleEvent['destroyedCards']
+): { damage: number; overflowDamage: number; overflowPlayerIndex: PlayerIndex | null } {
+  if (p0Atk > p1Atk) {
+    const damage = p0Atk - p1Atk;
+    const overflow = applyAtkDifferenceDamage(1, p1Mon, damage, hpChanges, destroyedCards);
+    return { damage, ...overflow };
+  }
+
+  if (p1Atk > p0Atk) {
+    const damage = p1Atk - p0Atk;
+    const overflow = applyAtkDifferenceDamage(0, p0Mon, damage, hpChanges, destroyedCards);
+    return { damage, ...overflow };
+  }
+
+  return { damage: 0, overflowDamage: 0, overflowPlayerIndex: null };
+}
+
 export function resolveBattle(p0: PlayerState, p1: PlayerState): BattleResult {
   const events: BattleEvent[] = [];
   let p0LpDelta = 0;
@@ -53,6 +95,7 @@ function resolveLane(
     const p0AttackNegated = p0Counter?.effect === 'negate_attack';
     const p1AttackNegated = p1Counter?.effect === 'negate_attack';
     const destroyedCards: BattleEvent['destroyedCards'] = [];
+    const hpChanges: NonNullable<BattleEvent['hpChanges']> = [];
     let damage = 0;
 
     if (p0AttackNegated && p1AttackNegated) {
@@ -70,50 +113,31 @@ function resolveLane(
 
     if (!p0AttackNegated && !p1AttackNegated) {
       const attackerIndex: PlayerIndex = p0Atk >= p1Atk ? 0 : 1;
-      if (p0Atk > p1Atk) {
-        destroyedCards.push({ playerIndex: 1, card: p1Mon });
-        damage = p0Atk - p1Atk;
-        p1LpDelta -= damage;
-      } else if (p1Atk > p0Atk) {
-        destroyedCards.push({ playerIndex: 0, card: p0Mon });
-        damage = p1Atk - p0Atk;
-        p0LpDelta -= damage;
-      } else {
-        destroyedCards.push({ playerIndex: 0, card: p0Mon });
-        destroyedCards.push({ playerIndex: 1, card: p1Mon });
-      }
-      events.push({ laneIndex, type: 'monster_vs_monster', attackerIndex, damage, destroyedCards, negated: false });
+      const atkResult = resolveAtkDifferenceDamage(p0Mon, p1Mon, p0Atk, p1Atk, hpChanges, destroyedCards);
+      damage = atkResult.damage;
+      if (atkResult.overflowPlayerIndex === 0) p0LpDelta -= atkResult.overflowDamage;
+      if (atkResult.overflowPlayerIndex === 1) p1LpDelta -= atkResult.overflowDamage;
+      events.push({ laneIndex, type: 'monster_vs_monster', attackerIndex, damage, hpChanges, destroyedCards, negated: false });
       return { events, p0LpDelta, p1LpDelta };
     }
 
     const spellOwner: PlayerIndex = p0AttackNegated ? 1 : 0;
     const spellCard = p0AttackNegated ? p0Counter! : p1Counter!;
 
-    if (p0AttackNegated) {
-      if (p1Atk > p0Atk) {
-        destroyedCards.push({ playerIndex: 0, card: p0Mon });
-        damage = p1Atk - p0Atk;
-        p0LpDelta -= damage;
-      } else if (p1Atk < p0Atk) {
-        destroyedCards.push({ playerIndex: 1, card: p1Mon });
-      } else {
-        destroyedCards.push({ playerIndex: 0, card: p0Mon });
-        destroyedCards.push({ playerIndex: 1, card: p1Mon });
-      }
-      events.push({ laneIndex, type: 'monster_vs_monster', attackerIndex: 1, damage, destroyedCards, triggeredSpell: { playerIndex: spellOwner, card: spellCard }, negated: true });
-    } else {
-      if (p0Atk > p1Atk) {
-        destroyedCards.push({ playerIndex: 1, card: p1Mon });
-        damage = p0Atk - p1Atk;
-        p1LpDelta -= damage;
-      } else if (p0Atk < p1Atk) {
-        destroyedCards.push({ playerIndex: 0, card: p0Mon });
-      } else {
-        destroyedCards.push({ playerIndex: 0, card: p0Mon });
-        destroyedCards.push({ playerIndex: 1, card: p1Mon });
-      }
-      events.push({ laneIndex, type: 'monster_vs_monster', attackerIndex: 0, damage, destroyedCards, triggeredSpell: { playerIndex: spellOwner, card: spellCard }, negated: true });
-    }
+    const atkResult = resolveAtkDifferenceDamage(p0Mon, p1Mon, p0Atk, p1Atk, hpChanges, destroyedCards);
+    damage = atkResult.damage;
+    if (atkResult.overflowPlayerIndex === 0) p0LpDelta -= atkResult.overflowDamage;
+    if (atkResult.overflowPlayerIndex === 1) p1LpDelta -= atkResult.overflowDamage;
+    events.push({
+      laneIndex,
+      type: 'monster_vs_monster',
+      attackerIndex: p0AttackNegated ? 1 : 0,
+      damage,
+      hpChanges,
+      destroyedCards,
+      triggeredSpell: { playerIndex: spellOwner, card: spellCard },
+      negated: true,
+    });
     return { events, p0LpDelta, p1LpDelta };
   }
 

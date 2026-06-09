@@ -5,7 +5,7 @@ import { HandArea } from '../components/HandArea';
 import { LPDisplay } from '../components/LPDisplay';
 import { SocketManager } from '../network/SocketManager';
 import type {
-  BattleEvent, Card, LaneIndex, LaneState, PlayerIndex, ServerMessage, TurnAction,
+  BattleEvent, Card, LaneIndex, LaneState, PlayerIndex, ServerMessage, SummonAction, TurnAction,
 } from '../data/CardTypes';
 import { ALL_CARDS } from './BootScene';
 
@@ -21,6 +21,7 @@ interface PendingTributeSummon {
   card: Card;
   laneIndex: LaneIndex;
   tributeCost: number;
+  summonIndex: number;
 }
 
 export class GameScene extends Phaser.Scene {
@@ -321,8 +322,10 @@ export class GameScene extends Phaser.Scene {
     const card = this.selectedCard;
 
     if (card.type === 'monster') {
-      if (this.pendingAction.summon) {
-        this.statusTxt.setText('Only one monster can be summoned this turn.');
+      if (this.getQueuedSummons().length >= this.getSummonLimit()) {
+        this.statusTxt.setText(this.getSummonLimit() > 1
+          ? 'You already queued all available summons this turn.'
+          : 'Only one monster can be summoned this turn.');
         return;
       }
       const tributeCost = card.tributeCost ?? 0;
@@ -335,7 +338,10 @@ export class GameScene extends Phaser.Scene {
         this.statusTxt.setText('That lane already has a monster. Choose an empty lane.');
         return;
       }
-      this.pendingAction.summon = tributeCost > 0 ? { card, laneIndex, tributeLaneIndices: [] } : { card, laneIndex };
+      const queuedSummons = this.getQueuedSummons();
+      const summon: SummonAction = tributeCost > 0 ? { card, laneIndex, tributeLaneIndices: [] } : { card, laneIndex };
+      queuedSummons.push(summon);
+      this.setQueuedSummons(queuedSummons);
       this.myField.setPendingCard(laneIndex, card);
       this.myHand = this.myHand.filter(c => c.id !== card.id);
       this.handArea.removeCard(card.id);
@@ -343,11 +349,11 @@ export class GameScene extends Phaser.Scene {
       if (tributeCost > 0) {
         this.selectedCard = null;
         this.handArea.deselectAll();
-        this.beginTributeSelection(card, laneIndex, tributeCost);
+        this.beginTributeSelection(card, laneIndex, tributeCost, queuedSummons.length - 1);
         return;
       }
       this.setCommitReady(true);
-      this.statusTxt.setText(`${card.name} queued in lane ${laneIndex + 1}. Press COMMIT.`);
+      this.statusTxt.setText(`${card.name} queued in lane ${laneIndex + 1}. ${this.getQueuedSummons().length}/${this.getSummonLimit()} summon used.`);
     } else if (card.type === 'spell') {
       if (card.spellMode === 'face_down' && this.myLanes?.[laneIndex].faceDownSpell) {
         this.statusTxt.setText('That lane already has a face-down spell.');
@@ -493,8 +499,8 @@ export class GameScene extends Phaser.Scene {
 
   private showOpponentPending(action: TurnAction): void {
     this.opField.clearPending();
-    if (action.summon) {
-      this.opField.setPendingCard(action.summon.laneIndex, action.summon.card);
+    for (const summon of this.normalizeSummons(action)) {
+      this.opField.setPendingCard(summon.laneIndex, summon.card);
     }
     for (const spell of action.spells) {
       this.opField.setPendingCard(spell.laneIndex, spell.card, spell.card.spellMode === 'face_down');
@@ -529,8 +535,8 @@ export class GameScene extends Phaser.Scene {
     return LANE_INDICES.filter(laneIndex => Boolean(this.myLanes?.[laneIndex].monster));
   }
 
-  private beginTributeSelection(card: Card, laneIndex: LaneIndex, tributeCost: number): void {
-    this.pendingTributeSummon = { card, laneIndex, tributeCost };
+  private beginTributeSelection(card: Card, laneIndex: LaneIndex, tributeCost: number, summonIndex: number): void {
+    this.pendingTributeSummon = { card, laneIndex, tributeCost, summonIndex };
     this.selectedTributeLanes.clear();
     this.myField.setGuidedLanes();
     this.myField.setTributeLanes(this.getTributeCandidateLaneIndices());
@@ -539,7 +545,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private selectTributeLane(laneIndex: LaneIndex): void {
-    if (!this.pendingTributeSummon || !this.pendingAction.summon) return;
+    if (!this.pendingTributeSummon) return;
     const candidates = this.getTributeCandidateLaneIndices();
     if (!candidates.includes(laneIndex)) {
       this.statusTxt.setText('Choose a glowing monster on your field as tribute.');
@@ -552,7 +558,11 @@ export class GameScene extends Phaser.Scene {
       this.selectedTributeLanes.add(laneIndex);
     }
 
-    this.pendingAction.summon.tributeLaneIndices = Array.from(this.selectedTributeLanes);
+    const summons = this.getQueuedSummons();
+    const queued = summons[this.pendingTributeSummon.summonIndex];
+    if (!queued) return;
+    queued.tributeLaneIndices = Array.from(this.selectedTributeLanes);
+    this.setQueuedSummons(summons);
     this.updateTributeCommitState();
   }
 
@@ -599,7 +609,7 @@ export class GameScene extends Phaser.Scene {
     if (this.submitted) return [];
     if (card.type === 'monster') {
       const tributeCost = card.tributeCost ?? 0;
-      if (this.pendingAction.summon) return [];
+      if (this.getQueuedSummons().length >= this.getSummonLimit()) return [];
       if (this.getTributeCandidateLaneIndices().length < tributeCost) return [];
     }
     return GameScene.getUnlockedLanes(this.turn).filter(laneIndex => {
@@ -615,7 +625,9 @@ export class GameScene extends Phaser.Scene {
   private getPlayBlockReason(card: Card): string {
     if (this.submitted) return 'Waiting for the rival move.';
     if (card.type === 'monster') {
-      if (this.pendingAction.summon) return 'Only one monster can be summoned each turn.';
+      if (this.getQueuedSummons().length >= this.getSummonLimit()) {
+        return this.getSummonLimit() > 1 ? 'All extra summon slots are already queued.' : 'Only one monster can be summoned each turn.';
+      }
       const tributeCost = card.tributeCost ?? 0;
       if (this.getTributeCandidateLaneIndices().length < tributeCost) {
         return `Needs ${tributeCost} tribute monster${tributeCost > 1 ? 's' : ''}.`;
@@ -667,9 +679,35 @@ export class GameScene extends Phaser.Scene {
 
     if (!hasOpenLane) return false;
     if (card.type !== 'monster') return true;
-    if (this.pendingAction.summon) return false;
+    if (this.getQueuedSummons().length >= this.getSummonLimit()) return false;
     const tributeCost = card.tributeCost ?? 0;
     return this.getTributeCandidateLaneIndices().length >= tributeCost;
+  }
+
+  private normalizeSummons(action: TurnAction): SummonAction[] {
+    if (action.summons?.length) return action.summons;
+    return action.summon ? [action.summon] : [];
+  }
+
+  private getQueuedSummons(): SummonAction[] {
+    return this.normalizeSummons(this.pendingAction);
+  }
+
+  private setQueuedSummons(summons: SummonAction[]): void {
+    if (summons.length > 0) {
+      this.pendingAction.summons = summons;
+      this.pendingAction.summon = summons[0];
+      return;
+    }
+    delete this.pendingAction.summons;
+    delete this.pendingAction.summon;
+  }
+
+  private getSummonLimit(): number {
+    const hasExtraSummonSpell = Boolean(this.myLanes?.some(lane =>
+      lane.spell?.card.effect === 'extra_summon_next_turn' && lane.spell.remainingTurns <= 1
+    ));
+    return hasExtraSummonSpell ? 2 : 1;
   }
 
   private showBattleEvents(events: BattleEvent[]): void {
@@ -677,9 +715,12 @@ export class GameScene extends Phaser.Scene {
       if (ev.type === 'no_action') continue;
       const x = this.myField.getLaneWorldX(ev.laneIndex);
       const y = this.scale.height / 2;
+      const overflowDamage = (ev.hpChanges ?? []).reduce((sum, change) => sum + Math.max(0, -change.hpAfter), 0);
       const labelText = ev.type === 'direct_attack'
         ? `DIRECT -${ev.damage}`
-        : ev.negated ? 'NEGATED' : `-${ev.damage}`;
+        : ev.hpChanges?.length
+          ? overflowDamage > 0 ? `HP -${ev.damage} / LP -${overflowDamage}` : `HP -${ev.damage}`
+          : ev.negated ? 'NEGATED' : `-${ev.damage}`;
       const color = ev.negated ? '#88ffb0' : '#ff667c';
 
       const slash = this.add.image(x, y, ART_KEYS.slash).setScale(0.6).setAlpha(ev.negated ? 0.35 : 0.95);

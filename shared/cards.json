@@ -132,6 +132,7 @@
   { "id": "battle_fervor", "type": "spell", "name": "Battle Fervor", "spellMode": "face_up", "effect": "power_boost", "spellDelayTurns": 1 },
   { "id": "monster_smash", "type": "spell", "name": "Crushing Rite", "spellMode": "face_up", "effect": "monster_smash", "spellDelayTurns": 1 },
   { "id": "backrow_break", "type": "spell", "name": "Seal Breaker", "spellMode": "face_up", "effect": "backrow_break", "spellDelayTurns": 1 },
+  { "id": "extra_summon", "type": "spell", "name": "Second Gate", "spellMode": "face_up", "effect": "extra_summon_next_turn", "spellDelayTurns": 1 },
   {
     "id": "mirror_snare",
     "type": "spell",
@@ -147,5 +148,13 @@
     "spellMode": "face_down",
     "triggerCondition": "on_direct_attack",
     "effect": "reduce_damage_500"
+  },
+  {
+    "id": "overextend_collapse",
+    "type": "spell",
+    "name": "Overextend Collapse",
+    "spellMode": "face_down",
+    "triggerCondition": "on_opponent_summon_two_plus",
+    "effect": "destroy_all_monsters"
   }
 ]

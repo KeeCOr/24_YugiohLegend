@@ -85,13 +85,14 @@ describe('monster card catalog', () => {
       'power_boost',
       'monster_smash',
       'backrow_break',
+      'extra_summon_next_turn',
     ]));
 
     for (const spell of spells) {
       expect(spell.spellMode).toMatch(/^(face_up|face_down)$/);
       if (spell.spellMode === 'face_down') {
-        expect(spell.triggerCondition).toMatch(/^(on_attacked|on_direct_attack)$/);
-        expect(['negate_attack', 'reduce_damage_500']).toContain(spell.effect);
+        expect(spell.triggerCondition).toMatch(/^(on_attacked|on_direct_attack|on_opponent_summon_two_plus)$/);
+        expect(['negate_attack', 'reduce_damage_500', 'destroy_all_monsters']).toContain(spell.effect);
       } else {
         expect(spell.spellDelayTurns).toBeGreaterThanOrEqual(1);
       }
