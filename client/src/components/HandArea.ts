@@ -3,8 +3,8 @@ import { CardSprite } from './CardSprite';
 import type { Card } from '../data/CardTypes';
 
 const HAND_LAYOUTS = {
-  few: { scale: 1.15, gapX: 160, angle: 3.8 },
-  many: { scale: 0.96, gapX: 124, angle: 3.0 },
+  few: { scale: 1.28, gapX: 176, angle: 3.8 },
+  many: { scale: 1.08, gapX: 140, angle: 3.0 },
 };
 const DRAG_THRESHOLD = 8;
 

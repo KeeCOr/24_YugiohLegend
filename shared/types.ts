@@ -101,7 +101,7 @@ export type ClientMessage =
 
 export type ServerMessage =
   | { type: 'game_start'; yourIndex: PlayerIndex; yourHand: Card[]; opponentHandCount: number; turn: number }
-  | { type: 'turn_start'; drawnCard: Card; turn: number }
+  | { type: 'turn_start'; drawnCard: Card; turn: number; lanes: [PlayerState['lanes'], PlayerState['lanes']]; summonLimit: number }
   | { type: 'reveal'; yourAction: TurnAction; opponentAction: TurnAction }
   | { type: 'battle_result'; events: BattleEvent[]; lps: [number, number]; lanes: [PlayerState['lanes'], PlayerState['lanes']] }
   | { type: 'game_over'; winner: PlayerIndex | 'draw'; finalLPs: [number, number] }

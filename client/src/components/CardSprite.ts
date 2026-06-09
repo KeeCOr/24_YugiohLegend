@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import type { Card } from '../data/CardTypes';
+import { getSpellEffectSummary, getSpellTimingSummary } from '../data/CardText';
 import { ART_KEYS, cardArtKey, cardTextureKey, typeTint } from '../art/ProceduralArt';
 
 export class CardSprite extends Phaser.GameObjects.Container {
@@ -79,7 +80,7 @@ export class CardSprite extends Phaser.GameObjects.Container {
     this.add(nameText);
 
     const actionLabel = this.getActionLabel(card);
-    const actionText = new Phaser.GameObjects.Text(scene, 0, card.abilityText ? 43 : 53, actionLabel, {
+    const actionText = new Phaser.GameObjects.Text(scene, 0, card.abilityText || card.type === 'spell' ? 43 : 53, actionLabel, {
       fontSize: card.type === 'monster' && (card.tributeCost ?? 0) > 0 ? '10px' : '9px',
       color: card.type === 'monster' && (card.tributeCost ?? 0) > 0 ? '#ffb1c0' : '#a9f4d0',
       fontStyle: 'bold',
@@ -87,6 +88,20 @@ export class CardSprite extends Phaser.GameObjects.Container {
       strokeThickness: 2,
     }).setOrigin(0.5);
     this.add(actionText);
+
+    if (card.type === 'spell') {
+      const effect = new Phaser.GameObjects.Text(scene, 0, 62, getSpellEffectSummary(card), {
+        fontSize: '8px',
+        color: '#ffe7a6',
+        fontStyle: 'bold',
+        stroke: '#10090d',
+        strokeThickness: 2,
+        wordWrap: { width: CardSprite.W - 18, useAdvancedWrap: true },
+        align: 'center',
+        lineSpacing: -2,
+      }).setOrigin(0.5);
+      this.add(effect);
+    }
 
     if (card.abilityText) {
       const ability = new Phaser.GameObjects.Text(scene, 0, 57, card.abilityText.toUpperCase(), {
@@ -131,7 +146,7 @@ export class CardSprite extends Phaser.GameObjects.Container {
       return tributeCost > 0 ? `TRIBUTE x${tributeCost}` : 'FREE SUMMON';
     }
     if (card.type === 'spell') {
-      return card.spellMode === 'face_down' ? 'SET FACE-DOWN' : `DELAY ${card.spellDelayTurns ?? 1}T`;
+      return getSpellTimingSummary(card);
     }
     return '';
   }

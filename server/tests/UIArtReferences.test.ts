@@ -49,16 +49,35 @@ describe('UI art references', () => {
     expect(cardSprite).toContain('setBlocked');
   });
 
-  it('supports manual tribute selection after placing a tribute monster', () => {
+  it('shows readable spell effect summaries on cards and hand guidance', () => {
+    const gameScene = readProjectFile('client/src/scenes/GameScene.ts');
+    const cardSprite = readProjectFile('client/src/components/CardSprite.ts');
+    const cardText = readProjectFile('client/src/data/CardText.ts');
+
+    expect(cardText).toContain('getSpellEffectSummary');
+    expect(cardText).toContain('NEXT TURN +1 SUMMON');
+    expect(cardText).toContain('IF RIVAL SUMMONS 2+: WIPE FIELD');
+    expect(cardSprite).toContain('getSpellEffectSummary(card)');
+    expect(gameScene).toContain('getSpellEffectSummary(card)');
+  });
+
+  it('auto-pays tribute costs when placing a tribute monster', () => {
     const gameScene = readProjectFile('client/src/scenes/GameScene.ts');
 
-    expect(gameScene).toContain('pendingTributeSummon');
-    expect(gameScene).toContain('selectedTributeLanes');
-    expect(gameScene).toContain('beginTributeSelection');
-    expect(gameScene).toContain('selectTributeLane');
+    expect(gameScene).toContain('getAutoTributeLaneIndices');
+    expect(gameScene).toContain('applyLocalTributePayment');
     expect(gameScene).toContain('getTributeCandidateLaneIndices');
-    expect(gameScene).toContain('updateTributeCommitState');
-    expect(gameScene).not.toContain('getAutoTributeLaneIndices');
+    expect(gameScene).not.toContain('pendingTributeSummon');
+    expect(gameScene).not.toContain('beginTributeSelection');
+    expect(gameScene).not.toContain('selectTributeLane');
+    expect(gameScene).not.toContain('updateTributeCommitState');
+  });
+
+  it('keeps opponent pending actions hidden until battle results resolve', () => {
+    const gameScene = readProjectFile('client/src/scenes/GameScene.ts');
+
+    expect(gameScene).toContain('keepOpponentLastConfirmedField');
+    expect(gameScene).not.toContain('showOpponentPending(msg.opponentAction)');
   });
 
   it('keeps HUD guide text inside its frame and avoids abandoned mana UI', () => {

@@ -135,7 +135,7 @@ describe('GameRoom', () => {
     expect(room.getState().players[1].lanes[2].monster?.id).toBe(lockedTurn2.id);
   });
 
-  it('spell is set on a lane first and resolves on the next turn', () => {
+  it('spell resolves at the start of the next turn before players submit actions', () => {
     const room = new GameRoom('room1');
     room.addPlayer('p0', makeDeck());
     room.addPlayer('p1', makeDeck());
@@ -149,10 +149,17 @@ describe('GameRoom', () => {
 
     const action: TurnAction = { spells: [{ card: boostCard, laneIndex: 0 }] };
     room.submitAction(0, action);
-    room.submitAction(1, emptyAction());
+    const turnStartMsgs = room.submitAction(1, emptyAction());
 
-    expect(room.getState().players[0].lanes[0].tempAtkBoost).toBe(0);
-    expect(room.getState().players[0].lanes[0].spell?.card.id).toBe(boostCard.id);
+    expect(room.getState().turn).toBe(2);
+    expect(room.getState().players[0].lanes[0].tempAtkBoost).toBe(500);
+    expect(room.getState().players[0].lanes[0].spell).toBeNull();
+    const turnStart = turnStartMsgs.find(m => m.playerIndex === 0 && m.message.type === 'turn_start')?.message;
+    expect(turnStart?.type).toBe('turn_start');
+    if (turnStart?.type === 'turn_start') {
+      expect(turnStart.lanes[0][0].tempAtkBoost).toBe(500);
+      expect(turnStart.lanes[0][0].spell).toBeNull();
+    }
 
     room.submitAction(0, emptyAction());
     room.submitAction(1, emptyAction());
@@ -160,7 +167,6 @@ describe('GameRoom', () => {
     expect(room.getState().players[0].lanes[0].monster?.id).toBe(monster.id);
     expect(room.getState().players[1].lanes[0].monster?.id).toBe(opponentMonster.id);
     expect(room.getState().players[1].lanes[0].monster?.hp).toBe(1100);
-    expect(room.getState().players[0].lanes[0].spell).toBeNull();
   });
 
   it('delayed spell is destroyed before resolving when its lane is hit', () => {
@@ -197,15 +203,16 @@ describe('GameRoom', () => {
 
     const action: TurnAction = { spells: [{ card: smashCard, laneIndex: 0 }] };
     room.submitAction(0, action);
-    room.submitAction(1, emptyAction());
+    const turnStartMsgs = room.submitAction(1, emptyAction());
 
-    expect(room.getState().players[1].lanes[0].monster?.id).toBe(strongMonster.id);
-
-    room.submitAction(0, emptyAction());
-    room.submitAction(1, emptyAction());
-
+    expect(room.getState().turn).toBe(2);
     expect(room.getState().players[1].lanes[0].monster).toBeNull();
     expect(room.getState().players[1].lanes[1].monster?.id).toBe(weakMonster.id);
+    const turnStart = turnStartMsgs.find(m => m.playerIndex === 0 && m.message.type === 'turn_start')?.message;
+    expect(turnStart?.type).toBe('turn_start');
+    if (turnStart?.type === 'turn_start') {
+      expect(turnStart.lanes[1][0].monster).toBeNull();
+    }
   });
 
   it('backrow_break spell destroys an opponent delayed spell before it resolves', () => {
@@ -223,14 +230,14 @@ describe('GameRoom', () => {
     };
 
     room.submitAction(0, { spells: [{ card: breaker, laneIndex: 0 }] });
-    room.submitAction(1, emptyAction());
-
-    expect(room.getState().players[1].lanes[0].spell?.card.id).toBe(opponentSpell.id);
-
-    room.submitAction(0, emptyAction());
-    room.submitAction(1, emptyAction());
+    const turnStartMsgs = room.submitAction(1, emptyAction());
 
     expect(room.getState().players[1].lanes[0].spell).toBeNull();
+    const turnStart = turnStartMsgs.find(m => m.playerIndex === 0 && m.message.type === 'turn_start')?.message;
+    expect(turnStart?.type).toBe('turn_start');
+    if (turnStart?.type === 'turn_start') {
+      expect(turnStart.lanes[1][0].spell).toBeNull();
+    }
   });
 
   it('backrow_break spell destroys an opponent trap when no delayed spell is available', () => {
@@ -299,9 +306,14 @@ describe('GameRoom', () => {
 
     (room.getState() as GameState).players[0].hand.push(extraSummon, first, second);
     room.submitAction(0, { spells: [{ card: extraSummon, laneIndex: 0 }] });
-    room.submitAction(1, emptyAction());
+    const turnStartMsgs = room.submitAction(1, emptyAction());
+    const turnStart = turnStartMsgs.find(m => m.playerIndex === 0 && m.message.type === 'turn_start')?.message;
 
-    expect(room.getState().players[0].lanes[0].spell?.card.id).toBe(extraSummon.id);
+    expect(room.getState().players[0].lanes[0].spell).toBeNull();
+    expect(turnStart?.type).toBe('turn_start');
+    if (turnStart?.type === 'turn_start') {
+      expect(turnStart.summonLimit).toBe(2);
+    }
 
     room.submitAction(0, {
       summons: [
@@ -332,7 +344,7 @@ describe('GameRoom', () => {
     (room.getState() as GameState).players[0].lanes[0].monster = p0Existing;
     (room.getState() as GameState).players[1].lanes[0].monster = p1Existing;
     (room.getState() as GameState).players[0].lanes[1].faceDownSpell = trap;
-    (room.getState() as GameState).players[1].lanes[1].spell = { card: extraSummon, remainingTurns: 1 };
+    (room as unknown as { extraSummonsThisTurn: [number, number] }).extraSummonsThisTurn = [0, 1];
 
     room.submitAction(0, emptyAction());
     room.submitAction(1, {

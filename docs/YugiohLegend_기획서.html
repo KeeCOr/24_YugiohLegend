@@ -11,9 +11,7 @@
       --line: #334866;
       --gold: #e1b96c;
       --cyan: #7fd8ff;
-      --green: #8ef2ba;
       --text: #f2f5ff;
-      --muted: #aab7cc;
     }
     * { box-sizing: border-box; }
     body {
@@ -23,11 +21,7 @@
       font-family: "Malgun Gothic", "Segoe UI", Arial, sans-serif;
       line-height: 1.68;
     }
-    main {
-      width: min(1120px, calc(100% - 40px));
-      margin: 0 auto;
-      padding: 42px 0 72px;
-    }
+    main { width: min(1120px, calc(100% - 40px)); margin: 0 auto; padding: 42px 0 72px; }
     header, section {
       border: 1px solid var(--line);
       background: linear-gradient(135deg, rgba(18,26,42,.96), rgba(24,36,58,.88));
@@ -40,52 +34,22 @@
     h1 { font-size: 38px; line-height: 1.12; }
     h2 { font-size: 24px; margin-bottom: 8px; }
     p { margin: 10px 0; }
-    ul, ol { margin: 10px 0 0; padding-left: 22px; }
+    ul { margin: 10px 0 0; padding-left: 22px; }
     li { margin: 4px 0; }
-    table {
-      width: 100%;
-      margin-top: 12px;
-      border-collapse: collapse;
-      border-radius: 8px;
-      overflow: hidden;
-      border: 1px solid var(--line);
-    }
-    th, td {
-      padding: 10px 12px;
-      border-bottom: 1px solid rgba(51,72,102,.7);
-      text-align: left;
-      vertical-align: top;
-    }
+    table { width: 100%; margin-top: 12px; border-collapse: collapse; border: 1px solid var(--line); }
+    th, td { padding: 10px 12px; border-bottom: 1px solid rgba(51,72,102,.7); text-align: left; vertical-align: top; }
     th { background: #1a2840; color: var(--gold); }
     tr:nth-child(even) td { background: rgba(255,255,255,.025); }
-    code {
-      padding: 2px 6px;
-      border-radius: 5px;
-      background: #07101d;
-      color: #bde8ff;
-    }
-    .meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 18px;
-    }
-    .pill {
-      padding: 6px 10px;
-      border-radius: 999px;
-      background: rgba(127,216,255,.1);
-      border: 1px solid rgba(127,216,255,.35);
-      color: var(--cyan);
-      font-weight: 700;
-      font-size: 13px;
-    }
+    code { padding: 2px 6px; border-radius: 5px; background: #07101d; color: #bde8ff; }
+    .meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+    .pill { padding: 6px 10px; border-radius: 999px; background: rgba(127,216,255,.1); border: 1px solid rgba(127,216,255,.35); color: var(--cyan); font-weight: 700; font-size: 13px; }
   </style>
 </head>
 <body>
 <main>
   <header>
     <h1>YugiohLegend 기획서</h1>
-    <p>업데이트: 2026-06-08</p>
+    <p>업데이트: 2026-06-09</p>
     <p>3라인 자동 전투 카드 게임. 플레이어는 손패에서 몬스터와 마법을 배치하고, 공개 후 각 라인에서 전투를 해결한다.</p>
     <div class="meta">
       <span class="pill">1600 x 900</span>
@@ -101,6 +65,7 @@
       <li>시작 LP는 4000이다.</li>
       <li>시작 손패는 4장이며 매 턴 1장을 드로우한다.</li>
       <li>1턴은 배치 전용 턴이며 공격하지 않는다.</li>
+      <li>매 턴 시작 시에는 먼저 지연 중인 앞면 마법의 카운트를 줄이고, 발동 가능한 마법 효과를 모두 해결한 뒤 드로우와 행동 선택을 진행한다.</li>
       <li>2턴부터 공개 후 라인별 자동 전투가 발생한다.</li>
       <li>1턴은 1라인, 2턴은 2라인, 3턴부터는 3라인을 사용한다.</li>
       <li>4턴 종료 후 최종 전투까지 해결하고 LP가 높은 쪽이 승리한다.</li>
@@ -111,11 +76,22 @@
     <h2>전투 규칙</h2>
     <ul>
       <li>같은 라인에 양쪽 몬스터가 있으면 전투력이 낮은 몬스터가 전투력 차이만큼 HP를 잃는다.</li>
-      <li>HP가 정확히 0이 되면 몬스터는 사망하고 필드에서 제거된다.</li>
-      <li>HP가 0 아래로 내려가면 몬스터는 사망하고, 초과 피해만큼 해당 플레이어 LP가 감소한다.</li>
-      <li>같은 라인에 상대 몬스터가 없으면 공격 몬스터의 전투력만큼 상대 LP를 직접 공격한다.</li>
-      <li>같은 전투력으로 맞붙으면 HP와 LP 피해가 발생하지 않는다.</li>
-      <li>전투 로그는 몬스터전 피해를 <code>HP -수치</code>, 관통 피해가 있으면 <code>HP -수치 / LP -수치</code>로 표시한다.</li>
+      <li>HP가 0이 되면 몬스터는 사망하고 필드에서 제거된다.</li>
+      <li>HP가 0 아래로 내려가면 초과 피해만큼 해당 플레이어 LP가 감소한다.</li>
+      <li>상대 몬스터가 없으면 공격 몬스터의 전투력만큼 상대 LP를 직접 공격한다.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>마법 카드</h2>
+    <ul>
+      <li>앞면 마법은 라인에 공개 배치되고 다음 턴 시작 시점에 카운트가 줄어 효과가 발동한다.</li>
+      <li>앞면 마법이 발동 전에 파괴되면 효과는 사라진다.</li>
+      <li>뒷면 마법은 세트된 상태로 있다가 조건이 달성되면 공개되며 효과를 발동한다.</li>
+      <li><code>Second Gate</code>는 다음 턴 소환 가능 횟수를 1회 추가한다.</li>
+      <li><code>Overextend Collapse</code>는 상대가 이번 턴 몬스터를 2회 이상 성공적으로 소환하면 필드 위 모든 몬스터를 제거한다.</li>
+      <li>마법 카드에는 발동 타이밍과 핵심 효과 요약을 카드 표면에 함께 표시한다.</li>
+      <li>손패에서 마법 카드를 선택하거나 호버하면 같은 효과 요약을 상태 가이드에 표시한다.</li>
     </ul>
   </section>
 
@@ -125,38 +101,12 @@
       <thead><tr><th>구분</th><th>설명</th></tr></thead>
       <tbody>
         <tr><td>FREE</td><td>제물 없이 일반 소환 가능한 몬스터</td></tr>
-        <tr><td>TRIBUTE</td><td>이미 필드에 소환된 아군 몬스터를 제물로 바쳐 소환하는 몬스터</td></tr>
+        <tr><td>TRIBUTE</td><td>필드에 소환된 아군 몬스터를 제물로 바쳐 소환하는 몬스터</td></tr>
         <tr><td>STRIKER</td><td>전투력이 높고 생명력이 낮은 기본 몬스터</td></tr>
         <tr><td>GUARDIAN</td><td>생명력이 높고 전투력이 낮은 기본 몬스터</td></tr>
         <tr><td>UTILITY</td><td>전투력과 생명력은 낮지만 이동 또는 특수 효과가 있는 기본 몬스터</td></tr>
-        <tr><td>BRUISER</td><td>강한 전투력과 생명력을 가진 제물 몬스터</td></tr>
-        <tr><td>ALLY+</td><td>아군을 강화하는 제물 몬스터</td></tr>
-        <tr><td>FIELD+</td><td>라인 또는 필드 상태를 강화하는 제물 몬스터</td></tr>
-        <tr><td>MOBILE</td><td>제물이 필요하지만 이동성이 있는 몬스터</td></tr>
-        <tr><td>SCALE</td><td>바친 제물 수만큼 강해지는 몬스터</td></tr>
       </tbody>
     </table>
-  </section>
-
-  <section>
-    <h2>제물 소환</h2>
-    <ul>
-      <li>제물은 손패 카드가 아니라 이미 필드에 소환된 아군 몬스터만 사용할 수 있다.</li>
-      <li>제물 몬스터를 필드에 내려놓으면 제물 선택 플로우가 시작된다.</li>
-      <li>필요한 수만큼 필드 위 아군 몬스터를 직접 선택해야 <code>COMMIT</code>이 활성화된다.</li>
-    </ul>
-  </section>
-
-  <section>
-    <h2>마법 카드</h2>
-    <ul>
-      <li>함정은 별도 카드 종류로 쓰지 않고, 앞면 마법과 뒷면 마법으로 통합한다.</li>
-      <li>앞면 마법은 라인에 공개 배치되고 몇 턴 후 효과가 발동한다.</li>
-      <li>앞면 마법이 발동 전에 파괴되면 효과는 사라진다.</li>
-      <li>뒷면 마법은 세트된 상태로 있다가 조건이 달성되면 공개되며 효과를 발동한다.</li>
-      <li><code>Second Gate</code>는 앞면 마법이며, 살아남아 다음 턴에 발동하면 그 턴 소환 가능 횟수를 1회 추가한다.</li>
-      <li><code>Overextend Collapse</code>는 뒷면 마법이며, 상대가 이번 턴에 몬스터를 2회 이상 성공적으로 소환하면 발동해 필드 위 모든 몬스터를 제거한다.</li>
-    </ul>
   </section>
 
   <section>
@@ -165,7 +115,28 @@
       <li>덱은 정확히 12장이어야 저장 및 결투 시작이 가능하다.</li>
       <li>덱 편성 화면은 카드 아카이브와 12개의 덱 슬롯으로 구성한다.</li>
       <li>카드는 클릭 또는 드래그로 슬롯에 넣을 수 있다.</li>
-      <li><code>AUTO FILL</code>은 초보자용 추천 덱을 자동 구성한다.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>제물 소환</h2>
+    <ul>
+      <li>제물은 손패 카드가 아니라 이미 필드에 소환된 아군 몬스터만 사용할 수 있다.</li>
+      <li>제물 몬스터를 필드에 내려놓으면 필요한 제물을 자동으로 바치고 즉시 소환 큐에 들어간다.</li>
+      <li>자동 제물은 소환할 라인을 제외한 아군 몬스터 중 전투력이 낮은 순서로 선택된다.</li>
+      <li>별도의 제물 선택/확정 단계 없이 일반 소환처럼 <code>COMMIT</code>할 수 있다.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>UI/UX</h2>
+    <ul>
+      <li>손패, 3라인 전장, HUD, 덱 카운터, 상태 가이드, 커밋 버튼을 한 화면에서 확인할 수 있다.</li>
+      <li>소환 또는 배치 가능한 카드는 금색 글로우로 표시한다.</li>
+      <li>카드에는 종류, 소환 방식, ATK/HP, 제물 필요 여부를 명확히 표시한다.</li>
+      <li>손패 카드는 가독성을 위해 기본 표시 크기와 카드 간격을 확대한다.</li>
+      <li>내 행동 입력 중에는 상대가 이번 턴에 낸 카드나 대기 배치를 보여주지 않고, 마지막으로 확정된 상대 필드 상태만 보여준다.</li>
+      <li>현재 버전은 마나 비용과 마나 게이지를 사용하지 않는다.</li>
     </ul>
   </section>
 
@@ -175,12 +146,12 @@
       <thead><tr><th>버전</th><th>날짜</th><th>내용</th></tr></thead>
       <tbody>
         <tr><td>v0.1.0</td><td>2026-05-29</td><td>3라인, 4턴, 앞면/뒷면 마법, 카드 아트 적용</td></tr>
-        <tr><td>v0.1.0</td><td>2026-06-08</td><td>덱 편성 과정 추가, 드래그 기반 12장 덱 슬롯 UI 적용</td></tr>
-        <tr><td>v0.1.0</td><td>2026-06-08</td><td>제물 소환을 직접 제물 선택 플로우로 변경</td></tr>
+        <tr><td>v0.1.0</td><td>2026-06-08</td><td>덱 편성 과정과 12장 덱 슬롯 UI 적용</td></tr>
         <tr><td>v0.1.0</td><td>2026-06-08</td><td>몬스터전 피해를 전투력 차이만큼 HP 감소로 변경</td></tr>
-        <tr><td>v0.1.0</td><td>2026-06-08</td><td>HP 0 사망 및 HP 0 미만 초과분 LP 관통 피해 적용</td></tr>
-        <tr><td>v0.1.0</td><td>2026-06-09</td><td>다음 턴 추가 소환 앞면 마법 <code>Second Gate</code> 추가</td></tr>
-        <tr><td>v0.1.0</td><td>2026-06-09</td><td>상대가 2회 이상 소환하면 모든 몬스터를 제거하는 뒷면 마법 <code>Overextend Collapse</code> 추가</td></tr>
+        <tr><td>v0.1.0</td><td>2026-06-09</td><td><code>Second Gate</code>, <code>Overextend Collapse</code> 추가</td></tr>
+        <tr><td>v0.1.0</td><td>2026-06-09</td><td>마법 카드 효과 요약을 카드 표면과 손패 가이드에 표시하고 손패 크기 확대</td></tr>
+        <tr><td>v0.1.0</td><td>2026-06-09</td><td>제물 소환을 자동 제물 지불 방식으로 변경하고 상대 필드 대기 행동 표시 제거</td></tr>
+        <tr><td>v0.1.0</td><td>2026-06-09</td><td>매 턴 시작 시 지연 마법 효과를 먼저 해결한 뒤 드로우와 행동 선택을 진행하도록 변경</td></tr>
       </tbody>
     </table>
   </section>

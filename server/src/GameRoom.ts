@@ -144,8 +144,6 @@ export class GameRoom {
     msgs.push({ playerIndex: 0, message: { type: 'reveal', yourAction: a0, opponentAction: maskActionForOpponent(a1) } });
     msgs.push({ playerIndex: 1, message: { type: 'reveal', yourAction: a1, opponentAction: maskActionForOpponent(a0) } });
 
-    this.extraSummonsThisTurn = [0, 0];
-    this.resolveDelayedSpells();
     const summonCounts: [number, number] = [
       this.applyAction(0, a0),
       this.applyAction(1, a1),
@@ -183,12 +181,24 @@ export class GameRoom {
 
     this.state.turn += 1;
     this.state.phase = 'action';
+    this.extraSummonsThisTurn = [0, 0];
+    this.resolveDelayedSpells();
+    const lanes = cloneLanes(this.state);
 
     for (const pi of [0, 1] as PlayerIndex[]) {
       const drawn = this.state.players[pi].deck.shift();
       if (drawn) {
         this.state.players[pi].hand.push(drawn);
-        msgs.push({ playerIndex: pi, message: { type: 'turn_start', drawnCard: drawn, turn: this.state.turn } });
+        msgs.push({
+          playerIndex: pi,
+          message: {
+            type: 'turn_start',
+            drawnCard: drawn,
+            turn: this.state.turn,
+            lanes,
+            summonLimit: 1 + this.extraSummonsThisTurn[pi],
+          },
+        });
       }
     }
 
