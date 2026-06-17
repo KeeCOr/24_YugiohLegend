@@ -383,6 +383,26 @@ describe('GameRoom', () => {
     expect(room.getState().players[0].lanes[1].monster?.id).toBe(tributeMonster.id);
   });
 
+  it('tribute summon can replace the chosen tribute monster in its lane', () => {
+    const room = new GameRoom('room1');
+    room.addPlayer('p0', makeDeck());
+    room.addPlayer('p1', makeDeck());
+    const tributeMonster = allCards.find(c => c.id === 'iron_golem')!;
+    const material = allCards.find(c => c.id === 'village_guard')!;
+
+    (room.getState() as GameState).players[0].hand.push(material);
+    (room.getState() as GameState).players[0].hand.push(tributeMonster);
+
+    room.submitAction(0, { summon: { card: material, laneIndex: 0 }, spells: [] });
+    room.submitAction(1, emptyAction());
+
+    room.submitAction(0, { summon: { card: tributeMonster, laneIndex: 0, tributeLaneIndices: [0] }, spells: [] });
+    room.submitAction(1, emptyAction());
+
+    expect(room.getState().players[0].lanes[0].monster?.id).toBe(tributeMonster.id);
+    expect(room.getState().players[0].hand.map(card => card.id)).not.toContain(tributeMonster.id);
+  });
+
   it('tribute summon does not use monsters from hand as tribute material', () => {
     const room = new GameRoom('room1');
     room.addPlayer('p0', makeDeck());

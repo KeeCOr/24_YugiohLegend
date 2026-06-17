@@ -319,12 +319,17 @@ export class GameScene extends Phaser.Scene {
         this.statusTxt.setText(`${card.name} needs ${tributeCost} tribute monster${tributeCost > 1 ? 's' : ''}.`);
         return;
       }
-      if (this.myLanes?.[laneIndex].monster || this.myField.hasPending(laneIndex)) {
-        this.statusTxt.setText('That lane already has a monster. Choose an empty lane.');
+      const canReplaceTargetWithTribute = tributeCost > 0 && Boolean(this.myLanes?.[laneIndex].monster);
+      if ((!canReplaceTargetWithTribute && this.myLanes?.[laneIndex].monster) || this.myField.hasPending(laneIndex)) {
+        this.statusTxt.setText(tributeCost > 0
+          ? 'Choose a tribute monster lane or an empty lane.'
+          : 'That lane already has a monster. Choose an empty lane.');
         return;
       }
       const queuedSummons = this.getQueuedSummons();
-      const tributeLaneIndices = tributeCost > 0 ? this.getAutoTributeLaneIndices(tributeCost, laneIndex) : [];
+      const tributeLaneIndices = tributeCost > 0
+        ? this.getAutoTributeLaneIndices(tributeCost, laneIndex, canReplaceTargetWithTribute)
+        : [];
       const summon: SummonAction = tributeCost > 0 ? { card, laneIndex, tributeLaneIndices } : { card, laneIndex };
       queuedSummons.push(summon);
       this.setQueuedSummons(queuedSummons);
@@ -335,7 +340,7 @@ export class GameScene extends Phaser.Scene {
       this.updatePlayableHandCards();
       this.setCommitReady(true);
       this.statusTxt.setText(tributeCost > 0
-        ? `${card.name} auto-paid ${tributeCost} tribute${tributeCost > 1 ? 's' : ''} and queued in lane ${laneIndex + 1}. Press COMMIT.`
+        ? `${card.name} paid ${tributeCost} tribute${tributeCost > 1 ? 's' : ''} and queued in lane ${laneIndex + 1}. Press COMMIT.`
         : `${card.name} queued in lane ${laneIndex + 1}. ${this.getQueuedSummons().length}/${this.getSummonLimit()} summon used.`);
     } else if (card.type === 'spell') {
       if (card.spellMode === 'face_down' && this.myLanes?.[laneIndex].faceDownSpell) {
@@ -513,12 +518,21 @@ export class GameScene extends Phaser.Scene {
     return LANE_INDICES.filter(laneIndex => Boolean(this.myLanes?.[laneIndex].monster));
   }
 
-  private getAutoTributeLaneIndices(tributeCost: number, summonLaneIndex: LaneIndex): LaneIndex[] {
+  private getAutoTributeLaneIndices(
+    tributeCost: number,
+    summonLaneIndex: LaneIndex,
+    includeSummonLane = false
+  ): LaneIndex[] {
     if (!this.myLanes || tributeCost <= 0) return [];
+    const selectedTributes = includeSummonLane && this.myLanes[summonLaneIndex].monster ? [summonLaneIndex] : [];
+    const remainingCost = tributeCost - selectedTributes.length;
+    if (remainingCost <= 0) return selectedTributes;
     return LANE_INDICES
       .filter(laneIndex => laneIndex !== summonLaneIndex && Boolean(this.myLanes?.[laneIndex].monster))
       .sort((a, b) => (this.myLanes?.[a].monster?.atk ?? 0) - (this.myLanes?.[b].monster?.atk ?? 0))
-      .slice(0, tributeCost);
+      .slice(0, remainingCost)
+      .concat(selectedTributes)
+      .sort((a, b) => a - b);
   }
 
   private applyLocalTributePayment(tributeLaneIndices: LaneIndex[]): void {
@@ -563,7 +577,10 @@ export class GameScene extends Phaser.Scene {
       const lane = this.myLanes?.[laneIndex];
       const pending = this.myField?.hasPending(laneIndex);
       if (pending) return false;
-      if (card.type === 'monster') return !lane?.monster;
+      if (card.type === 'monster') {
+        const tributeCost = card.tributeCost ?? 0;
+        return !lane?.monster || tributeCost > 0;
+      }
       if (card.spellMode === 'face_down') return !lane?.faceDownSpell;
       return !lane?.spell;
     });
@@ -579,7 +596,7 @@ export class GameScene extends Phaser.Scene {
       if (this.getTributeCandidateLaneIndices().length < tributeCost) {
         return `Needs ${tributeCost} tribute monster${tributeCost > 1 ? 's' : ''}.`;
       }
-      return 'No open unlocked monster lane.';
+      return tributeCost > 0 ? 'No open unlocked monster or tribute lane.' : 'No open unlocked monster lane.';
     }
     return 'No open unlocked spell slot for this card.';
   }
@@ -620,7 +637,10 @@ export class GameScene extends Phaser.Scene {
     const hasOpenLane = unlocked.some(laneIndex => {
       const lane = this.myLanes?.[laneIndex];
       const pending = this.myField?.hasPending(laneIndex);
-      if (card.type === 'monster') return !lane?.monster && !pending;
+      if (card.type === 'monster') {
+        const tributeCost = card.tributeCost ?? 0;
+        return (!lane?.monster || tributeCost > 0) && !pending;
+      }
       if (card.type === 'spell') {
         if (pending) return false;
         if (card.spellMode === 'face_down') return !lane?.faceDownSpell;

@@ -264,7 +264,7 @@ export class GameRoom {
       const tributeCost = card.tributeCost ?? 0;
       const uniqueTributes = [...new Set(tributeLaneIndices)];
       const requestedTributes = uniqueTributes.filter(tributeLane =>
-        tributeLane !== laneIndex && player.lanes[tributeLane]?.monster
+        player.lanes[tributeLane]?.monster
       );
       const autoTributes = LANE_INDICES
         .filter(tributeLane =>
@@ -275,8 +275,9 @@ export class GameRoom {
         .sort((a, b) => (player.lanes[a].monster?.atk ?? 0) - (player.lanes[b].monster?.atk ?? 0));
       const validTributes = [...requestedTributes, ...autoTributes].slice(0, tributeCost);
       const canPayTribute = tributeCost === 0 || validTributes.length >= tributeCost;
+      const targetLaneIsOpen = !player.lanes[laneIndex].monster || validTributes.includes(laneIndex);
 
-      if (isLaneUnlocked(this.state.turn, laneIndex) && !player.lanes[laneIndex].monster && canPayTribute) {
+      if (isLaneUnlocked(this.state.turn, laneIndex) && targetLaneIsOpen && canPayTribute) {
         for (const tributeLane of validTributes.slice(0, tributeCost)) {
           player.lanes[tributeLane].monster = null;
         }
