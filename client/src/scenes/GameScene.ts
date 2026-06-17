@@ -680,39 +680,136 @@ export class GameScene extends Phaser.Scene {
   }
 
   private showBattleEvents(events: BattleEvent[]): void {
+    let shownEvents = 0;
     for (const ev of events) {
       if (ev.type === 'no_action') continue;
-      const x = this.myField.getLaneWorldX(ev.laneIndex);
-      const y = this.scale.height / 2;
-      const overflowDamage = (ev.hpChanges ?? []).reduce((sum, change) => sum + Math.max(0, -change.hpAfter), 0);
-      const labelText = ev.type === 'direct_attack'
-        ? `DIRECT -${ev.damage}`
-        : ev.hpChanges?.length
-          ? overflowDamage > 0 ? `HP -${ev.damage} / LP -${overflowDamage}` : `HP -${ev.damage}`
-          : ev.negated ? 'NEGATED' : `-${ev.damage}`;
-      const color = ev.negated ? '#88ffb0' : '#ff667c';
-
-      const slash = this.add.image(x, y, ART_KEYS.slash).setScale(0.6).setAlpha(ev.negated ? 0.35 : 0.95);
-      const label = this.add.text(x, y - 8, labelText, {
-        fontSize: '22px',
-        color,
-        fontStyle: 'bold',
-        stroke: '#11080c',
-        strokeThickness: 4,
-      }).setOrigin(0.5);
-
-      this.tweens.add({
-        targets: [label, slash],
-        y: y - 58,
-        alpha: 0,
-        duration: 1200,
-        ease: 'Sine.easeOut',
-        onComplete: () => {
-          label.destroy();
-          slash.destroy();
-        },
+      this.time.delayedCall(shownEvents * 260, () => this.playBattleImpactEvent(ev));
+      shownEvents += 1;
+    }
+    if (shownEvents > 0) {
+      this.statusTxt.setText('Battle clash!');
+      this.time.delayedCall(2200 + shownEvents * 260, () => {
+        if (!this.submitted) this.statusTxt.setText('New draw. Prepare your lane.');
       });
     }
+  }
+
+  private playBattleImpactEvent(ev: BattleEvent): void {
+    const x = this.myField.getLaneWorldX(ev.laneIndex);
+    const attackerIsMine = ev.attackerIndex === this.myIndex;
+    const startY = attackerIsMine ? this.myField.y - 52 : this.opField.y + 52;
+    const impactY = ev.type === 'direct_attack'
+      ? attackerIsMine ? this.opLP.y + 18 : this.myLP.y - 18
+      : this.scale.height / 2;
+    const travelY = Phaser.Math.Linear(startY, impactY, 0.66);
+    const overflowDamage = (ev.hpChanges ?? []).reduce((sum, change) => sum + Math.max(0, -change.hpAfter), 0);
+    const labelText = ev.type === 'direct_attack'
+      ? `DIRECT -${ev.damage}`
+      : ev.hpChanges?.length
+        ? overflowDamage > 0 ? `HP -${ev.damage} / LP -${overflowDamage}` : `HP -${ev.damage}`
+        : ev.negated ? 'NEGATED' : `-${ev.damage}`;
+    const color = ev.negated ? '#88ffb0' : ev.type === 'direct_attack' ? '#ffdf7d' : '#ff667c';
+    const angle = attackerIsMine ? -62 : 118;
+    const windup = this.add.image(x, startY, ART_KEYS.glow)
+      .setDisplaySize(86, 86)
+      .setAlpha(0.0)
+      .setTint(attackerIsMine ? 0xffd36f : 0xff6692)
+      .setDepth(70);
+    const slash = this.add.image(x, startY, ART_KEYS.slash)
+      .setScale(0.46)
+      .setAlpha(ev.negated ? 0.42 : 0.98)
+      .setAngle(angle)
+      .setDepth(72);
+    const impactRing = this.add.circle(x, impactY, 26, ev.negated ? 0x88ffb0 : 0xffe29a, 0)
+      .setStrokeStyle(6, ev.negated ? 0x88ffb0 : 0xffe29a, 0)
+      .setDepth(73);
+    const impactFlash = this.add.rectangle(x, impactY, 230, 150, ev.negated ? 0x65ffc6 : 0xfff1a6, 0)
+      .setAngle(attackerIsMine ? -10 : 10)
+      .setDepth(71);
+    const label = this.add.text(x, impactY - 18, labelText, {
+      fontSize: ev.type === 'direct_attack' ? '32px' : '28px',
+      color,
+      fontStyle: 'bold',
+      stroke: '#11080c',
+      strokeThickness: 6,
+    }).setOrigin(0.5).setScale(0.65).setAlpha(0).setDepth(80);
+
+    this.tweens.add({
+      targets: windup,
+      alpha: { from: 0, to: 0.42 },
+      scaleX: { from: 0.5, to: 1.35 },
+      scaleY: { from: 0.5, to: 1.35 },
+      duration: 260,
+      ease: 'Sine.easeOut',
+    });
+    this.tweens.add({
+      targets: slash,
+      y: travelY,
+      scaleX: { from: 0.46, to: 1.08 },
+      scaleY: { from: 0.46, to: 1.08 },
+      duration: 360,
+      ease: 'Cubic.easeIn',
+      onComplete: () => {
+        this.cameras.main.shake(ev.type === 'direct_attack' ? 260 : 190, ev.negated ? 0.002 : 0.006);
+        this.tweens.add({
+          targets: slash,
+          y: impactY,
+          scaleX: 1.35,
+          scaleY: 1.35,
+          alpha: 0,
+          duration: 190,
+          ease: 'Cubic.easeOut',
+        });
+        this.tweens.add({
+          targets: impactFlash,
+          alpha: { from: ev.negated ? 0.22 : 0.42, to: 0 },
+          scaleX: { from: 0.35, to: 1.25 },
+          scaleY: { from: 0.25, to: 1.0 },
+          duration: 340,
+          ease: 'Quad.easeOut',
+        });
+        this.tweens.add({
+          targets: impactRing,
+          radius: { from: 26, to: ev.type === 'direct_attack' ? 92 : 72 },
+          alpha: { from: 0.95, to: 0 },
+          duration: 520,
+          ease: 'Sine.easeOut',
+        });
+        this.tweens.add({
+          targets: label,
+          y: impactY - 72,
+          scaleX: { from: 0.65, to: 1.08 },
+          scaleY: { from: 0.65, to: 1.08 },
+          alpha: { from: 0, to: 1 },
+          duration: 300,
+          ease: 'Back.easeOut',
+          onComplete: () => {
+            this.tweens.add({
+              targets: label,
+              y: impactY - 104,
+              alpha: 0,
+              duration: 1250,
+              delay: 650,
+              ease: 'Sine.easeIn',
+              onComplete: () => label.destroy(),
+            });
+          },
+        });
+      },
+    });
+    this.tweens.add({
+      targets: windup,
+      alpha: 0,
+      duration: 520,
+      delay: 280,
+      ease: 'Sine.easeOut',
+    });
+    this.time.delayedCall(1150, () => {
+      windup.destroy();
+      slash.destroy();
+      impactRing.destroy();
+      impactFlash.destroy();
+    });
   }
 }
 
