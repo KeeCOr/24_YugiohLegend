@@ -1,11 +1,12 @@
 import Phaser from 'phaser';
 import { ART_KEYS, addSceneBackdrop } from '../art/ProceduralArt';
-import type { PlayerIndex } from '../data/CardTypes';
+import type { Card, PlayerIndex } from '../data/CardTypes';
 
 interface ResultData {
   winner: PlayerIndex | 'draw';
   myIndex: PlayerIndex;
   finalLPs: [number, number];
+  deck: Card[];
 }
 
 export class ResultScene extends Phaser.Scene {
@@ -37,8 +38,9 @@ export class ResultScene extends Phaser.Scene {
       color: '#ffffff',
     }).setOrigin(0.5);
 
+    const rematchDeck = [...data.deck];
     this.createTextButton(width / 2, height * 0.61, 'REMATCH', () => {
-      this.scene.start('GameScene', { mode: 'single' });
+      this.scene.start('GameScene', { mode: 'single', deck: rematchDeck });
     });
     this.createTextButton(width / 2, height * 0.72, 'MAIN MENU', () => {
       this.scene.start('MenuScene');

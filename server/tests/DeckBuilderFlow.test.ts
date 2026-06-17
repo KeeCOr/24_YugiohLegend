@@ -32,6 +32,18 @@ describe('deck building flow wiring', () => {
     expect(menu).toContain('deck: savedDeck');
   });
 
+  it('carries the active deck into rematch so deck counters reset correctly', () => {
+    const gameScene = readProjectFile('client/src/scenes/GameScene.ts');
+    const resultScene = readProjectFile('client/src/scenes/ResultScene.ts');
+
+    expect(gameScene).toContain('private duelDeck: Card[] = []');
+    expect(gameScene).toContain('this.duelDeck = [...deck]');
+    expect(gameScene).toContain('deck: this.duelDeck');
+    expect(resultScene).toContain('deck: Card[]');
+    expect(resultScene).toContain('const rematchDeck = [...data.deck]');
+    expect(resultScene).toContain("this.scene.start('GameScene', { mode: 'single', deck: rematchDeck })");
+  });
+
   it('presents deck construction as a guided process', () => {
     const deckBuilder = readProjectFile('client/src/scenes/DeckBuilderScene.ts');
 

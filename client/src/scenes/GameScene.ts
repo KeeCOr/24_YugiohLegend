@@ -4,6 +4,7 @@ import { Field } from '../components/Field';
 import { HandArea } from '../components/HandArea';
 import { LPDisplay } from '../components/LPDisplay';
 import { getSpellEffectSummary, getSpellTimingSummary } from '../data/CardText';
+import { getStarterDeck, isValidDeck } from '../data/DeckStorage';
 import { SocketManager } from '../network/SocketManager';
 import type {
   BattleEvent, Card, LaneIndex, LaneState, PlayerIndex, ServerMessage, SummonAction, TurnAction,
@@ -51,6 +52,7 @@ export class GameScene extends Phaser.Scene {
   private startingDeckSize = 0;
   private myDeckCount = 0;
   private opDeckCount = 0;
+  private duelDeck: Card[] = [];
   private summonLimitThisTurn = 1;
   private commitReady = false;
   private surrenderBtn!: Phaser.GameObjects.Text;
@@ -72,7 +74,8 @@ export class GameScene extends Phaser.Scene {
     const { width, height } = this.scale;
     addSceneBackdrop(this);
 
-    const deck: Card[] = data.deck ?? ALL_CARDS.slice(0, 8).concat(ALL_CARDS.slice(0, 2));
+    const deck: Card[] = data.deck && isValidDeck(data.deck) ? data.deck : getStarterDeck();
+    this.duelDeck = [...deck];
     this.startingDeckSize = deck.length;
     this.socket = new SocketManager();
     const boardX = width * 0.52;
@@ -471,6 +474,7 @@ export class GameScene extends Phaser.Scene {
             winner: msg.winner,
             myIndex: this.myIndex,
             finalLPs: msg.finalLPs,
+            deck: this.duelDeck,
           });
         });
         break;
