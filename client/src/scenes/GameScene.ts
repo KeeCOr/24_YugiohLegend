@@ -1,4 +1,4 @@
-﻿import Phaser from 'phaser';
+import Phaser from 'phaser';
 import { ART_KEYS, addSceneBackdrop, cardArtKey } from '../art/ProceduralArt';
 import { Field } from '../components/Field';
 import { HandArea } from '../components/HandArea';
@@ -86,15 +86,12 @@ export class GameScene extends Phaser.Scene {
     this.createTopHud(boardX, width, sideCenter);
 
     this.add.image(boardX, height * 0.435, ART_KEYS.hudFrame).setDisplaySize(850, 60).setAlpha(0.58);
-    this.add.text(boardX, height * 0.435, 'BATTLE LINE', {
-      fontSize: '13px',
-      color: '#d8b56a',
-      fontStyle: 'bold',
-    }).setOrigin(0.5);
+
+
     this.createBattlePreviewBadges(boardX, height * 0.435);
 
-    this.opField = new Field(this, boardX, height * 0.270, 1);
-    this.myField = new Field(this, boardX, height * 0.600, 0);
+    this.opField = new Field(this, boardX, height * 0.245, 1);
+    this.myField = new Field(this, boardX, height * 0.635, 0);
     this.updateLaneUnlocks();
 
     this.myLP = new LPDisplay(this, 20, height * 0.915, 'YOU');
@@ -906,4 +903,3 @@ export class GameScene extends Phaser.Scene {
     });
   }
 }
-

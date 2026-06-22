@@ -387,7 +387,7 @@ describe('GameRoom', () => {
     const room = new GameRoom('room1');
     room.addPlayer('p0', makeDeck());
     room.addPlayer('p1', makeDeck());
-    const tributeMonster = allCards.find(c => c.id === 'iron_golem')!;
+    const tributeMonster: Card = { id: 'replacement_titan', type: 'monster', name: 'Replacement Titan', atk: 2400, hp: 1800, tributeCost: 1 };
     const material = allCards.find(c => c.id === 'village_guard')!;
 
     (room.getState() as GameState).players[0].hand.push(material);
