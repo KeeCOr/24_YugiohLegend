@@ -6,6 +6,7 @@ import { LPDisplay } from '../components/LPDisplay';
 import { getSpellEffectSummary, getSpellTimingSummary } from '../data/CardText';
 import { getStarterDeck, isValidDeck } from '../data/DeckStorage';
 import { SocketManager } from '../network/SocketManager';
+import { getLaneBattlePreview, type LaneBattlePreview } from 'shared/battlePreview';
 import type {
   BattleEvent, Card, LaneIndex, LaneState, PlayerIndex, ServerMessage, SummonAction, TurnAction,
 } from '../data/CardTypes';
@@ -49,6 +50,7 @@ export class GameScene extends Phaser.Scene {
   private turnTxt!: Phaser.GameObjects.Text;
   private myDeckTxt!: Phaser.GameObjects.Text;
   private opDeckTxt!: Phaser.GameObjects.Text;
+  private battlePreviewBadges: Phaser.GameObjects.Container[] = [];
   private startingDeckSize = 0;
   private myDeckCount = 0;
   private opDeckCount = 0;
@@ -89,6 +91,7 @@ export class GameScene extends Phaser.Scene {
       color: '#d8b56a',
       fontStyle: 'bold',
     }).setOrigin(0.5);
+    this.createBattlePreviewBadges(boardX, height * 0.435);
 
     this.opField = new Field(this, boardX, height * 0.270, 1);
     this.myField = new Field(this, boardX, height * 0.600, 0);
@@ -262,6 +265,38 @@ export class GameScene extends Phaser.Scene {
       stroke: '#090b12',
       strokeThickness: 4,
     }).setOrigin(0, 0.5);
+  }
+
+  private createBattlePreviewBadges(boardX: number, y: number): void {
+    this.battlePreviewBadges = LANE_INDICES.map((laneIndex) => {
+      const x = boardX + (laneIndex - (LANE_COUNT - 1) / 2) * 246;
+      const c = this.add.container(x, y + 2).setDepth(62);
+      const bg = this.add.rectangle(0, 0, 174, 46, 0x08101c, 0.88);
+      bg.setName('preview-bg');
+      bg.setStrokeStyle(2, 0x30425f, 0.9);
+      const accent = this.add.rectangle(0, -21, 166, 3, 0x7fd8ff, 0.95);
+      accent.setName('preview-accent');
+      const title = this.add.text(0, -8, 'BATTLE T2', {
+        fontSize: '10px',
+        color: '#aebbd0',
+        fontStyle: 'bold',
+        stroke: '#030711',
+        strokeThickness: 2,
+      }).setOrigin(0.5);
+      title.setName('preview-title');
+      const detail = this.add.text(0, 10, 'attacks start later', {
+        fontSize: '11px',
+        color: '#d8e7ff',
+        fontStyle: 'bold',
+        align: 'center',
+        wordWrap: { width: 154, useAdvancedWrap: true },
+        stroke: '#030711',
+        strokeThickness: 2,
+      }).setOrigin(0.5);
+      detail.setName('preview-detail');
+      c.add([bg, accent, title, detail]);
+      return c;
+    });
   }
 
   private onCardDroppedOnLane(card: Card, worldX: number, worldY: number): void {
@@ -504,6 +539,7 @@ export class GameScene extends Phaser.Scene {
     this.myField.setTributeLanes();
     this.updateLaneUnlocks();
     this.updatePlayableHandCards();
+    this.updateBattlePreviews();
   }
 
   private isLaneUnlocked(laneIndex: LaneIndex): boolean {
@@ -515,6 +551,60 @@ export class GameScene extends Phaser.Scene {
     const unlocked = GameScene.getUnlockedLanes(this.turn);
     this.myField.setUnlockedLanes(unlocked);
     this.opField.setUnlockedLanes(unlocked);
+    this.updateBattlePreviews();
+  }
+
+  private updateBattlePreviews(): void {
+    if (this.battlePreviewBadges.length === 0) return;
+    const unlocked = new Set(GameScene.getUnlockedLanes(this.turn));
+    for (const laneIndex of LANE_INDICES) {
+      const badge = this.battlePreviewBadges[laneIndex];
+      const bg = badge.getByName('preview-bg') as Phaser.GameObjects.Rectangle | null;
+      const accent = badge.getByName('preview-accent') as Phaser.GameObjects.Rectangle | null;
+      const title = badge.getByName('preview-title') as Phaser.GameObjects.Text | null;
+      const detail = badge.getByName('preview-detail') as Phaser.GameObjects.Text | null;
+      const locked = !unlocked.has(laneIndex);
+      const hasBattlePreview = this.turn >= 2 && this.myLanes && this.opLanes && !locked;
+
+      if (!hasBattlePreview) {
+        const text = locked ? `LANE ${laneIndex + 1} LOCKED` : 'BATTLE T2';
+        title?.setText(text);
+        detail?.setText(locked ? 'opens later' : 'attacks start later');
+        title?.setColor('#aebbd0');
+        detail?.setColor('#aebbd0');
+        bg?.setFillStyle(0x08101c, locked ? 0.52 : 0.76);
+        bg?.setStrokeStyle(2, 0x30425f, locked ? 0.45 : 0.78);
+        accent?.setFillStyle(0x6a7a8d, 0.72);
+        continue;
+      }
+
+      const preview = getLaneBattlePreview(this.myLanes[laneIndex], this.opLanes[laneIndex]);
+      const palette = this.getPreviewPalette(preview);
+      title?.setText(this.getPreviewTitle(preview));
+      detail?.setText(preview.label);
+      title?.setColor(palette.title);
+      detail?.setColor(palette.detail);
+      bg?.setFillStyle(palette.bg, 0.9);
+      bg?.setStrokeStyle(2, palette.stroke, 0.92);
+      accent?.setFillStyle(palette.stroke, 0.98);
+    }
+  }
+
+  private getPreviewTitle(preview: LaneBattlePreview): string {
+    if (preview.kind === 'empty') return 'QUIET';
+    if (preview.kind === 'direct') return preview.attacker === 'player' ? 'YOU HIT LP' : 'LP DANGER';
+    if (preview.damage === 0) return 'EVEN CLASH';
+    return preview.target === 'opponent' ? 'YOU WIN TRADE' : 'RIVAL WINS';
+  }
+
+  private getPreviewPalette(preview: LaneBattlePreview): { bg: number; stroke: number; title: string; detail: string } {
+    if (preview.tone === 'advantage') {
+      return { bg: 0x092016, stroke: 0x8ef2ba, title: '#bfffe2', detail: '#ffffff' };
+    }
+    if (preview.tone === 'danger') {
+      return { bg: 0x260c14, stroke: 0xff7487, title: '#ffb3be', detail: '#ffffff' };
+    }
+    return { bg: 0x0b1524, stroke: 0x7fd8ff, title: '#bde8ff', detail: '#d8e7ff' };
   }
 
   private getTributeCandidateLaneIndices(): LaneIndex[] {
