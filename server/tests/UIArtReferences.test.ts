@@ -88,6 +88,6 @@ describe('UI art references', () => {
     expect(gameScene).toContain('wordWrap: { width: 244');
     expect(gameScene).not.toContain('MANA');
     expect(gameScene).not.toContain('manaTxt');
-    expect(field).toContain('FIELD_CARD_SCALE = 1.48');
+    expect(field).toContain('FIELD_CARD_SCALE = 1.0');
   });
 });

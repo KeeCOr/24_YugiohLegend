@@ -4,10 +4,10 @@ import { CardSprite } from './CardSprite';
 import type { Card, LaneIndex, LaneState, PlayerIndex } from '../data/CardTypes';
 
 const LANE_COUNT = 3;
-const LANE_W = 198;
-const LANE_H = 286;
-const LANE_GAP = 48;
-const FIELD_CARD_SCALE = 1.48;
+const LANE_W = 160;
+const LANE_H = 210;
+const LANE_GAP = 38;
+const FIELD_CARD_SCALE = 1.0;
 
 export class Field extends Phaser.GameObjects.Container {
   private laneImages: Phaser.GameObjects.Image[] = [];
@@ -30,8 +30,8 @@ export class Field extends Phaser.GameObjects.Container {
   private buildLanes(scene: Phaser.Scene): void {
     for (let i = 0; i < LANE_COUNT; i++) {
       const lx = this.getLaneLocalX(i);
-      const glow = scene.add.image(lx, 0, ART_KEYS.glow).setDisplaySize(258, 334).setAlpha(0);
-      const laneFrame = scene.add.image(lx, 0, ART_KEYS.laneFrame).setDisplaySize(224, 316).setAlpha(0.9);
+      const glow = scene.add.image(lx, 0, ART_KEYS.glow).setDisplaySize(210, 252).setAlpha(0);
+      const laneFrame = scene.add.image(lx, 0, ART_KEYS.laneFrame).setDisplaySize(186, 238).setAlpha(0.9);
       const lane = scene.add.image(lx, 0, this.playerIndex === 0 ? ART_KEYS.lane : ART_KEYS.laneEnemy);
       lane.setDisplaySize(LANE_W, LANE_H);
       this.add([glow, laneFrame, lane]);

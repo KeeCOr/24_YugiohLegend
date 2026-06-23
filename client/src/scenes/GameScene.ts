@@ -85,13 +85,13 @@ export class GameScene extends Phaser.Scene {
     const lpX = sideCenter - 119;
     this.createTopHud(boardX, width, sideCenter);
 
-    this.add.image(boardX, height * 0.435, ART_KEYS.hudFrame).setDisplaySize(850, 60).setAlpha(0.58);
+    this.add.image(boardX, height * 0.435, ART_KEYS.hudFrame).setDisplaySize(700, 60).setAlpha(0.58);
 
 
     this.createBattlePreviewBadges(boardX, height * 0.435);
 
     this.opField = new Field(this, boardX, height * 0.245, 1);
-    this.myField = new Field(this, boardX, height * 0.635, 0);
+    this.myField = new Field(this, boardX, height * 0.600, 0);
     this.updateLaneUnlocks();
 
     this.myLP = new LPDisplay(this, 20, height * 0.915, 'YOU');
@@ -266,7 +266,7 @@ export class GameScene extends Phaser.Scene {
 
   private createBattlePreviewBadges(boardX: number, y: number): void {
     this.battlePreviewBadges = LANE_INDICES.map((laneIndex) => {
-      const x = boardX + (laneIndex - (LANE_COUNT - 1) / 2) * 246;
+      const x = boardX + (laneIndex - (LANE_COUNT - 1) / 2) * 198;
       const c = this.add.container(x, y + 2).setDepth(62);
       const bg = this.add.rectangle(0, 0, 174, 46, 0x08101c, 0.88);
       bg.setName('preview-bg');
