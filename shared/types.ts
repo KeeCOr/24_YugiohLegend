@@ -1,4 +1,4 @@
-export type CardType = 'monster' | 'spell';
+export type CardType = 'monster' | 'spell' | 'trap';
 export type SpellMode = 'face_up' | 'face_down';
 export type EffectId =
   | 'power_boost'
@@ -83,8 +83,20 @@ export interface BattleEvent {
   destroyedCards: { playerIndex: PlayerIndex; card: Card }[];
   triggeredSpell?: { playerIndex: PlayerIndex; card: Card };
   negated: boolean;
+  finisher?: boolean;
 }
 
+export interface TurnSummary {
+  turn: number;
+  isSetupTurn: boolean;
+  playerSummons: [number, number];
+  playerActions: [number, number];
+  lpDelta: [number, number];
+  battleEventCount: number;
+  nextTurn: number | null;
+  headline: string;
+  steps: string[];
+}
 export interface GameState {
   turn: number;
   phase: 'waiting' | 'action' | 'reveal' | 'battle' | 'final_battle' | 'game_over';
@@ -103,7 +115,7 @@ export type ServerMessage =
   | { type: 'game_start'; yourIndex: PlayerIndex; yourHand: Card[]; opponentHandCount: number; turn: number }
   | { type: 'turn_start'; drawnCard: Card; turn: number; lanes: [PlayerState['lanes'], PlayerState['lanes']]; summonLimit: number }
   | { type: 'reveal'; yourAction: TurnAction; opponentAction: TurnAction }
-  | { type: 'battle_result'; events: BattleEvent[]; lps: [number, number]; lanes: [PlayerState['lanes'], PlayerState['lanes']] }
+  | { type: 'battle_result'; events: BattleEvent[]; lps: [number, number]; preBattleLanes: [PlayerState['lanes'], PlayerState['lanes']]; lanes: [PlayerState['lanes'], PlayerState['lanes']]; turnSummary?: TurnSummary }
   | { type: 'game_over'; winner: PlayerIndex | 'draw'; finalLPs: [number, number] }
   | { type: 'error'; message: string }
   | { type: 'waiting'; message: string };

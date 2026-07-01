@@ -3,12 +3,12 @@ import { ART_KEYS, addSceneBackdrop, cardArtKey } from '../art/ProceduralArt';
 import { Field } from '../components/Field';
 import { HandArea } from '../components/HandArea';
 import { LPDisplay } from '../components/LPDisplay';
-import { getSpellEffectSummary, getSpellTimingSummary } from '../data/CardText';
+import { getReadableEffectSummary, getSpellEffectSummary, getSpellTimingSummary } from '../data/CardText';
 import { getStarterDeck, isValidDeck } from '../data/DeckStorage';
 import { SocketManager } from '../network/SocketManager';
 import { getLaneBattlePreview, type LaneBattlePreview } from 'shared/battlePreview';
 import type {
-  BattleEvent, Card, LaneIndex, LaneState, PlayerIndex, ServerMessage, SummonAction, TurnAction,
+  BattleEvent, Card, LaneIndex, LaneState, PlayerIndex, ServerMessage, SummonAction, TurnAction, TurnSummary,
 } from '../data/CardTypes';
 import { ALL_CARDS } from './BootScene';
 
@@ -20,8 +20,15 @@ interface GameSceneData {
   deck?: Card[];
 }
 
+type TurnStartMessage = Extract<ServerMessage, { type: 'turn_start' }>;
+type BattleResultMessage = Extract<ServerMessage, { type: 'battle_result' }>;
+type GameOverMessage = Extract<ServerMessage, { type: 'game_over' }>;
+
 export class GameScene extends Phaser.Scene {
   private static readonly MAX_TURNS = 4;
+  private static readonly BATTLE_REVEAL_PAUSE_MS = 850;
+  private static readonly BATTLE_EVENT_STAGGER_MS = 780;
+  private static readonly BATTLE_LP_APPLY_BUFFER_MS = 1250;
   private static getUnlockedLanes(turn: number): LaneIndex[] {
     if (turn <= 1) return [0];
     if (turn === 2) return [0, 1];
@@ -60,6 +67,11 @@ export class GameScene extends Phaser.Scene {
   private surrenderBtn!: Phaser.GameObjects.Text;
   private surrenderPending = false;
   private surrenderTimer?: Phaser.Time.TimerEvent;
+  private lastBattleHadFinisher = false;
+  private battleSequenceActive = false;
+  private deferredTurnStart: TurnStartMessage | null = null;
+  private deferredGameOver: GameOverMessage | null = null;
+  private battleSequenceResultDelayMs = 0;
 
   constructor() { super('GameScene'); }
 
@@ -70,6 +82,11 @@ export class GameScene extends Phaser.Scene {
     this.myHand = [];
     this.myLanes = null;
     this.opLanes = null;
+    this.lastBattleHadFinisher = false;
+    this.battleSequenceActive = false;
+    this.deferredTurnStart = null;
+    this.deferredGameOver = null;
+    this.battleSequenceResultDelayMs = 0;
   }
 
   async create(data: GameSceneData): Promise<void> {
@@ -103,8 +120,8 @@ export class GameScene extends Phaser.Scene {
 
     this.handArea = new HandArea(this, boardX, height * 0.870, (card, _sprite) => {
       this.selectedCard = card;
-      if (card.type === 'spell') {
-        const text = `${card.name}: ${getSpellTimingSummary(card)} - ${getSpellEffectSummary(card)}. Click or drag to your lane.`;
+      if (card.type === 'spell' || card.type === 'trap') {
+        const text = `${card.name}: ${getSpellTimingSummary(card)} - ${getReadableEffectSummary(card) || getSpellEffectSummary(card)}. Click or drag to your lane.`;
         this.statusTxt.setText(text);
       } else {
         const summonText = this.getSummonText(card);
@@ -143,7 +160,7 @@ export class GameScene extends Phaser.Scene {
       else this.submitBtn.clearTint();
     });
 
-    this.surrenderBtn = this.add.text(sideCenter, height * 0.974, '??났', {
+    this.surrenderBtn = this.add.text(sideCenter, height * 0.974, 'SURRENDER', {
       fontSize: '14px',
       color: '#6a7a8d',
       fontStyle: 'bold',
@@ -377,7 +394,7 @@ export class GameScene extends Phaser.Scene {
       this.statusTxt.setText(tributeCost > 0
         ? `${card.name} paid ${tributeCost} tribute${tributeCost > 1 ? 's' : ''} and queued in lane ${laneIndex + 1}. Press COMMIT.`
         : `${card.name} queued in lane ${laneIndex + 1}. ${this.getQueuedSummons().length}/${this.getSummonLimit()} summon used.`);
-    } else if (card.type === 'spell') {
+    } else if (card.type === 'spell' || card.type === 'trap') {
       if (card.spellMode === 'face_down' && this.myLanes?.[laneIndex].faceDownSpell) {
         this.statusTxt.setText('That lane already has a face-down spell.');
         return;
@@ -411,17 +428,17 @@ export class GameScene extends Phaser.Scene {
   private onSurrenderClick(): void {
     if (this.surrenderPending) {
       this.surrenderTimer?.destroy();
-      this.surrenderBtn.setText('??났 以?..');
+      this.surrenderBtn.setText('SURRENDER');
       this.surrenderBtn.setColor('#ff667c');
       this.surrenderBtn.disableInteractive();
       this.socket.send({ type: 'forfeit' });
     } else {
       this.surrenderPending = true;
-      this.surrenderBtn.setText('?뺤씤?');
+      this.surrenderBtn.setText('SURRENDER');
       this.surrenderBtn.setColor('#ff667c');
       this.surrenderTimer = this.time.delayedCall(3000, () => {
         this.surrenderPending = false;
-        this.surrenderBtn.setText('??났');
+        this.surrenderBtn.setText('SURRENDER');
         this.surrenderBtn.setColor('#6a7a8d');
       });
     }
@@ -467,24 +484,11 @@ export class GameScene extends Phaser.Scene {
         break;
 
       case 'turn_start':
-        this.submitted = false;
-        this.pendingAction = { spells: [] };
-        this.keepOpponentLastConfirmedField();
-        this.turn = msg.turn;
-        this.summonLimitThisTurn = msg.summonLimit;
-        this.myDeckCount = Math.max(0, this.myDeckCount - 1);
-        this.opDeckCount = Math.max(0, this.opDeckCount - 1);
-        this.updateDeckCounters();
-        this.turnTxt.setText(`TURN ${this.turn} / ${GameScene.MAX_TURNS}`);
-        this.applyLaneState(msg.lanes);
-        this.updateLaneUnlocks();
-        this.myField.setTributeLanes();
-        this.myHand.push(msg.drawnCard);
-        this.handArea.setHand(this.myHand);
-        this.submitTxt.setText('COMMIT');
-        this.setCommitReady(false);
-        this.statusTxt.setText('New draw. Prepare your lane.');
-        this.updatePlayableHandCards();
+        if (this.battleSequenceActive) {
+          this.deferredTurnStart = msg;
+          break;
+        }
+        this.applyTurnStart(msg);
         break;
 
       case 'reveal':
@@ -493,22 +497,15 @@ export class GameScene extends Phaser.Scene {
         break;
 
       case 'battle_result':
-        this.myLP.update(msg.lps[this.myIndex]);
-        this.opLP.update(msg.lps[this.myIndex === 0 ? 1 : 0]);
-        this.applyLaneState(msg.lanes);
-        this.showBattleEvents(msg.events);
+        this.beginBattleResolutionSequence(msg);
         break;
 
       case 'game_over':
-        this.socket.disconnect();
-        this.time.delayedCall(1500, () => {
-          this.scene.start('ResultScene', {
-            winner: msg.winner,
-            myIndex: this.myIndex,
-            finalLPs: msg.finalLPs,
-            deck: this.duelDeck,
-          });
-        });
+        if (this.battleSequenceActive) {
+          this.deferredGameOver = msg;
+          break;
+        }
+        this.startResultScene(msg);
         break;
 
       case 'waiting':
@@ -521,6 +518,147 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  private applyTurnStart(msg: TurnStartMessage): void {
+    this.submitted = false;
+    this.pendingAction = { spells: [] };
+    this.keepOpponentLastConfirmedField();
+    this.turn = msg.turn;
+    this.summonLimitThisTurn = msg.summonLimit;
+    this.myDeckCount = Math.max(0, this.myDeckCount - 1);
+    this.opDeckCount = Math.max(0, this.opDeckCount - 1);
+    this.updateDeckCounters();
+    this.turnTxt.setText(`TURN ${this.turn} / ${GameScene.MAX_TURNS}`);
+    this.applyLaneState(msg.lanes);
+    this.updateLaneUnlocks();
+    this.myField.setTributeLanes();
+    this.myHand.push(msg.drawnCard);
+    this.handArea.setHand(this.myHand);
+    this.submitTxt.setText('COMMIT');
+    this.setCommitReady(false);
+    this.statusTxt.setText('New draw. Prepare your lane.');
+    this.updatePlayableHandCards();
+  }
+
+  private beginBattleResolutionSequence(result: BattleResultMessage): void {
+    this.lastBattleHadFinisher = result.events.some(ev => ev.finisher);
+    this.battleSequenceActive = true;
+    this.battleSequenceResultDelayMs = this.getBattleSequenceDuration(result.events);
+    this.applyLaneState(result.preBattleLanes);
+    this.statusTxt.setText(result.events.some(ev => ev.finisher)
+      ? 'Summons revealed. Final blow incoming...'
+      : 'Summons revealed. Battle starts...');
+    this.showBattleEvents(result.events, GameScene.BATTLE_REVEAL_PAUSE_MS);
+    this.time.delayedCall(this.battleSequenceResultDelayMs, () => this.finishBattleResolutionSequence(result));
+  }
+
+  private finishBattleResolutionSequence(result: BattleResultMessage): void {
+    this.myLP.update(result.lps[this.myIndex]);
+    this.opLP.update(result.lps[this.myIndex === 0 ? 1 : 0]);
+    this.applyLaneState(result.lanes);
+    this.battleSequenceActive = false;
+    this.statusTxt.setText(this.formatTurnSummary(result.turnSummary));
+    this.showDuelEndSummaryOverlay(result.turnSummary, result.lps);
+
+    const deferredTurnStart = this.deferredTurnStart;
+    this.deferredTurnStart = null;
+    if (deferredTurnStart) {
+      this.applyTurnStart(deferredTurnStart);
+      return;
+    }
+
+    const deferredGameOver = this.deferredGameOver;
+    this.deferredGameOver = null;
+    if (deferredGameOver) this.startResultScene(deferredGameOver);
+  }
+
+
+  private showDuelEndSummaryOverlay(turnSummary: TurnSummary | undefined, lps: [number, number]): void {
+    if (!turnSummary) return;
+    const defeatedIndex = lps.findIndex(lp => lp <= 0);
+    if (turnSummary.nextTurn !== null && defeatedIndex < 0) return;
+
+    const { width, height } = this.scale;
+    const defeatedLabel = defeatedIndex === 0 ? 'P1 LP 0' : defeatedIndex === 1 ? 'P2 LP 0' : 'FINAL TURN';
+    const overlay = this.add.container(width / 2, height / 2).setDepth(96).setAlpha(0);
+    const scrim = this.add.rectangle(0, 0, width, height, 0x050712, 0.72);
+    const panel = this.add.image(0, 0, ART_KEYS.hudFrame).setDisplaySize(640, 250).setAlpha(0.96);
+    const headline = this.add.text(0, -82, turnSummary.headline, {
+      fontSize: '28px',
+      color: '#fff4c6',
+      fontStyle: 'bold',
+      stroke: '#120912',
+      strokeThickness: 5,
+      align: 'center',
+      wordWrap: { width: 560, useAdvancedWrap: true },
+    }).setOrigin(0.5);
+    const lpBadge = this.add.text(0, -28, defeatedLabel, {
+      fontSize: '22px',
+      color: '#ff9bb0',
+      fontStyle: 'bold',
+      stroke: '#090b12',
+      strokeThickness: 4,
+    }).setOrigin(0.5);
+    const steps = this.add.text(0, 42, turnSummary.steps.slice(1).join('\n'), {
+      fontSize: '16px',
+      color: '#d8e7ff',
+      stroke: '#080b12',
+      strokeThickness: 3,
+      align: 'center',
+      lineSpacing: 5,
+      wordWrap: { width: 560, useAdvancedWrap: true },
+    }).setOrigin(0.5);
+
+    overlay.add([scrim, panel, headline, lpBadge, steps]);
+    overlay.setScale(0.92);
+    this.tweens.add({
+      targets: overlay,
+      alpha: 1,
+      scaleX: 1,
+      scaleY: 1,
+      duration: 260,
+      ease: 'Back.easeOut',
+    });
+    this.time.delayedCall(2300, () => {
+      this.tweens.add({
+        targets: overlay,
+        alpha: 0,
+        y: overlay.y - 18,
+        duration: 420,
+        ease: 'Sine.easeIn',
+        onComplete: () => overlay.destroy(),
+      });
+    });
+  }
+
+  private formatTurnSummary(turnSummary?: TurnSummary): string {
+    if (!turnSummary) return 'Battle resolved. LP updated.';
+    const detail = turnSummary.steps.slice(1).join('\n');
+    return `${turnSummary.headline}\n${detail}`;
+  }
+  private getBattleSequenceDuration(events: BattleEvent[]): number {
+    const shownEvents = this.getShownBattleEventCount(events);
+    if (shownEvents === 0) return GameScene.BATTLE_REVEAL_PAUSE_MS;
+    return GameScene.BATTLE_REVEAL_PAUSE_MS
+      + (shownEvents - 1) * GameScene.BATTLE_EVENT_STAGGER_MS
+      + GameScene.BATTLE_LP_APPLY_BUFFER_MS;
+  }
+
+  private getShownBattleEventCount(events: BattleEvent[]): number {
+    return events.filter(ev => ev.type !== 'no_action').length;
+  }
+
+  private startResultScene(msg: GameOverMessage): void {
+    this.socket.disconnect();
+    const resultDelay = this.lastBattleHadFinisher ? 2600 : 1500;
+    this.time.delayedCall(resultDelay, () => {
+      this.scene.start('ResultScene', {
+        winner: msg.winner,
+        myIndex: this.myIndex,
+        finalLPs: msg.finalLPs,
+        deck: this.duelDeck,
+      });
+    });
+  }
   private keepOpponentLastConfirmedField(): void {
     this.opField.clearPending();
     if (this.opLanes) this.opField.updateLanes(this.opLanes);
@@ -696,15 +834,15 @@ export class GameScene extends Phaser.Scene {
     const reason = this.getPlayBlockReason(card);
     if (this.canPlayCardNow(card)) {
       const lanes = this.getPlayableLaneIndices(card).map(i => i + 1).join(', ');
-      if (card.type === 'spell') {
-        this.statusTxt.setText(`${card.name}: ${getSpellEffectSummary(card)}. Valid lane${lanes.includes(',') ? 's' : ''}: ${lanes}.`);
+      if (card.type === 'spell' || card.type === 'trap') {
+        this.statusTxt.setText(`${card.name}: ${getReadableEffectSummary(card) || getSpellEffectSummary(card)}. Valid lane${lanes.includes(',') ? 's' : ''}: ${lanes}.`);
         return;
       }
       this.statusTxt.setText(`${card.name}: playable now. Valid lane${lanes.includes(',') ? 's' : ''}: ${lanes}.`);
       return;
     }
-    this.statusTxt.setText(card.type === 'spell'
-      ? `${card.name}: ${getSpellEffectSummary(card)}. Cannot play now. ${reason}`
+    this.statusTxt.setText((card.type === 'spell' || card.type === 'trap')
+      ? `${card.name}: ${getReadableEffectSummary(card) || getSpellEffectSummary(card)}. Cannot play now. ${reason}`
       : `${card.name}: cannot play now. ${reason}`);
   }
 
@@ -732,7 +870,7 @@ export class GameScene extends Phaser.Scene {
         const tributeCost = card.tributeCost ?? 0;
         return (!lane?.monster || tributeCost > 0) && !pending;
       }
-      if (card.type === 'spell') {
+      if (card.type === 'spell' || card.type === 'trap') {
         if (pending) return false;
         if (card.spellMode === 'face_down') return !lane?.faceDownSpell;
         return !lane?.spell;
@@ -770,17 +908,16 @@ export class GameScene extends Phaser.Scene {
     return this.summonLimitThisTurn;
   }
 
-  private showBattleEvents(events: BattleEvent[]): void {
+  private showBattleEvents(events: BattleEvent[], startDelay = 0): void {
     let shownEvents = 0;
     for (const ev of events) {
       if (ev.type === 'no_action') continue;
-      this.time.delayedCall(shownEvents * 260, () => this.playBattleImpactEvent(ev));
+      this.time.delayedCall(startDelay + shownEvents * GameScene.BATTLE_EVENT_STAGGER_MS, () => this.playBattleImpactEvent(ev));
       shownEvents += 1;
     }
     if (shownEvents > 0) {
-      this.statusTxt.setText('Battle clash!');
-      this.time.delayedCall(2200 + shownEvents * 260, () => {
-        if (!this.submitted) this.statusTxt.setText('New draw. Prepare your lane.');
+      this.time.delayedCall(startDelay, () => {
+        this.statusTxt.setText(events.some(ev => ev.finisher) ? 'Final blow!' : 'Battle clash!');
       });
     }
   }
@@ -795,7 +932,7 @@ export class GameScene extends Phaser.Scene {
     const travelY = Phaser.Math.Linear(startY, impactY, 0.66);
     const overflowDamage = (ev.hpChanges ?? []).reduce((sum, change) => sum + Math.max(0, -change.hpAfter), 0);
     const labelText = ev.type === 'direct_attack'
-      ? `DIRECT -${ev.damage}`
+      ? `LP -${ev.damage}`
       : ev.hpChanges?.length
         ? overflowDamage > 0 ? `HP -${ev.damage} / LP -${overflowDamage}` : `HP -${ev.damage}`
         : ev.negated ? 'NEGATED' : `-${ev.damage}`;
@@ -818,7 +955,7 @@ export class GameScene extends Phaser.Scene {
       .setAngle(attackerIsMine ? -10 : 10)
       .setDepth(71);
     const label = this.add.text(x, impactY - 18, labelText, {
-      fontSize: ev.type === 'direct_attack' ? '32px' : '28px',
+      fontSize: ev.type === 'direct_attack' ? '26px' : '28px',
       color,
       fontStyle: 'bold',
       stroke: '#11080c',
@@ -841,7 +978,8 @@ export class GameScene extends Phaser.Scene {
       duration: 360,
       ease: 'Cubic.easeIn',
       onComplete: () => {
-        this.cameras.main.shake(ev.type === 'direct_attack' ? 260 : 190, ev.negated ? 0.002 : 0.006);
+        this.cameras.main.shake(ev.finisher ? 420 : ev.type === 'direct_attack' ? 260 : 190, ev.finisher ? 0.012 : ev.negated ? 0.002 : 0.006);
+        if (ev.finisher) this.playFinisherImpact(x, impactY, attackerIsMine);
         this.tweens.add({
           targets: slash,
           y: impactY,
@@ -902,4 +1040,84 @@ export class GameScene extends Phaser.Scene {
       impactFlash.destroy();
     });
   }
-}
+
+  private playFinisherImpact(x: number, impactY: number, attackerIsMine: boolean): void {
+    const { width, height } = this.scale;
+    const tint = attackerIsMine ? 0xffd36f : 0xff5f86;
+    const flash = this.add.rectangle(width / 2, height / 2, width, height, 0xfff1a6, 0)
+      .setDepth(88);
+    const beam = this.add.rectangle(x, impactY, 42, height * 0.72, tint, 0.0)
+      .setAngle(attackerIsMine ? -18 : 18)
+      .setDepth(89);
+    const ring = this.add.circle(x, impactY, 36, tint, 0)
+      .setStrokeStyle(9, tint, 0)
+      .setDepth(90);
+    const finishText = this.add.text(width / 2, height * 0.41, 'FINAL BLOW', {
+      fontSize: '58px',
+      color: '#fff4c6',
+      fontStyle: 'bold',
+      stroke: '#19070b',
+      strokeThickness: 9,
+    }).setOrigin(0.5).setAlpha(0).setScale(0.72).setDepth(91);
+    const subText = this.add.text(width / 2, height * 0.50, 'LP 0', {
+      fontSize: '25px',
+      color: attackerIsMine ? '#8fffd2' : '#ff9bb0',
+      fontStyle: 'bold',
+      stroke: '#090b12',
+      strokeThickness: 5,
+    }).setOrigin(0.5).setAlpha(0).setDepth(91);
+
+    this.tweens.add({
+      targets: flash,
+      alpha: { from: 0.0, to: 0.44 },
+      duration: 140,
+      yoyo: true,
+      repeat: 1,
+      ease: 'Sine.easeOut',
+    });
+    this.tweens.add({
+      targets: beam,
+      alpha: { from: 0, to: 0.76 },
+      scaleX: { from: 0.45, to: 1.35 },
+      scaleY: { from: 0.35, to: 1.06 },
+      duration: 260,
+      ease: 'Cubic.easeOut',
+      onComplete: () => {
+        this.tweens.add({ targets: beam, alpha: 0, scaleX: 1.75, duration: 460, ease: 'Sine.easeIn' });
+      },
+    });
+    this.tweens.add({
+      targets: ring,
+      radius: { from: 36, to: 210 },
+      alpha: { from: 0.95, to: 0 },
+      duration: 820,
+      ease: 'Expo.easeOut',
+    });
+    this.tweens.add({
+      targets: [finishText, subText],
+      alpha: { from: 0, to: 1 },
+      scaleX: { from: 0.72, to: 1.0 },
+      scaleY: { from: 0.72, to: 1.0 },
+      duration: 240,
+      ease: 'Back.easeOut',
+      onComplete: () => {
+        this.tweens.add({
+          targets: [finishText, subText],
+          alpha: 0,
+          y: '-=22',
+          duration: 620,
+          delay: 720,
+          ease: 'Sine.easeIn',
+        });
+      },
+    });
+
+    this.time.delayedCall(1800, () => {
+      flash.destroy();
+      beam.destroy();
+      ring.destroy();
+      finishText.destroy();
+      subText.destroy();
+    });
+  }
+  }

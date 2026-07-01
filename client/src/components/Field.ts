@@ -38,7 +38,7 @@ export class Field extends Phaser.GameObjects.Container {
       this.laneGlows.push(glow);
       this.laneImages.push(lane);
 
-      const faceDown = this.createFaceDownSpellIndicator(scene, lx, LANE_H / 2 - 24);
+      const faceDown = this.createTrapIndicator(scene, lx, LANE_H / 2 - 24);
       faceDown.setVisible(false);
       this.add(faceDown);
       this.faceDownSpellIndicators.push(faceDown);
@@ -167,11 +167,11 @@ export class Field extends Phaser.GameObjects.Container {
     }
   }
 
-  private createFaceDownSpellIndicator(scene: Phaser.Scene, x: number, y: number): Phaser.GameObjects.Container {
+  private createTrapIndicator(scene: Phaser.Scene, x: number, y: number): Phaser.GameObjects.Container {
     const c = scene.add.container(x, y);
     const back = scene.add.image(0, 0, ART_KEYS.cardBack).setDisplaySize(36, 50).setAlpha(0.96);
-    const diamond = scene.add.polygon(0, 0, [0, -18, 20, 0, 0, 18, -20, 0], 0xd281ee, 0.28);
-    diamond.setStrokeStyle(2, 0xffe0ff, 0.95);
+    const diamond = scene.add.polygon(0, 0, [0, -18, 20, 0, 0, 18, -20, 0], 0xff70bc, 0.30);
+    diamond.setStrokeStyle(2, 0xffb6df, 0.95);
     const art = scene.add.image(0, 0, ART_KEYS.cardBack).setDisplaySize(30, 40).setAlpha(0.45);
     art.setName('face-down-art');
     const text = scene.add.text(0, 0, '?', {

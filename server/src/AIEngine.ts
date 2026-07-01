@@ -52,7 +52,7 @@ export function randomAction(player: PlayerState, turn = 3): TurnAction {
   const hand = [...player.hand];
   const emptyLanes = filterUnlocked(getEmptyLaneIndices(player), turn);
   const monsters = hand.filter(c => c.type === 'monster');
-  const spellCards = hand.filter(c => c.type === 'spell');
+  const spellCards = hand.filter(c => c.type === 'spell' || c.type === 'trap');
   let summon: TurnAction['summon'];
 
   if (monsters.length > 0 && emptyLanes.length > 0) {
@@ -69,7 +69,7 @@ export function greedyAction(player: PlayerState, turn = 3): TurnAction {
   const hand = [...player.hand];
   const emptyLanes = filterUnlocked(getEmptyLaneIndices(player), turn);
   const monsters = hand.filter(c => c.type === 'monster').sort((a, b) => (b.atk ?? 0) - (a.atk ?? 0));
-  const spellCards = hand.filter(c => c.type === 'spell');
+  const spellCards = hand.filter(c => c.type === 'spell' || c.type === 'trap');
   let summon: TurnAction['summon'];
 
   if (emptyLanes.length > 0) {

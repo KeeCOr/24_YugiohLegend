@@ -1,7 +1,7 @@
 import { resolveBattle } from './BattleResolver';
 import type {
   Card, GameState, LaneState, PlayerState, SummonAction, TurnAction,
-  ServerMessage, PlayerIndex, LaneIndex
+  ServerMessage, PlayerIndex, LaneIndex, TurnSummary
 } from '../../shared/types';
 import { LANE_INDICES } from '../../shared/types';
 import cardsData from '../../shared/cards.json';
@@ -19,9 +19,9 @@ const UNLOCKED_LANES_BY_TURN: Record<number, LaneIndex[]> = {
 };
 const HIDDEN_FACE_DOWN_SPELL_CARD: Card = {
   id: 'hidden_face_down_spell',
-  type: 'spell',
+  type: 'trap',
   spellMode: 'face_down',
-  name: 'Hidden Spell',
+  name: 'Hidden Trap',
 };
 
 export interface OutgoingMessage {
@@ -154,12 +154,15 @@ export class GameRoom {
       ? { events: [], p0LpDelta: 0, p1LpDelta: 0 }
       : resolveBattle(this.state.players[0], this.state.players[1]);
 
+    this.markFinisherEvents(events);
+    const preBattleLanes = cloneLanes(this.state);
     this.applyBattleResult(events);
     this.state.players[0].lp += p0LpDelta;
     this.state.players[1].lp += p1LpDelta;
 
     const lps: [number, number] = [this.state.players[0].lp, this.state.players[1].lp];
-    msgs.push({ playerIndex: 'both', message: { type: 'battle_result', events, lps, lanes: cloneLanes(this.state) } });
+    const turnSummary = this.buildTurnSummary(this.state.turn, [a0, a1], summonCounts, [p0LpDelta, p1LpDelta], events.filter(event => event.type !== 'no_action').length, this.state.turn >= MAX_TURNS ? null : this.state.turn + 1);
+    msgs.push({ playerIndex: 'both', message: { type: 'battle_result', events, lps, preBattleLanes, lanes: cloneLanes(this.state), turnSummary } });
 
     const p0Dead = this.state.players[0].lp <= 0;
     const p1Dead = this.state.players[1].lp <= 0;
@@ -205,6 +208,130 @@ export class GameRoom {
     return msgs;
   }
 
+
+  private buildTurnSummary(
+    turn: number,
+    actions: [TurnAction, TurnAction],
+    summonCounts: [number, number],
+    lpDelta: [number, number],
+    battleEventCount: number,
+    nextTurn: number | null,
+  ): TurnSummary {
+    const playerActions: [number, number] = [this.countActionSteps(actions[0]), this.countActionSteps(actions[1])];
+    const summaryBase = {
+      turn,
+      isSetupTurn: turn === SETUP_TURN,
+      playerSummons: summonCounts,
+      playerActions,
+      lpDelta,
+      battleEventCount,
+      nextTurn,
+    };
+    return {
+      ...summaryBase,
+      headline: this.buildTurnSummaryHeadline(turn, summaryBase),
+      steps: this.buildTurnSummarySteps(summaryBase),
+    };
+  }
+
+  private buildTurnSummaryHeadline(
+    turn: number,
+    summary: Omit<TurnSummary, 'headline' | 'steps'>,
+  ): string {
+    const defeated = this.getDefeatedPlayerLabel();
+    if (defeated) return `T${turn} finish: ${defeated} LP reached 0. Duel ends now.`;
+
+    if (summary.isSetupTurn) {
+      return `T${turn} setup: P1 played ${summary.playerActions[0]} ${this.cardWord(summary.playerActions[0])}, P2 played ${summary.playerActions[1]} ${this.cardWord(summary.playerActions[1])}. ${this.nextTurnSentence(summary.nextTurn)}`;
+    }
+
+    return `T${turn} battle: ${this.formatLpDeltaHeadline(summary.lpDelta)} across ${summary.battleEventCount} ${summary.battleEventCount === 1 ? 'clash' : 'clashes'}. ${this.nextTurnSentence(summary.nextTurn)}`;
+  }
+
+  private buildTurnSummarySteps(summary: Omit<TurnSummary, 'headline' | 'steps'>): string[] {
+    const defeated = this.getDefeatedPlayerLabel();
+    return [
+      summary.nextTurn === null ? 'Draw: no next draw after this result.' : 'Draw: next turn both duelists draw 1 card.',
+      `Action: ${this.formatActionStep('P1', summary.playerSummons[0], summary.playerActions[0])}; ${this.formatActionStep('P2', summary.playerSummons[1], summary.playerActions[1])}.`,
+      this.formatLpStep(summary.lpDelta),
+      defeated ? `End: ${defeated} LP 0, game over before the next draw.` : summary.nextTurn === null ? 'End: final battle resolved.' : `End: proceed to T${summary.nextTurn} draw.`,
+    ];
+  }
+
+  private countActionSteps(action: TurnAction): number {
+    return normalizeSummons(action).length + (action.spells?.length ?? 0);
+  }
+
+  private getDefeatedPlayerLabel(): string | null {
+    if (this.state.players[0].lp <= 0 && this.state.players[1].lp <= 0) return 'Both players';
+    if (this.state.players[0].lp <= 0) return 'P1';
+    if (this.state.players[1].lp <= 0) return 'P2';
+    return null;
+  }
+
+  private nextTurnSentence(nextTurn: number | null): string {
+    return nextTurn === null ? 'No next draw.' : `Next: draw for T${nextTurn}.`;
+  }
+
+  private formatLpDeltaHeadline(lpDelta: [number, number]): string {
+    const parts = lpDelta
+      .map((delta, index) => ({ delta, label: index === 0 ? 'P1' : 'P2' }))
+      .filter(item => item.delta !== 0)
+      .map(item => `${item.label} LP ${item.delta}`);
+    return parts.length > 0 ? parts.join(', ') : 'no LP change';
+  }
+
+  private formatLpStep(lpDelta: [number, number]): string {
+    if (lpDelta[0] === 0 && lpDelta[1] === 0) return 'LP: no LP change this turn.';
+    return `LP: P1 ${lpDelta[0]}, P2 ${lpDelta[1]}.`;
+  }
+
+  private formatActionStep(label: string, summonCount: number, actionCount: number): string {
+    if (summonCount > 0) {
+      const monsterWord = summonCount === 1 ? 'monster' : 'monsters';
+      return `${label} summoned ${summonCount} ${monsterWord} and played ${actionCount} total ${this.cardWord(actionCount)}`;
+    }
+
+    return `${label} played ${actionCount} ${this.cardWord(actionCount)}`;
+  }
+
+  private cardWord(count: number): string {
+    return count === 1 ? 'card' : 'cards';
+  }
+  private markFinisherEvents(events: ReturnType<typeof resolveBattle>['events']): void {
+    const runningLPs: [number, number] = [this.state.players[0].lp, this.state.players[1].lp];
+    let finisherMarked = false;
+
+    for (const ev of events) {
+      const lpDamageByPlayer = this.getLpDamageByPlayer(ev);
+      for (const playerIndex of [0, 1] as PlayerIndex[]) {
+        const damage = lpDamageByPlayer[playerIndex];
+        if (damage <= 0) continue;
+
+        const lpBefore = runningLPs[playerIndex];
+        runningLPs[playerIndex] -= damage;
+        if (!finisherMarked && lpBefore > 0 && runningLPs[playerIndex] <= 0) {
+          ev.finisher = true;
+          finisherMarked = true;
+        }
+      }
+    }
+  }
+
+  private getLpDamageByPlayer(ev: ReturnType<typeof resolveBattle>['events'][number]): [number, number] {
+    const damageByPlayer: [number, number] = [0, 0];
+
+    if (ev.type === 'direct_attack') {
+      const defenderIndex: PlayerIndex = ev.attackerIndex === 0 ? 1 : 0;
+      damageByPlayer[defenderIndex] += ev.damage;
+      return damageByPlayer;
+    }
+
+    for (const hpChange of ev.hpChanges ?? []) {
+      damageByPlayer[hpChange.playerIndex] += Math.max(0, -hpChange.hpAfter);
+    }
+    return damageByPlayer;
+  }
   private applyBattleResult(events: ReturnType<typeof resolveBattle>['events']): void {
     for (const ev of events) {
       for (const hpChange of ev.hpChanges ?? []) {
@@ -236,13 +363,16 @@ export class GameRoom {
   private resolveFinalBattle(): OutgoingMessage[] {
     const msgs: OutgoingMessage[] = [];
     const { events, p0LpDelta, p1LpDelta } = resolveBattle(this.state.players[0], this.state.players[1]);
+    this.markFinisherEvents(events);
+    const preBattleLanes = cloneLanes(this.state);
     this.applyBattleResult(events);
 
     this.state.players[0].lp += p0LpDelta;
     this.state.players[1].lp += p1LpDelta;
 
     const lps: [number, number] = [this.state.players[0].lp, this.state.players[1].lp];
-    msgs.push({ playerIndex: 'both', message: { type: 'battle_result', events, lps, lanes: cloneLanes(this.state) } });
+    const turnSummary = this.buildTurnSummary(this.state.turn, [{ spells: [] }, { spells: [] }], [0, 0], [p0LpDelta, p1LpDelta], events.filter(event => event.type !== 'no_action').length, null);
+    msgs.push({ playerIndex: 'both', message: { type: 'battle_result', events, lps, preBattleLanes, lanes: cloneLanes(this.state), turnSummary } });
 
     const p0Lp = this.state.players[0].lp;
     const p1Lp = this.state.players[1].lp;

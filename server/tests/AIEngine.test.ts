@@ -48,8 +48,8 @@ describe('randomAction', () => {
     expect(action.summon).toBeUndefined();
   });
 
-  it('can set a face-down spell in the same lane as a summoned monster', () => {
-    const faceDownSpell: Card = { id: 'ct', type: 'spell', spellMode: 'face_down', name: 'Face-down Spell', triggerCondition: 'on_attacked', effect: 'negate_attack' };
+  it('can set a trap in the same lane as a summoned monster', () => {
+    const faceDownSpell: Card = { id: 'ct', type: 'trap', spellMode: 'face_down', name: 'Trap', triggerCondition: 'on_attacked', effect: 'negate_attack' };
     const p: PlayerState = {
       index: 0,
       lp: 4000,
@@ -83,16 +83,16 @@ describe('greedyAction', () => {
     expect(action.spells[0].card.id).toBe('boost');
   });
 
-  it('sets a faceDownSpell in the first empty lane', () => {
-    const faceDownSpell: Card = { id: 'ct', type: 'spell', spellMode: 'face_down', name: 'Face-down Spell', triggerCondition: 'on_attacked', effect: 'negate_attack' };
+  it('sets a trap in the first empty lane', () => {
+    const faceDownSpell: Card = { id: 'ct', type: 'trap', spellMode: 'face_down', name: 'Trap', triggerCondition: 'on_attacked', effect: 'negate_attack' };
     const p = player([faceDownSpell]);
     const action = greedyAction(p);
     expect(action.spells).toHaveLength(1);
     expect(action.spells[0].laneIndex).toBe(0);
   });
 
-  it('can set a face-down spell in the same lane as a summoned monster', () => {
-    const faceDownSpell: Card = { id: 'ct', type: 'spell', spellMode: 'face_down', name: 'Face-down Spell', triggerCondition: 'on_attacked', effect: 'negate_attack' };
+  it('can set a trap in the same lane as a summoned monster', () => {
+    const faceDownSpell: Card = { id: 'ct', type: 'trap', spellMode: 'face_down', name: 'Trap', triggerCondition: 'on_attacked', effect: 'negate_attack' };
     const p: PlayerState = {
       index: 0,
       lp: 4000,
@@ -112,7 +112,7 @@ describe('greedyAction', () => {
 
   it('turn 1 AI only uses lane 1', () => {
     const spell: Card = { id: 'boost', type: 'spell', name: 'Boost', effect: 'power_boost' };
-    const faceDownSpell: Card = { id: 'ct', type: 'spell', spellMode: 'face_down', name: 'Face-down Spell', triggerCondition: 'on_attacked', effect: 'negate_attack' };
+    const faceDownSpell: Card = { id: 'ct', type: 'trap', spellMode: 'face_down', name: 'Trap', triggerCondition: 'on_attacked', effect: 'negate_attack' };
     const p = player([monster('m', 1000), spell, faceDownSpell]);
     const action = greedyAction(p, 1);
 

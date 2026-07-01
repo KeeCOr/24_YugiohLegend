@@ -5,6 +5,7 @@ import type { Card } from '../../shared/types';
 const allCards = cards as Card[];
 const monsters = allCards.filter(card => card.type === 'monster');
 const spells = allCards.filter(card => card.type === 'spell');
+const traps = allCards.filter(card => card.type === 'trap');
 const basicMonsters = monsters.filter(card => (card.tributeCost ?? 0) === 0);
 
 describe('monster card catalog', () => {
@@ -75,12 +76,12 @@ describe('monster card catalog', () => {
     }
   });
 
-  it('keeps only monster and face-up/face-down spell cards in the catalog', () => {
-    expect(allCards.map(card => card.type)).not.toContain('trap');
+  it('keeps delayed magic as spells and conditional trigger cards as traps', () => {
     expect(spells.length).toBeGreaterThanOrEqual(4);
+    expect(traps.length).toBe(3);
     expect(spells.map(card => card.effect)).not.toContain('heal_1000');
 
-    const faceUpEffects = new Set(spells.filter(card => card.spellMode !== 'face_down').map(card => card.effect));
+    const faceUpEffects = new Set(spells.map(card => card.effect));
     expect(faceUpEffects).toEqual(new Set([
       'power_boost',
       'monster_smash',
@@ -89,13 +90,15 @@ describe('monster card catalog', () => {
     ]));
 
     for (const spell of spells) {
-      expect(spell.spellMode).toMatch(/^(face_up|face_down)$/);
-      if (spell.spellMode === 'face_down') {
-        expect(spell.triggerCondition).toMatch(/^(on_attacked|on_direct_attack|on_opponent_summon_two_plus)$/);
-        expect(['negate_attack', 'reduce_damage_500', 'destroy_all_monsters']).toContain(spell.effect);
-      } else {
-        expect(spell.spellDelayTurns).toBeGreaterThanOrEqual(1);
-      }
+      expect(spell.spellMode).toBe('face_up');
+      expect(spell.triggerCondition).toBeUndefined();
+      expect(spell.spellDelayTurns).toBeGreaterThanOrEqual(1);
+    }
+
+    for (const trap of traps) {
+      expect(trap.spellMode).toBe('face_down');
+      expect(trap.triggerCondition).toMatch(/^(on_attacked|on_direct_attack|on_opponent_summon_two_plus)$/);
+      expect(['negate_attack', 'reduce_damage_500', 'destroy_all_monsters']).toContain(trap.effect);
     }
   });
 });

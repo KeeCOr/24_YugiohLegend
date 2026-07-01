@@ -1,4 +1,4 @@
-import Phaser from 'phaser';
+﻿import Phaser from 'phaser';
 import type { CardType } from '../data/CardTypes';
 
 export const ART_KEYS = {
@@ -6,6 +6,7 @@ export const ART_KEYS = {
   cardBack: 'art_card_back',
   cardMonster: 'art_card_monster',
   cardSpell: 'art_card_spell',
+  cardTrap: 'art_card_trap',
   lane: 'art_lane',
   laneEnemy: 'art_lane_enemy',
   panel: 'art_panel',
@@ -19,22 +20,25 @@ export const ART_KEYS = {
 } as const;
 
 export function registerProceduralArt(scene: Phaser.Scene): void {
-  if (scene.textures.exists(ART_KEYS.backdrop)) return;
+  ensureTexture(scene, ART_KEYS.backdrop, () => createBackdrop(scene));
+  ensureTexture(scene, ART_KEYS.cardMonster, () => createCardFrame(scene, ART_KEYS.cardMonster, 0x7b2f18, 0xe2a34d, 0x2f1d17));
+  ensureTexture(scene, ART_KEYS.cardSpell, () => createCardFrame(scene, ART_KEYS.cardSpell, 0x145e46, 0x66d39f, 0x132820));
+  ensureTexture(scene, ART_KEYS.cardTrap, () => createCardFrame(scene, ART_KEYS.cardTrap, 0x7a1d50, 0xff70bc, 0x2d1024));
+  ensureTexture(scene, ART_KEYS.cardBack, () => createCardBack(scene));
+  ensureTexture(scene, ART_KEYS.lane, () => createLane(scene, ART_KEYS.lane, 0x132b3f, 0x4cb2ff));
+  ensureTexture(scene, ART_KEYS.laneEnemy, () => createLane(scene, ART_KEYS.laneEnemy, 0x351d2c, 0xff6692));
+  ensureTexture(scene, ART_KEYS.panel, () => createPanel(scene));
+  ensureTexture(scene, ART_KEYS.button, () => createButton(scene));
+  ensureTexture(scene, ART_KEYS.buttonPrimary, () => createButtonPrimary(scene));
+  ensureTexture(scene, ART_KEYS.hudFrame, () => createHudFrame(scene));
+  ensureTexture(scene, ART_KEYS.handRail, () => createHandRail(scene));
+  ensureTexture(scene, ART_KEYS.laneFrame, () => createLaneFrame(scene));
+  ensureTexture(scene, ART_KEYS.glow, () => createGlow(scene));
+  ensureTexture(scene, ART_KEYS.slash, () => createSlash(scene));
+}
 
-  createBackdrop(scene);
-  createCardFrame(scene, ART_KEYS.cardMonster, 0x7b2f18, 0xe2a34d, 0x2f1d17);
-  createCardFrame(scene, ART_KEYS.cardSpell, 0x145e46, 0x66d39f, 0x132820);
-  createCardBack(scene);
-  createLane(scene, ART_KEYS.lane, 0x132b3f, 0x4cb2ff);
-  createLane(scene, ART_KEYS.laneEnemy, 0x351d2c, 0xff6692);
-  createPanel(scene);
-  createButton(scene);
-  createButtonPrimary(scene);
-  createHudFrame(scene);
-  createHandRail(scene);
-  createLaneFrame(scene);
-  createGlow(scene);
-  createSlash(scene);
+function ensureTexture(scene: Phaser.Scene, key: string, createTexture: () => void): void {
+  if (!scene.textures.exists(key)) createTexture();
 }
 
 export function addSceneBackdrop(scene: Phaser.Scene): Phaser.GameObjects.Image {
@@ -48,6 +52,7 @@ export function addSceneBackdrop(scene: Phaser.Scene): Phaser.GameObjects.Image 
 
 export function cardTextureKey(type: CardType): string {
   if (type === 'monster') return ART_KEYS.cardMonster;
+  if (type === 'trap') return ART_KEYS.cardTrap;
   return ART_KEYS.cardSpell;
 }
 
@@ -57,6 +62,7 @@ export function cardArtKey(cardId: string): string {
 
 export function typeTint(type: CardType): number {
   if (type === 'monster') return 0xe6a24a;
+  if (type === 'trap') return 0xff70bc;
   return 0x61d79d;
 }
 

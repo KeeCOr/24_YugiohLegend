@@ -46,12 +46,12 @@ export function getLaneBattlePreview(playerLane: LaneState, opponentLane: LaneSt
 
   if (playerMonster && !opponentMonster) {
     const damage = effectiveAtk(playerLane);
-    return { kind: 'direct', attacker: 'player', damage, label: `DIRECT -${damage}`, tone: 'advantage' };
+    return { kind: 'direct', attacker: 'player', damage, label: `LP -${damage}`, tone: 'advantage' };
   }
 
   if (!playerMonster && opponentMonster) {
     const damage = effectiveAtk(opponentLane);
-    return { kind: 'direct', attacker: 'opponent', damage, label: `DIRECT -${damage}`, tone: 'danger' };
+    return { kind: 'direct', attacker: 'opponent', damage, label: `LP -${damage}`, tone: 'danger' };
   }
 
   const playerAtk = effectiveAtk(playerLane);

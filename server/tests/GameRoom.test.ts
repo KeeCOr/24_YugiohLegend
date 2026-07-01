@@ -43,6 +43,82 @@ describe('GameRoom', () => {
     expect(msgs.some(m => m.message.type === 'battle_result')).toBe(true);
   });
 
+  it('battle_result summarizes setup-turn actions before the next draw', () => {
+    const room = new GameRoom('room1');
+    room.addPlayer('p0', makeDeck());
+    room.addPlayer('p1', makeDeck());
+    const monsterCard = allCards.find(c => c.id === 'goblin_warrior')!;
+    const spellCard = allCards.find(c => c.id === 'power_boost')!;
+
+    room.submitAction(0, { summon: { card: monsterCard, laneIndex: 0 }, spells: [] });
+    const msgs = room.submitAction(1, { spells: [{ card: spellCard, laneIndex: 0 }] });
+    const result = msgs.find(m => m.message.type === 'battle_result')?.message;
+
+    expect(result?.type).toBe('battle_result');
+    if (result?.type === 'battle_result') {
+      expect((result as any).turnSummary).toMatchObject({
+        turn: 1,
+        isSetupTurn: true,
+        playerSummons: [1, 0],
+        playerActions: [1, 1],
+        lpDelta: [0, 0],
+        battleEventCount: 0,
+        nextTurn: 2,
+      });
+    }
+  });
+
+  it('battle_result summarizes LP change and combat event count', () => {
+    const room = new GameRoom('room1');
+    room.addPlayer('p0', makeDeck());
+    room.addPlayer('p1', makeDeck());
+    const attacker: Card = { id: 'summary_attacker', type: 'monster', name: 'Summary Attacker', atk: 1300, hp: 800 };
+
+    const state = room.getState() as GameState;
+    state.turn = 2;
+    state.players[0].lanes[0].monster = attacker;
+
+    room.submitAction(0, emptyAction());
+    const msgs = room.submitAction(1, emptyAction());
+    const result = msgs.find(m => m.message.type === 'battle_result')?.message;
+
+    expect(result?.type).toBe('battle_result');
+    if (result?.type === 'battle_result') {
+      expect((result as any).turnSummary).toMatchObject({
+        turn: 2,
+        isSetupTurn: false,
+        playerSummons: [0, 0],
+        playerActions: [0, 0],
+        lpDelta: [0, -1300],
+        battleEventCount: 1,
+        nextTurn: 3,
+      });
+    }
+  });
+
+  it('final turn battle_result summary does not promise another draw', () => {
+    const room = new GameRoom('room1');
+    room.addPlayer('p0', makeDeck());
+    room.addPlayer('p1', makeDeck());
+    const attacker: Card = { id: 'summary_final_attacker', type: 'monster', name: 'Summary Final Attacker', atk: 900, hp: 800 };
+
+    const state = room.getState() as GameState;
+    state.turn = 4;
+    state.players[0].lanes[0].monster = attacker;
+
+    room.submitAction(0, emptyAction());
+    const msgs = room.submitAction(1, emptyAction());
+    const firstResult = msgs.find(m => m.message.type === 'battle_result')?.message;
+
+    expect(firstResult?.type).toBe('battle_result');
+    if (firstResult?.type === 'battle_result') {
+      expect((firstResult as any).turnSummary).toMatchObject({
+        turn: 4,
+        lpDelta: [0, -900],
+        nextTurn: null,
+      });
+    }
+  });
   it('does not reveal after only one player submits', () => {
     const room = new GameRoom('room1');
     room.addPlayer('p0', makeDeck());
@@ -88,6 +164,27 @@ describe('GameRoom', () => {
     expect(room.getState().turn).toBe(2);
   });
 
+  it('includes pre-battle lanes before HP and LP results are applied', () => {
+    const room = new GameRoom('room1');
+    room.addPlayer('p0', makeDeck());
+    room.addPlayer('p1', makeDeck());
+    const strong: Card = { id: 'strong_prebattle_monster', type: 'monster', name: 'Strong', atk: 2000, hp: 500 };
+    const fragile: Card = { id: 'fragile_prebattle_monster', type: 'monster', name: 'Fragile', atk: 1500, hp: 300 };
+
+    room.submitAction(0, { summon: { card: strong, laneIndex: 0 }, spells: [] });
+    room.submitAction(1, { summon: { card: fragile, laneIndex: 0 }, spells: [] });
+    room.submitAction(0, emptyAction());
+    const msgs = room.submitAction(1, emptyAction());
+    const result = msgs.find(m => m.message.type === 'battle_result')?.message;
+
+    expect(result?.type).toBe('battle_result');
+    if (result?.type === 'battle_result') {
+      expect(result.preBattleLanes[1][0].monster?.id).toBe(fragile.id);
+      expect(result.preBattleLanes[1][0].monster?.hp).toBe(300);
+      expect(result.lanes[1][0].monster).toBeNull();
+      expect(result.lps).toEqual([4000, 3800]);
+    }
+  });
   it('applies ATK difference as monster HP loss without LP damage', () => {
     const room = new GameRoom('room1');
     room.addPlayer('p0', makeDeck());
@@ -421,16 +518,16 @@ describe('GameRoom', () => {
     expect(room.getState().players[0].hand.map(card => card.id)).toContain(tributeMonster.id);
   });
 
-  it('reveal shows opponent face-up spells and hides face-down spells', () => {
+  it('reveal shows opponent face-up spells and hides traps', () => {
     const room = new GameRoom('room1');
     room.addPlayer('p0', makeDeck());
     room.addPlayer('p1', makeDeck());
     const spell = allCards.find(c => c.id === 'backrow_break')!;
-    const faceDownSpell = allCards.find(c => c.id === 'mirror_snare')!;
+    const trap = allCards.find(c => c.id === 'mirror_snare')!;
 
     room.submitAction(0, emptyAction());
     const msgs = room.submitAction(1, {
-      spells: [{ card: spell, laneIndex: 1 }, { card: faceDownSpell, laneIndex: 1 }],
+      spells: [{ card: spell, laneIndex: 1 }, { card: trap, laneIndex: 1 }],
     });
     const revealForP0 = msgs.find(m => m.playerIndex === 0 && m.message.type === 'reveal')?.message;
     const revealForP1 = msgs.find(m => m.playerIndex === 1 && m.message.type === 'reveal')?.message;
@@ -441,10 +538,82 @@ describe('GameRoom', () => {
       expect(revealForP0.opponentAction.spells[0].card.id).toBe(spell.id);
       expect(revealForP0.opponentAction.spells[1].card.id).toBe('hidden_face_down_spell');
       expect(revealForP1.yourAction.spells[0].card.id).toBe(spell.id);
-      expect(revealForP1.yourAction.spells[1].card.id).toBe(faceDownSpell.id);
+      expect(revealForP1.yourAction.spells[1].card.id).toBe(trap.id);
     }
   });
 
+
+  it('marks a direct attack as a finisher when it drops LP to zero', () => {
+    const room = new GameRoom('room1');
+    room.addPlayer('p0', makeDeck());
+    room.addPlayer('p1', makeDeck());
+    const lethalAttacker: Card = { id: 'lethal_direct', type: 'monster', name: 'Lethal Direct', atk: 1200, hp: 800 };
+
+    const state = room.getState() as GameState;
+    state.turn = 2;
+    state.players[1].lp = 1000;
+    state.players[0].lanes[0].monster = lethalAttacker;
+
+    room.submitAction(0, emptyAction());
+    const msgs = room.submitAction(1, emptyAction());
+    const result = msgs.find(m => m.message.type === 'battle_result')?.message;
+
+    expect(result?.type).toBe('battle_result');
+    if (result?.type === 'battle_result') {
+      expect(result.events[0]).toMatchObject({ type: 'direct_attack', attackerIndex: 0, damage: 1200, finisher: true });
+      expect(result.lps[1]).toBe(-200);
+    }
+    expect(msgs.find(m => m.message.type === 'game_over')).toBeDefined();
+  });
+
+  it('marks overflow LP damage as a finisher when monster combat ends the duel', () => {
+    const room = new GameRoom('room1');
+    room.addPlayer('p0', makeDeck());
+    room.addPlayer('p1', makeDeck());
+    const attacker: Card = { id: 'lethal_overflow', type: 'monster', name: 'Lethal Overflow', atk: 2200, hp: 900 };
+    const defender: Card = { id: 'fragile_wall', type: 'monster', name: 'Fragile Wall', atk: 1600, hp: 300 };
+
+    const state = room.getState() as GameState;
+    state.turn = 2;
+    state.players[1].lp = 250;
+    state.players[0].lanes[0].monster = attacker;
+    state.players[1].lanes[0].monster = defender;
+
+    room.submitAction(0, emptyAction());
+    const msgs = room.submitAction(1, emptyAction());
+    const result = msgs.find(m => m.message.type === 'battle_result')?.message;
+
+    expect(result?.type).toBe('battle_result');
+    if (result?.type === 'battle_result') {
+      expect(result.events[0]).toMatchObject({ type: 'monster_vs_monster', attackerIndex: 0, damage: 600, finisher: true });
+      expect(result.events[0].hpChanges).toEqual([{ playerIndex: 1, card: defender, hpBefore: 300, hpAfter: -300 }]);
+      expect(result.lps[1]).toBe(-50);
+    }
+  });
+
+  it('does not mark non-lethal LP damage as a finisher', () => {
+    const room = new GameRoom('room1');
+    room.addPlayer('p0', makeDeck());
+    room.addPlayer('p1', makeDeck());
+    const attacker: Card = { id: 'non_lethal_direct', type: 'monster', name: 'Non Lethal Direct', atk: 800, hp: 800 };
+
+    const state = room.getState() as GameState;
+    state.turn = 2;
+    state.players[1].lp = 1800;
+    state.players[0].lanes[0].monster = attacker;
+
+    room.submitAction(0, emptyAction());
+    const msgs = room.submitAction(1, emptyAction());
+    const result = msgs.find(m => m.message.type === 'battle_result')?.message;
+
+    expect(result?.type).toBe('battle_result');
+    if (result?.type === 'battle_result') {
+      expect(result.events[0]).toMatchObject({ type: 'direct_attack', damage: 800 });
+      expect(result.events[0].finisher).toBeUndefined();
+      expect(result.lps[1]).toBe(1000);
+    }
+    expect(msgs.find(m => m.message.type === 'game_over')).toBeUndefined();
+  });
   it('battle_result includes both players lane state after summons', () => {
     const room = new GameRoom('room1');
     room.addPlayer('p0', makeDeck());
@@ -465,6 +634,75 @@ describe('GameRoom', () => {
     if (result?.type === 'battle_result') {
       expect(result.lanes[0][0].monster?.id).toBe(p0Monster.id);
       expect(result.lanes[1][2].monster?.id).toBe(p1Monster.id);
+    }
+  });
+  it('turn summary gives a readable setup draw-action-next-turn chain', () => {
+    const room = new GameRoom('room1');
+    room.addPlayer('p0', makeDeck());
+    room.addPlayer('p1', makeDeck());
+    const monsterCard = allCards.find(c => c.id === 'goblin_warrior')!;
+
+    room.submitAction(0, { summon: { card: monsterCard, laneIndex: 0 }, spells: [] });
+    const msgs = room.submitAction(1, emptyAction());
+    const result = msgs.find(m => m.message.type === 'battle_result')?.message;
+
+    expect(result?.type).toBe('battle_result');
+    if (result?.type === 'battle_result') {
+      expect(result.turnSummary?.headline).toBe('T1 setup: P1 played 1 card, P2 played 0 cards. Next: draw for T2.');
+      expect(result.turnSummary?.steps).toEqual([
+        'Draw: next turn both duelists draw 1 card.',
+        'Action: P1 summoned 1 monster and played 1 total card; P2 played 0 cards.',
+        'LP: no LP change this turn.',
+        'End: proceed to T2 draw.',
+      ]);
+    }
+  });
+
+  it('turn summary explains LP loss and the next draw', () => {
+    const room = new GameRoom('room1');
+    room.addPlayer('p0', makeDeck());
+    room.addPlayer('p1', makeDeck());
+    const attacker: Card = { id: 'summary_chain_attacker', type: 'monster', name: 'Summary Chain Attacker', atk: 1300, hp: 800 };
+
+    const state = room.getState() as GameState;
+    state.turn = 2;
+    state.players[0].lanes[0].monster = attacker;
+
+    room.submitAction(0, emptyAction());
+    const msgs = room.submitAction(1, emptyAction());
+    const result = msgs.find(m => m.message.type === 'battle_result')?.message;
+
+    expect(result?.type).toBe('battle_result');
+    if (result?.type === 'battle_result') {
+      expect(result.turnSummary?.headline).toBe('T2 battle: P2 LP -1300 across 1 clash. Next: draw for T3.');
+      expect(result.turnSummary?.steps).toEqual([
+        'Draw: next turn both duelists draw 1 card.',
+        'Action: P1 played 0 cards; P2 played 0 cards.',
+        'LP: P1 0, P2 -1300.',
+        'End: proceed to T3 draw.',
+      ]);
+    }
+  });
+
+  it('turn summary calls out an LP 0 duel finish', () => {
+    const room = new GameRoom('room1');
+    room.addPlayer('p0', makeDeck());
+    room.addPlayer('p1', makeDeck());
+    const attacker: Card = { id: 'summary_finish_attacker', type: 'monster', name: 'Summary Finish Attacker', atk: 1200, hp: 800 };
+
+    const state = room.getState() as GameState;
+    state.turn = 2;
+    state.players[1].lp = 1000;
+    state.players[0].lanes[0].monster = attacker;
+
+    room.submitAction(0, emptyAction());
+    const msgs = room.submitAction(1, emptyAction());
+    const result = msgs.find(m => m.message.type === 'battle_result')?.message;
+
+    expect(result?.type).toBe('battle_result');
+    if (result?.type === 'battle_result') {
+      expect(result.turnSummary?.headline).toBe('T2 finish: P2 LP reached 0. Duel ends now.');
+      expect(result.turnSummary?.steps).toContain('End: P2 LP 0, game over before the next draw.');
     }
   });
 });

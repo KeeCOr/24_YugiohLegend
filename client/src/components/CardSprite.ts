@@ -1,7 +1,10 @@
-import Phaser from 'phaser';
+﻿import Phaser from 'phaser';
 import type { Card } from '../data/CardTypes';
-import { getSpellEffectSummary, getSpellTimingSummary } from '../data/CardText';
+import { getEffectConditionSummary, getEffectOutcomeSummary, getSpellEffectSummary, getSpellTimingSummary } from '../data/CardText';
 import { ART_KEYS, cardArtKey, cardTextureKey, typeTint } from '../art/ProceduralArt';
+
+const CARD_ART_SLOT_W = 76;
+const CARD_ART_SLOT_H = 100;
 
 export class CardSprite extends Phaser.GameObjects.Container {
   card: Card;
@@ -61,7 +64,7 @@ export class CardSprite extends Phaser.GameObjects.Container {
     this.add(typeText);
 
     if (tributeCost > 0) {
-      const starText = new Phaser.GameObjects.Text(scene, 54, -80, '★'.repeat(tributeCost), {
+      const starText = new Phaser.GameObjects.Text(scene, 54, -80, '*'.repeat(tributeCost), {
         fontSize: '11px',
         color: '#f2c86a',
         fontStyle: 'bold',
@@ -71,7 +74,7 @@ export class CardSprite extends Phaser.GameObjects.Container {
       this.add(starText);
     }
 
-    const nameText = new Phaser.GameObjects.Text(scene, 0, 23, card.name, {
+    const nameText = new Phaser.GameObjects.Text(scene, 0, 30, card.name, {
       fontSize: '13px',
       color: '#f8f0d8',
       wordWrap: { width: CardSprite.W - 12 },
@@ -80,17 +83,31 @@ export class CardSprite extends Phaser.GameObjects.Container {
     this.add(nameText);
 
     const actionLabel = this.getActionLabel(card);
-    const actionText = new Phaser.GameObjects.Text(scene, 0, card.abilityText || card.type === 'spell' ? 43 : 53, actionLabel, {
+    const actionText = new Phaser.GameObjects.Text(scene, 0, card.abilityText || card.type === 'spell' || card.type === 'trap' ? 43 : 53, actionLabel, {
       fontSize: card.type === 'monster' && (card.tributeCost ?? 0) > 0 ? '10px' : '9px',
-      color: card.type === 'monster' && (card.tributeCost ?? 0) > 0 ? '#ffb1c0' : '#a9f4d0',
+      color: card.type === 'trap' ? '#ff9fd0' : card.type === 'monster' && (card.tributeCost ?? 0) > 0 ? '#ffb1c0' : '#a9f4d0',
       fontStyle: 'bold',
       stroke: '#10090d',
       strokeThickness: 2,
     }).setOrigin(0.5);
     this.add(actionText);
 
-    if (card.type === 'spell') {
-      const effect = new Phaser.GameObjects.Text(scene, 0, 62, getSpellEffectSummary(card), {
+    if (card.type === 'spell' || card.type === 'trap') {
+      const readableEffect = getSpellEffectSummary(card);
+      const conditionText = new Phaser.GameObjects.Text(scene, 0, 57, getEffectConditionSummary(card), {
+        fontSize: '7px',
+        color: card.type === 'trap' ? '#ffc0df' : '#bfffe2',
+        fontStyle: 'bold',
+        stroke: '#10090d',
+        strokeThickness: 2,
+        wordWrap: { width: CardSprite.W - 18, useAdvancedWrap: true },
+        align: 'center',
+      }).setOrigin(0.5);
+      conditionText.setName('effect-condition');
+      conditionText.setData('summary', readableEffect);
+      this.add(conditionText);
+
+      const outcomeText = new Phaser.GameObjects.Text(scene, 0, 70, getEffectOutcomeSummary(card), {
         fontSize: '8px',
         color: '#ffe7a6',
         fontStyle: 'bold',
@@ -100,7 +117,8 @@ export class CardSprite extends Phaser.GameObjects.Container {
         align: 'center',
         lineSpacing: -2,
       }).setOrigin(0.5);
-      this.add(effect);
+      outcomeText.setName('effect-outcome');
+      this.add(outcomeText);
     }
 
     if (card.abilityText) {
@@ -137,7 +155,7 @@ export class CardSprite extends Phaser.GameObjects.Container {
   }
 
   setBlocked(on: boolean): void {
-    this.setAlpha(on ? 0.62 : 1);
+    void on;
   }
 
   private getActionLabel(card: Card): string {
@@ -145,7 +163,7 @@ export class CardSprite extends Phaser.GameObjects.Container {
       const tributeCost = card.tributeCost ?? 0;
       return tributeCost > 0 ? `TRIBUTE x${tributeCost}` : 'FREE SUMMON';
     }
-    if (card.type === 'spell') {
+    if (card.type === 'spell' || card.type === 'trap') {
       return getSpellTimingSummary(card);
     }
     return '';
@@ -153,7 +171,8 @@ export class CardSprite extends Phaser.GameObjects.Container {
 
   private getTypeLabel(card: Card): string {
     if (card.type === 'monster') return 'MONSTER';
-    return card.spellMode === 'face_down' ? 'FACE-DOWN SPELL' : 'FACE-UP SPELL';
+    if (card.type === 'trap') return 'TRAP';
+    return 'FACE-UP SPELL';
   }
 
   private getRoleColor(card: Card): number {
@@ -253,13 +272,13 @@ export class CardSprite extends Phaser.GameObjects.Container {
 
   private addCardArtwork(scene: Phaser.Scene, card: Card): void {
     const key = cardArtKey(card.id);
-    const artFrame = new Phaser.GameObjects.Rectangle(scene, 0, -30, 112, 88, 0x05070c, 0.38);
+    const artFrame = new Phaser.GameObjects.Rectangle(scene, 0, -30, CARD_ART_SLOT_W, CARD_ART_SLOT_H, 0x05070c, 0.38);
     artFrame.setStrokeStyle(2, typeTint(card.type), 0.58);
     this.add(artFrame);
 
     if (scene.textures.exists(key)) {
       const art = new Phaser.GameObjects.Image(scene, 0, -30, key);
-      art.setDisplaySize(108, 84);
+      this.fitArtworkToSlot(scene, art, key);
       this.add(art);
       return;
     }
@@ -267,6 +286,17 @@ export class CardSprite extends Phaser.GameObjects.Container {
     this.add(this.createSymbol(scene, card.id, card.type));
   }
 
+  private fitArtworkToSlot(scene: Phaser.Scene, art: Phaser.GameObjects.Image, key: string): void {
+    const source = scene.textures.get(key).getSourceImage() as { width: number; height: number };
+    const scale = Math.max(CARD_ART_SLOT_W / source.width, CARD_ART_SLOT_H / source.height);
+    const cropW = Math.min(source.width, CARD_ART_SLOT_W / scale);
+    const cropH = Math.min(source.height, CARD_ART_SLOT_H / scale);
+    const cropX = Math.max(0, (source.width - cropW) / 2);
+    const cropY = Math.max(0, (source.height - cropH) / 2);
+
+    art.setCrop(cropX, cropY, cropW, cropH);
+    art.setDisplaySize(CARD_ART_SLOT_W, CARD_ART_SLOT_H);
+  }
   private createSymbol(scene: Phaser.Scene, id: string, type: Card['type']): Phaser.GameObjects.Container {
     const box = new Phaser.GameObjects.Container(scene, 0, -30);
     const tint = typeTint(type);

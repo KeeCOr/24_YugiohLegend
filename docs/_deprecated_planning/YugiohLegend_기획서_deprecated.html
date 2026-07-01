@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>YugiohLegend 기획서</title>
+  <style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.65;max-width:1040px;margin:0 auto;padding:40px 24px;color:#20242a;background:#fafafa}h1{font-size:34px;margin:0 0 20px}h2{font-size:24px;margin-top:34px;border-bottom:1px solid #ddd;padding-bottom:6px}h3{font-size:18px;margin-top:24px;color:#32435f}p,li,td,th{font-size:15px}li{margin:5px 0}code{background:#fff;border:1px solid #ddd;border-radius:4px;padding:1px 4px}pre{white-space:pre-wrap;background:#fff;border:1px solid #ddd;border-radius:8px;padding:10px 12px;overflow:auto}pre code{border:0;padding:0;background:transparent}table{border-collapse:collapse;width:100%;background:#fff;margin:12px 0}td,th{border:1px solid #ddd;padding:8px;text-align:left;vertical-align:top}figure{margin:18px 0;background:#fff;border:1px solid #ddd;border-radius:8px;padding:12px}img{max-width:100%;height:auto;display:block;border-radius:6px}figcaption{font-size:13px;color:#626b76;margin-top:8px}</style>
+</head>
+<body>
+<h1>YugiohLegend 기획서</h1>
+<p>문제 정의: 카드 배틀 팬이 복잡한 룰을 유지하면서도 현재 가능한 선택을 빠르게 파악하고 싶어 한다.</p>
+<h2>게임 소개</h2>
+<p>카드 소환과 연계 콤보를 중심에 둔 듀얼 게임.</p>
+<p>YugiohLegend의 핵심 매력은 한 번의 선택이 다음 장면의 위험도, 보상, 성장 방향으로 이어지는 구조다. 이 문서는 처음 보는 사람에게 게임의 재미와 현재 방향을 빠르게 소개하기 위한 단일 기획서이며, 세부 변경 이력은 별도 업데이트 내역서에서 관리한다.</p>
+<h2>한 줄 소개</h2>
+<p>카드 소환과 연계 콤보를 중심에 둔 듀얼 게임.</p>
+<h2>핵심 루프</h2>
+<p>유저가 현재 전장의 정보를 읽고 선택을 하면 전투/운영 결과가 갱신되고, 그 보상과 손실 때문에 다시 다음 선택을 준비한다.</p>
+<h2>게임 플레이 예시</h2>
+<ul>
+<li>1단계: 플레이어가 YugiohLegend의 현재 목표, 보유 자원, 즉시 대응해야 할 위험을 확인한다.</li>
+<li>2단계: 카드, 유닛, 배치, 명령, 이동 중 현재 상황에 맞는 핵심 행동을 선택한다.</li>
+<li>3단계: 선택 결과가 전투, 운영, 보상, 손실로 즉시 갱신되고 다음 판단의 근거가 된다.</li>
+<li>4단계: 획득한 보상이나 변화한 상태를 바탕으로 다음 선택을 준비하며 핵심 루프를 반복한다.</li>
+<li>플레이 감각: 짧은 세션 안에서 상황 파악, 의미 있는 선택, 즉각적인 피드백, 다음 목표 제시가 끊기지 않는 흐름을 지향한다.</li>
+</ul>
+<h2>핵심 재미</h2>
+<ul>
+<li>읽기 쉬운 상황 판단: 지금 위험한 요소와 얻을 수 있는 보상이 한눈에 들어온다.</li>
+<li>직접적인 선택 피드백: 선택 직후 전투, 점수, 자원, 성장 상태가 변해 손맛을 만든다.</li>
+<li>누적되는 성장감: 반복 플레이가 단순 재시작이 아니라 다음 전략의 재료로 이어진다.</li>
+</ul>
+<h2>주요 시스템</h2>
+<ul>
+<li>핵심 선택 시스템: 현재 국면에서 가능한 행동을 5개 이하의 명확한 선택지로 제시한다.</li>
+<li>위험/보상 피드백: 행동 전후의 이득, 손실, 위협 변화를 빠르게 보여준다.</li>
+<li>성장과 해금: 세션 결과가 능력, 카드, 유닛, 건물, 장비, 스테이지 등 다음 플레이의 선택지를 넓힌다.</li>
+<li>상태별 UX: 로딩, 빈 상태, 오류, 많은 데이터, 긴 텍스트 상황에서도 레이아웃이 무너지지 않도록 관리한다.</li>
+<li>실행 안정성: 테스트와 빌드 산출물을 기준으로 현재 플레이 가능한 범위를 계속 확인한다.</li>
+</ul>
+<h2>게임 구성과 규칙 (GDD 통합)</h2>
+<ul>
+<li>통합 기준 문서: <code>superpowers/specs/2026-05-14-yugioh-legend-design.md</code></li>
+<li>작성 기준: 16_PokerStrike_GDD처럼 화면 구조, 핵심 시스템, 진행/승패 규칙, UI/HUD, 미결 항목을 한 문서에서 바로 읽을 수 있게 정리한다.</li>
+</ul>
+<h3>화면/플레이 구조</h3>
+<ul>
+<li><strong>게임 개요</strong> (superpowers/specs/2026-05-14-yugioh-legend-design.md)</li>
+</ul>
+<p>  - 유희왕을 단순화한 4레인 카드 대전 게임이다. 양쪽 플레이어가 비공개로 행동을 입력하고, 동시에 공개한 뒤 서버가 전투를 해결한다.</p>
+<ul>
+<li><strong>화면 레이아웃</strong> (superpowers/specs/2026-05-14-yugioh-legend-design.md)</li>
+</ul>
+<p>  - Phaser 캔버스와 Electron 창은 900 x 1600 세로형을 기준으로 한다.</p>
+<p>  - 게임 화면은 상대 필드, 전투선, 내 필드, 상태/커밋, 손패가 세로로 쌓이는 구조다.</p>
+<p>  - 덱 빌더는 카드 아카이브를 3열로 배치하고 현재 덱을 하단 패널에 둔다.</p>
+<h3>핵심 시스템</h3>
+<ul>
+<li><strong>기본 수치</strong> (superpowers/specs/2026-05-14-yugioh-legend-design.md)</li>
+</ul>
+<table>
+<tr><th>항목</th><th>값</th></tr>
+<tr><td>시작 LP</td><td>4000</td></tr>
+<tr><td>기준 해상도</td><td>900 x 1600</td></tr>
+<tr><td>총 턴 수</td><td>4턴 + 파이널 배틀 페이즈</td></tr>
+<tr><td>1턴 규칙</td><td>공격 없는 셋업 턴</td></tr>
+<tr><td>라인 해금</td><td>1턴 1라인, 2턴 2라인, 3턴 3라인, 4턴 4라인</td></tr>
+<tr><td>시작 핸드</td><td>4장</td></tr>
+<tr><td>매턴 드로우</td><td>1장</td></tr>
+<tr><td>매턴 소환</td><td>1장</td></tr>
+</table>
+<ul>
+<li><strong>라인 해금</strong> (superpowers/specs/2026-05-14-yugioh-legend-design.md)</li>
+</ul>
+<p>  - 1턴에는 중앙 레인만 사용할 수 있다.</p>
+<p>  - 2턴에는 왼쪽과 중앙 레인을 사용할 수 있다.</p>
+<p>  - 3턴에는 세 레인을 사용할 수 있다.</p>
+<p>  - 4턴에는 네 레인을 모두 사용할 수 있다.</p>
+<p>  - 서버는 잠긴 레인에 대한 소환, 마법 배치, 함정 세트를 무시한다.</p>
+<p>  - AI는 현재 턴에 해금된 레인만 선택한다.</p>
+<p>  - 클라이언트는 잠긴 레인에 어두운 오버레이와 해금 턴을 표시한다.</p>
+<ul>
+<li><strong>턴 흐름</strong> (superpowers/specs/2026-05-14-yugioh-legend-design.md)</li>
+</ul>
+<p>  1. 중앙 레인에만 행동 입력</p>
+<p>  2. 몬스터 소환, 마법 배치, 함정 세트</p>
+<p>  3. 행동 공개</p>
+<p>  4. 전투 없이 필드/LP 상태만 동기화</p>
+<p>  1. 기존 지연 마법 카운트다운 및 발동</p>
+<p>  2. 양쪽 행동 공개</p>
+<p>  3. 해금된 레인에 새 행동 적용</p>
+<p>  4. 레인별 자동 전투 해결</p>
+<p>  5. LP 갱신 및 0 이하 즉시 승패 판정</p>
+<ul>
+<li><strong>지연 마법</strong> (superpowers/specs/2026-05-14-yugioh-legend-design.md)</li>
+</ul>
+<p>  - 마법은 즉발이 아니라 레인에 먼저 놓인다.</p>
+<p>  - 상대에게는 마법/함정 예약 카드가 뒷면으로만 보인다.</p>
+<p>  - <code>LaneState.spell</code>은 <code>{ card, remainingTurns }</code> 형태로 저장된다.</p>
+<p>  - 새 행동을 적용하기 전에 기존 마법의 <code>remainingTurns</code>를 줄인다.</p>
+<p>  - 0이 된 마법은 효과를 발동하고 레인에서 제거된다.</p>
+<p>  - 발동 전에 해당 레인이 직접 공격당하면 마법은 파괴되고 효과는 사라진다.</p>
+<h3>진행/승패 규칙</h3>
+<ul>
+<li><strong>YugiohLegend 설계 문서</strong> (superpowers/specs/2026-05-14-yugioh-legend-design.md)</li>
+</ul>
+<p>  - <strong>날짜:</strong> 2026-05-14</p>
+<p>  - <strong>최신화:</strong> 2026-05-15</p>
+<p>  - <strong>스택:</strong> Phaser 3 클라이언트 + Node.js WebSocket 서버 + Electron 패키징</p>
+<h3>UI/HUD/피드백</h3>
+<ul>
+<li><strong>UX 원칙</strong> (기획서)</li>
+</ul>
+<p>  - 주요 버튼은 44px 이상, 한 화면의 강조 CTA는 하나로 유지한다.</p>
+<p>  - HUD 같은 레이어 요소는 겹치지 않게 배치하고, 결과 피드백은 400ms 이내에 전달한다.</p>
+<h3>구현 메모/미결</h3>
+<ul>
+<li><strong>보강 필요</strong> (기획서)</li>
+</ul>
+<p>  - 별도 GDD 또는 디자인 스펙이 없으므로, 다음 문서 갱신 시 세부 규칙과 수치표를 추가해야 한다.</p>
+<h2>MVP 가설</h2>
+<table>
+<tr><th>기능</th><th>검증할 가설</th><th>검증 방법</th></tr>
+<tr><td>핵심 전투/운영 루프</td><td>플레이어는 한 판 안에서 선택 결과를 이해하면 다음 판을 자발적으로 시작한다.</td><td>1회 플레이 후 재시작률 60% 이상</td></tr>
+<tr><td>위험/보상 표시</td><td>위험과 보상이 동시에 보이면 선택 시간이 줄고 납득도가 오른다.</td><td>주요 선택 평균 8초 이내, 결과 불만 피드백 20% 이하</td></tr>
+<tr><td>성장 보상</td><td>보상이 다음 전략을 바꾸면 반복 플레이 피로가 낮아진다.</td><td>3판 내 서로 다른 빌드 선택률 50% 이상</td></tr>
+</table>
+<h2>레퍼런스 분석</h2>
+<ul>
+<li>장르 기준 레퍼런스는 한 판 시작까지 3단계 이내, 첫 의미 있는 선택까지 30초 이내가 목표다.</li>
+<li>적용 교훈: 규칙 설명보다 먼저 선택 가능한 상황을 보여주고, 결과 화면에서 다음 판의 개선 포인트를 바로 제안한다.</li>
+</ul>
+<h2>현재 개발 상태 예상 수치</h2>
+<ul>
+<li>완성 목표 대비 구현 체감도: 약 64%</li>
+<li>첫 세션에서 핵심 루프가 전달될 가능성: 약 70%</li>
+<li>UI/리소스 일관성 체감: 약 66%</li>
+<li>콘텐츠와 반복 플레이 분량 충족도: 약 60%</li>
+<li>빌드/실행 안정성 기대치: 약 74%</li>
+<li>해석 기준: 현재 문서, 최근 산출물 기록, 연결된 예시 이미지 유무를 기준으로 한 사전 추정치이며 실제 플레이 테스트 후 ±15%p 정도 보정이 필요하다.</li>
+</ul>
+<ul>
+<li>첫 세션 평균 플레이 시간 8분 이상</li>
+<li>첫 세션 내 2회차 진입률 55% 이상</li>
+<li>핵심 선택 화면에서 무응답/이탈률 15% 이하</li>
+</ul>
+<h2>현재 구현 상태</h2>
+<ul>
+<li>이 문서는 2026-06-24 기준으로 현재 플레이 방향과 구현 체감 상태를 요약한다.</li>
+<li>핵심 루프, 조작 원칙, 리소스 적용 현황, 빌드 기준은 프로젝트별 실제 구현과 산출물 기록을 기준으로 계속 보정한다.</li>
+<li>세부 변경 이력은 별도 업데이트 내역서에서 관리하고, 본 기획서는 처음 보는 사람이 현재 방향을 빠르게 이해하는 공유 문서로 유지한다.</li>
+<li>새 기능, 밸런스 변경, 리소스 교체, UX 개선이 들어가면 본문과 HTML 문서를 함께 갱신한다.</li>
+</ul>
+<h2>조작과 UX 원칙</h2>
+<ul>
+<li>주요 버튼은 44px 이상으로 유지하고, 화면당 CTA 강조색은 하나만 사용한다.</li>
+<li>버튼/선택지는 한 번에 5개 이하로 노출해 판단 부담을 줄인다.</li>
+<li>로딩, 빈 상태, 에러, 많은 데이터, 긴 텍스트 상태를 각각 별도 화면/컴포넌트로 확인한다.</li>
+<li>HUD 동일 레이어 요소는 겹치지 않게 배치하고, 겹침이 필요한 효과는 별도 depth/z-order를 쓴다.</li>
+</ul>
+<h2>적용 리소스</h2>
+<ul>
+<li>런타임에 쓰이는 대표 이미지와 UI 리소스는 프로젝트별 asset/public/Resources 경로를 기준으로 관리한다.</li>
+<li>새 이미지가 필요할 때는 프로젝트 접두어를 포함한 lowercase kebab-case 파일명을 사용한다.</li>
+<li>최종 런타임 비주얼은 PNG/WebP 등 비트맵 자산을 우선 사용하고, SVG 또는 코드 드로잉은 문서/임시 참조로만 남긴다.</li>
+</ul>
+<h2>공유용 이미지 미리보기</h2>
+<figure><img src="YugiohLegend_01_플레이예시.png" alt="YugiohLegend 공유용 예시 1"><figcaption>YugiohLegend 공유용 예시 1</figcaption></figure>
+<h3>AI 생성 에셋 (client/public/assets/generated/) — 14개</h3>
+<ul>
+<li>art_backdrop.png</li>
+<li>art_cardBack.png</li>
+<li>art_cardMonster.png</li>
+<li>art_cardSpell.png</li>
+<li>art_lane.png</li>
+<li>art_laneEnemy.png</li>
+<li>art_panel.png</li>
+<li>art_button.png</li>
+<li>art_buttonPrimary.png</li>
+<li>art_hudFrame.png</li>
+<li>art_handRail.png</li>
+<li>art_laneFrame.png</li>
+<li>art_glow.png</li>
+<li>art_slash.png</li>
+</ul>
+<h3>카드 원본 에셋 (client/public/assets/cards/)</h3>
+<ul>
+<li>client/public/assets/cards/banner_titan.png</li>
+<li>client/public/assets/cards/battle_fervor.png</li>
+<li>client/public/assets/cards/card_art_atlas.png</li>
+</ul>
+<h2>빌드, 테스트, 릴리스</h2>
+<ul>
+<li>npm test</li>
+<li>현재 문서 기준 버전: 0.4.2</li>
+</ul>
+<h2>남은 리스크와 다음 우선순위</h2>
+<ul>
+<li>첫 화면에서 게임의 목표와 다음 행동이 5초 안에 보이는지 확인한다.</li>
+<li>주요 선택의 결과 예측과 실제 결과가 어긋나는 지점을 플레이 테스트로 수집한다.</li>
+<li>기획서에 남아 있던 변경 이력성 내용은 업데이트 내역서로 계속 이동해 소개 문서의 밀도를 유지한다.</li>
+</ul>
+<h2>v0.4.1 트랩 복구 적용 메모</h2>
+<ul>
+<li>조건부 발동 카드(<code>mirror_snare</code>, <code>direct_shield</code>, <code>overextend_collapse</code>)를 마법이 아닌 <code>trap</code> 타입으로 되돌렸다.</li>
+<li>트랩 카드의 프레임, 타입 바, 필드 후열 표시를 핑크 계열로 분리해 face-up spell과 즉시 구분되게 했다.</li>
+<li>AI도 트랩을 후열 카드로 세울 수 있게 조정해 솔로전 흐름과 카드 카탈로그 규칙을 맞췄다.</li>
+</ul>
+<h2>v0.4.2 카드 효과 가독성 1순위 적용 메모</h2>
+<ul>
+<li>카드 효과 문구를 <code>발동 조건</code>과 <code>효과 결과</code> 2줄 구조로 분리해 트랩/마법의 읽는 순서를 명확히 했다.</li>
+<li>선택/호버 안내 문구도 같은 효과 요약 함수를 사용해 카드 내부 표시와 하단 안내가 같은 의미 체계를 쓰게 했다.</li>
+<li>비ASCII 라벨로 인한 빌드 불안정을 피하기 위해 항복 버튼과 제물 표시 라벨을 ASCII 기반으로 정리했다.</li>
+</ul>
+</body>
+</html>

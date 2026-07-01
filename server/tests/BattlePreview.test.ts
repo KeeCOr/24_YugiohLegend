@@ -18,7 +18,7 @@ describe('getLaneBattlePreview', () => {
       kind: 'direct',
       attacker: 'player',
       damage: 1200,
-      label: 'DIRECT -1200',
+      label: 'LP -1200',
       tone: 'advantage',
     });
   });

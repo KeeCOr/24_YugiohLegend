@@ -1,160 +1,195 @@
 [
-  {
-    "id": "goblin_warrior",
-    "type": "monster",
-    "name": "Bronze Raider",
-    "atk": 1900,
-    "hp": 500,
-    "tributeCost": 0,
-    "monsterRole": "striker"
-  },
-  {
-    "id": "swift_thief",
-    "type": "monster",
-    "name": "Swift Cutpurse",
-    "atk": 800,
-    "hp": 400,
-    "tributeCost": 0,
-    "monsterRole": "utility",
-    "monsterAbility": "zone_shift",
-    "abilityText": "Zone Shift"
-  },
-  {
-    "id": "village_guard",
-    "type": "monster",
-    "name": "Gate Watcher",
-    "atk": 600,
-    "hp": 1500,
-    "tributeCost": 0,
-    "monsterRole": "guardian"
-  },
-  {
-    "id": "dragon_mage",
-    "type": "monster",
-    "name": "Dragon Acolyte",
-    "atk": 1100,
-    "hp": 600,
-    "tributeCost": 0,
-    "monsterRole": "utility",
-    "monsterAbility": "draw_on_summon",
-    "abilityText": "Draw Spark"
-  },
-  {
-    "id": "flame_wizard",
-    "type": "monster",
-    "name": "Ember Magus",
-    "atk": 1200,
-    "hp": 600,
-    "tributeCost": 0,
-    "monsterRole": "utility",
-    "monsterAbility": "last_stand",
-    "abilityText": "Last Stand"
-  },
-  {
-    "id": "sky_lancer",
-    "type": "monster",
-    "name": "Sky Lancer",
-    "atk": 1800,
-    "hp": 400,
-    "tributeCost": 0,
-    "monsterRole": "striker"
-  },
-  {
-    "id": "shield_mason",
-    "type": "monster",
-    "name": "Shield Mason",
-    "atk": 900,
-    "hp": 1300,
-    "tributeCost": 0,
-    "monsterRole": "guardian"
-  },
-  {
-    "id": "iron_golem",
-    "type": "monster",
-    "name": "Iron Colossus",
-    "atk": 2400,
-    "hp": 1800,
-    "tributeCost": 1,
-    "monsterRole": "guardian",
-    "tributeRole": "bruiser",
-    "monsterAbility": "guard_adjacent",
-    "abilityText": "Heavy Body"
-  },
-  {
-    "id": "hero_warrior",
-    "type": "monster",
-    "name": "Radiant Champion",
-    "atk": 1800,
-    "hp": 1300,
-    "tributeCost": 1,
-    "monsterRole": "guardian",
-    "tributeRole": "ally_booster",
-    "monsterAbility": "ally_warcry",
-    "abilityText": "Ally +300"
-  },
-  {
-    "id": "banner_titan",
-    "type": "monster",
-    "name": "Banner Titan",
-    "atk": 1700,
-    "hp": 1500,
-    "tributeCost": 1,
-    "monsterRole": "guardian",
-    "tributeRole": "field_booster",
-    "monsterAbility": "field_aura",
-    "abilityText": "Lane Aura"
-  },
-  {
-    "id": "dark_knight",
-    "type": "monster",
-    "name": "Nightbound Knight",
-    "atk": 2100,
-    "hp": 700,
-    "tributeCost": 1,
-    "monsterRole": "striker",
-    "tributeRole": "mobile",
-    "monsterAbility": "tribute_stride",
-    "abilityText": "Stride"
-  },
-  {
-    "id": "relic_devourer",
-    "type": "monster",
-    "name": "Relic Devourer",
-    "atk": 1600,
-    "hp": 900,
-    "tributeCost": 2,
-    "monsterRole": "striker",
-    "tributeRole": "tribute_scaler",
-    "monsterAbility": "tribute_growth",
-    "abilityText": "+Power/Tribute"
-  },
-  { "id": "power_boost", "type": "spell", "name": "Power Sigil", "spellMode": "face_up", "effect": "power_boost", "spellDelayTurns": 1 },
-  { "id": "battle_fervor", "type": "spell", "name": "Battle Fervor", "spellMode": "face_up", "effect": "power_boost", "spellDelayTurns": 1 },
-  { "id": "monster_smash", "type": "spell", "name": "Crushing Rite", "spellMode": "face_up", "effect": "monster_smash", "spellDelayTurns": 1 },
-  { "id": "backrow_break", "type": "spell", "name": "Seal Breaker", "spellMode": "face_up", "effect": "backrow_break", "spellDelayTurns": 1 },
-  { "id": "extra_summon", "type": "spell", "name": "Second Gate", "spellMode": "face_up", "effect": "extra_summon_next_turn", "spellDelayTurns": 1 },
-  {
-    "id": "mirror_snare",
-    "type": "spell",
-    "name": "Mirror Snare",
-    "spellMode": "face_down",
-    "triggerCondition": "on_attacked",
-    "effect": "negate_attack"
-  },
-  {
-    "id": "direct_shield",
-    "type": "spell",
-    "name": "Aegis Ward",
-    "spellMode": "face_down",
-    "triggerCondition": "on_direct_attack",
-    "effect": "reduce_damage_500"
-  },
-  {
-    "id": "overextend_collapse",
-    "type": "spell",
-    "name": "Overextend Collapse",
-    "spellMode": "face_down",
-    "triggerCondition": "on_opponent_summon_two_plus",
-    "effect": "destroy_all_monsters"
-  }
+    {
+        "id":  "goblin_warrior",
+        "type":  "monster",
+        "name":  "Bronze Raider",
+        "atk":  1900,
+        "hp":  500,
+        "tributeCost":  0,
+        "monsterRole":  "striker"
+    },
+    {
+        "id":  "swift_thief",
+        "type":  "monster",
+        "name":  "Swift Cutpurse",
+        "atk":  800,
+        "hp":  400,
+        "tributeCost":  0,
+        "monsterRole":  "utility",
+        "monsterAbility":  "zone_shift",
+        "abilityText":  "Zone Shift"
+    },
+    {
+        "id":  "village_guard",
+        "type":  "monster",
+        "name":  "Gate Watcher",
+        "atk":  600,
+        "hp":  1500,
+        "tributeCost":  0,
+        "monsterRole":  "guardian"
+    },
+    {
+        "id":  "dragon_mage",
+        "type":  "monster",
+        "name":  "Dragon Acolyte",
+        "atk":  1100,
+        "hp":  600,
+        "tributeCost":  0,
+        "monsterRole":  "utility",
+        "monsterAbility":  "draw_on_summon",
+        "abilityText":  "Draw Spark"
+    },
+    {
+        "id":  "flame_wizard",
+        "type":  "monster",
+        "name":  "Ember Magus",
+        "atk":  1200,
+        "hp":  600,
+        "tributeCost":  0,
+        "monsterRole":  "utility",
+        "monsterAbility":  "last_stand",
+        "abilityText":  "Last Stand"
+    },
+    {
+        "id":  "sky_lancer",
+        "type":  "monster",
+        "name":  "Sky Lancer",
+        "atk":  1800,
+        "hp":  400,
+        "tributeCost":  0,
+        "monsterRole":  "striker"
+    },
+    {
+        "id":  "shield_mason",
+        "type":  "monster",
+        "name":  "Shield Mason",
+        "atk":  900,
+        "hp":  1300,
+        "tributeCost":  0,
+        "monsterRole":  "guardian"
+    },
+    {
+        "id":  "iron_golem",
+        "type":  "monster",
+        "name":  "Iron Colossus",
+        "atk":  2400,
+        "hp":  1800,
+        "tributeCost":  1,
+        "monsterRole":  "guardian",
+        "tributeRole":  "bruiser",
+        "monsterAbility":  "guard_adjacent",
+        "abilityText":  "Heavy Body"
+    },
+    {
+        "id":  "hero_warrior",
+        "type":  "monster",
+        "name":  "Radiant Champion",
+        "atk":  1800,
+        "hp":  1300,
+        "tributeCost":  1,
+        "monsterRole":  "guardian",
+        "tributeRole":  "ally_booster",
+        "monsterAbility":  "ally_warcry",
+        "abilityText":  "Ally +300"
+    },
+    {
+        "id":  "banner_titan",
+        "type":  "monster",
+        "name":  "Banner Titan",
+        "atk":  1700,
+        "hp":  1500,
+        "tributeCost":  1,
+        "monsterRole":  "guardian",
+        "tributeRole":  "field_booster",
+        "monsterAbility":  "field_aura",
+        "abilityText":  "Lane Aura"
+    },
+    {
+        "id":  "dark_knight",
+        "type":  "monster",
+        "name":  "Nightbound Knight",
+        "atk":  2100,
+        "hp":  700,
+        "tributeCost":  1,
+        "monsterRole":  "striker",
+        "tributeRole":  "mobile",
+        "monsterAbility":  "tribute_stride",
+        "abilityText":  "Stride"
+    },
+    {
+        "id":  "relic_devourer",
+        "type":  "monster",
+        "name":  "Relic Devourer",
+        "atk":  1600,
+        "hp":  900,
+        "tributeCost":  2,
+        "monsterRole":  "striker",
+        "tributeRole":  "tribute_scaler",
+        "monsterAbility":  "tribute_growth",
+        "abilityText":  "+Power/Tribute"
+    },
+    {
+        "id":  "power_boost",
+        "type":  "spell",
+        "name":  "Power Sigil",
+        "spellMode":  "face_up",
+        "effect":  "power_boost",
+        "spellDelayTurns":  1
+    },
+    {
+        "id":  "battle_fervor",
+        "type":  "spell",
+        "name":  "Battle Fervor",
+        "spellMode":  "face_up",
+        "effect":  "power_boost",
+        "spellDelayTurns":  1
+    },
+    {
+        "id":  "monster_smash",
+        "type":  "spell",
+        "name":  "Crushing Rite",
+        "spellMode":  "face_up",
+        "effect":  "monster_smash",
+        "spellDelayTurns":  1
+    },
+    {
+        "id":  "backrow_break",
+        "type":  "spell",
+        "name":  "Seal Breaker",
+        "spellMode":  "face_up",
+        "effect":  "backrow_break",
+        "spellDelayTurns":  1
+    },
+    {
+        "id":  "extra_summon",
+        "type":  "spell",
+        "name":  "Second Gate",
+        "spellMode":  "face_up",
+        "effect":  "extra_summon_next_turn",
+        "spellDelayTurns":  1
+    },
+    {
+        "id":  "mirror_snare",
+        "type":  "trap",
+        "name":  "Mirror Snare",
+        "spellMode":  "face_down",
+        "triggerCondition":  "on_attacked",
+        "effect":  "negate_attack"
+    },
+    {
+        "id":  "direct_shield",
+        "type":  "trap",
+        "name":  "Aegis Ward",
+        "spellMode":  "face_down",
+        "triggerCondition":  "on_direct_attack",
+        "effect":  "reduce_damage_500"
+    },
+    {
+        "id":  "overextend_collapse",
+        "type":  "trap",
+        "name":  "Overextend Collapse",
+        "spellMode":  "face_down",
+        "triggerCondition":  "on_opponent_summon_two_plus",
+        "effect":  "destroy_all_monsters"
+    }
 ]
