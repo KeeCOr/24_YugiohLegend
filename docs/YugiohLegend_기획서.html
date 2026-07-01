@@ -20,7 +20,10 @@
 </head>
 <body>
 <h1>YugiohLegend 기획서 v0.4.6</h1>
-<p class="meta">**최종 업데이트:** 2026-06-24</p>
+<p class="meta">⚠️ **[IP 침해 경고 2026-07-01]** "유희왕(Yu-Gi-Oh)" 명칭·소재 직접 사용으로 Konami IP 침해 위험. 현 상태로 스토어 등록 불가. 피벗 전까지 개발 중단 권고.</p>
+<blockquote>
+<p>⚠️ <strong>[IP 침해 경고 2026-07-01]</strong> "유희왕(Yu-Gi-Oh)" 명칭·소재 직접 사용으로 Konami IP 침해 위험. 현 상태로 스토어 등록 불가. 피벗 전까지 개발 중단 권고.</p>
+</blockquote>
 <blockquote>
 <p><strong>최종 업데이트:</strong> 2026-06-24</p>
 </blockquote>
@@ -31,12 +34,12 @@
 <p><strong>Pain (핵심 고통):</strong> 복잡한 콤보나 전략의 깊이를 즐기려 해도 현재 가능한 선택지가 한눈에 들어오지 않고 즉각적인 결과 피드백이 없어, 짧은 세션에서는 충분한 전략적 만족감이 충족되지 않아 이탈한다.</p>
 <hr>
 <h2>주 페르소나</h2>
-<p><strong>김지윤 (29세) IT 스타트업 백엔드 개발자</strong></p>
+<p><strong>박성현 (24세) 대학교 4학년 / 유희왕·하스스톤 경험자</strong></p>
 <ul>
-  <li><strong>현재 게임 경험:</strong> 전에는 유희왕 카드를 즐겼으나, 사회에 나온 이후 실제 카드 게임은 시간·비용 문제로 포기. 현재는 퇴근 후 30분 이외로 모바일 퍼즐·전략 게임을 가끔 즐김. 긴 튜토리얼이 있으면 바로 튀어나오는 것.</li>
-  <li><strong>현재 행동(대안 게임):</strong> 마스터 듀얼을 플레이하지만 조작 피드백이 부족해 졌을 때 아쉬움이 남는다. 결국 화면에서 다음 행동의 개선 힌트와 즉각 피드백을 원하지만 해소되지 않아 다음 판을 시작하지 못한다.</li>
-  <li><strong>이 게임을 플레이하는 맥락:</strong> 지하철 출퇴근 이어폰 꽂고 한 판씩. 규칙 설명 없이 화면부터 바로 선택 가능한 상황을 보여주기를 원함. 지거나 이기더라도 "왜 그랬지 좋았는데/아쉬웠는데"가 바로 이해되어야 다음 판을 시작함.</li>
-  <li><strong>특이점:</strong> 코딩하는 직업 특성상 로직 파악이 빠름. 전략적인 게임에서도 UI가 정보를 알아볼 수 있게 구조화해주기를 기대함. "룰북 읽기" 없이 3판 이내에 게임 이해가 목표.</li>
+  <li><strong>현재 게임 경험:</strong> 고등학교 시절 유희왕 카드를 수집·대전했고, 대학 입학 후 하스스톤과 마스터 듀얼을 플레이했다. 현재는 취업 준비로 시간이 부족해 긴 세션의 카드 게임에서 이탈했지만, 대전 카드 게임 특유의 "심리전과 전략 배치" 감각은 여전히 그리워한다.</li>
+  <li><strong>현재 행동(대안 게임):</strong> 유희왕 마스터 듀얼을 가끔 켜지만 한 판이 너무 길고 룰이 복잡해 10분 이내에 접는다. 하스스톤은 P2W 구조에 지쳐 그만뒀다. "빠르게 한 판 대전하고 전략적으로 이기는 맛"을 원하지만 마땅한 대안이 없다.</li>
+  <li><strong>이 게임을 플레이하는 맥락:</strong> 강의 공강 시간 또는 자취방에서 취침 전 10~15분. 규칙을 외우지 않아도 직관적으로 "이 레인에 뭘 배치할지" 결정할 수 있기를 원함. 이기면 "내 전략이 통했다", 지면 "다음엔 다르게 해봐야지" 느낌이 즉시 와야 재시작한다.</li>
+  <li><strong>특이점:</strong> 카드 게임 대전 경험이 있어 로직 파악이 빠르다. 복잡한 콤보보다 "상황 판단 + 배치 결정"의 즉각적인 인과관계를 선호. 친구와 대전하고 싶지만 스케줄 맞추기 어려워 솔로 AI 대전을 선호.</li>
 </ul>
 <hr>
 <h2>핵심 루프</h2>
@@ -314,26 +317,40 @@
   <li>LP 0 finish presentation remains pending; this batch exposes the data needed without locking final presentation direction.</li>
   <li>Validation: <code>npm test</code>, focused GameRoom tests, and <code>npm run build:all</code> passed.</li>
 </ul>
-
-
-<section class="update-block">
-  <h2>2026-06-30 v0.6.0 Turn Result Summary</h2>
-  <ul>
-    <li>Persona target: fast duel players now get a readable end-of-turn chain without rereading the board state.</li>
-    <li>Server <code>TurnSummary</code> now includes <code>headline</code> and <code>steps</code> so each battle result explains draw, action, LP change, and end state.</li>
-    <li>Client battle resolution status now prints the turn headline plus action/LP/end details after animations resolve.</li>
-    <li>LP 0 direction is explicit for this batch: the result summary calls out the defeated player and stops before the next draw. A richer final duel presentation remains a later visual/UI layer.</li>
-    <li>Validation: <code>npm exec vitest run server/tests/GameRoom.test.ts server/tests/UIArtReferences.test.ts</code> passed 47 tests; <code>npm test</code> passed 7 files / 84 tests.</li>
-    <li>Release target: <code>YugiohLegend_v0.6.0_portable.exe</code>.</li>
-  </ul>
-</section>
-
-</body>
-</html>
-
+<hr>
+<h2>2026-06-30 v0.6.0 Turn Result Summary</h2>
+<ul>
+  <li>Persona target: fast duel players now get a readable end-of-turn chain without rereading the board state.</li>
+  <li>Server <code>TurnSummary</code> now includes <code>headline</code> and <code>steps</code> so each battle result explains draw, action, LP change, and end state.</li>
+  <li>Client battle resolution status now prints the turn headline plus action/LP/end details after animations resolve.</li>
+  <li>LP 0 direction is explicit for this batch: the result summary calls out the defeated player and stops before the next draw. A richer final duel presentation remains a later visual/UI layer.</li>
+  <li>Validation: <code>npm exec vitest run server/tests/GameRoom.test.ts server/tests/UIArtReferences.test.ts</code> passed 47 tests; <code>npm test</code> passed 7 files / 84 tests.</li>
+  <li>Release target: <code>YugiohLegend_v0.6.0_portable.exe</code>.</li>
+</ul>
 <h2>2026-07-01 v0.7.0 Duel-End Overlay</h2>
 <ul>
   <li>LP 0 finish now shows a centered duel-end overlay before ResultScene transition.</li>
   <li>The overlay reuses the existing turn summary headline and steps, plus the final LP 0 label, instead of inventing a separate result data source.</li>
   <li>Validation: <code>npm test</code> passed 7 files / 85 tests; <code>npm run build:all</code> and <code>npm run electron:build</code> passed, producing <code>YugiohLegend_v0.7.0_portable.exe</code>.</li>
 </ul>
+<hr>
+<h2>평가 결정 (2026-07-01)</h2>
+<p><strong>결정</strong>: 피벗 필요</p>
+<p><strong>종합 점수</strong>: 3.5/10</p>
+<h3>핵심 강점</h3>
+<ul>
+  <li>동시공개 + 레인 메커닉은 Marvel Snap과 차별화되는 독자적 구조로 보존 가치가 있음</li>
+  <li>4레인 전투 흐름(비공개 입력 → 동시 공개 → 자동 전투)이 빠른 세션에 적합한 구조</li>
+  <li>Phaser 3 + Electron 기반 구현 완성도 64%로 핵심 로직 일부 구현됨</li>
+</ul>
+<h3>치명적 약점</h3>
+<ul>
+  <li>"유희왕(Yu-Gi-Oh)" 명칭·카드 소재 직접 사용으로 Konami IP 침해 위험 — 현 상태로 스토어 등록 불가</li>
+  <li>Marvel Snap이 이미 시장을 선점한 동시공개 카드 배틀 포지션, 차별화 부족</li>
+  <li>KPI 자기모순: "선택 시간 8분 이내"인데 "세션 10분" — 한 번의 선택에 8분이면 세션이 불가능</li>
+</ul>
+<h3>피벗 방향</h3>
+<p>YugiohLegend → 오리지널 판타지 카드 배틀로 리브랜딩. Marvel Snap과 차별화를 위해 '동시공개 + 레인' 메커닉은 유지하되, 속성 마법 카드 고유 시스템(카드 조합 시너지) 추가. 게임명/카드명/배경 전면 오리지널로 교체. 피벗 완료 전까지 신규 기능 개발 중단, 오리지널 세계관 설계 우선.</p>
+
+</body>
+</html>
