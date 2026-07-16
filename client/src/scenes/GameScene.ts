@@ -6,7 +6,7 @@ import { LPDisplay } from '../components/LPDisplay';
 import { getReadableEffectSummary, getSpellEffectSummary, getSpellTimingSummary } from '../data/CardText';
 import { getStarterDeck, isValidDeck } from '../data/DeckStorage';
 import { SocketManager } from '../network/SocketManager';
-import { getLaneBattlePreview, type LaneBattlePreview } from 'shared/battlePreview';
+import { getBoardBattlePressure, getLaneBattlePreview, type BattlePreviewTone, type LaneBattlePreview } from 'shared/battlePreview';
 import type {
   BattleEvent, Card, LaneIndex, LaneState, PlayerIndex, ServerMessage, SummonAction, TurnAction, TurnSummary,
 } from '../data/CardTypes';
@@ -58,6 +58,7 @@ export class GameScene extends Phaser.Scene {
   private myDeckTxt!: Phaser.GameObjects.Text;
   private opDeckTxt!: Phaser.GameObjects.Text;
   private battlePreviewBadges: Phaser.GameObjects.Container[] = [];
+  private battlePressureTxt!: Phaser.GameObjects.Text;
   private startingDeckSize = 0;
   private myDeckCount = 0;
   private opDeckCount = 0;
@@ -106,6 +107,14 @@ export class GameScene extends Phaser.Scene {
 
 
     this.createBattlePreviewBadges(boardX, height * 0.435);
+    this.battlePressureTxt = this.add.text(boardX, height * 0.392, 'BOARD QUIET', {
+      fontSize: '15px',
+      color: '#bde8ff',
+      fontStyle: 'bold',
+      stroke: '#030711',
+      strokeThickness: 3,
+      align: 'center',
+    }).setOrigin(0.5).setDepth(64);
 
     this.opField = new Field(this, boardX, height * 0.245, 1);
     this.myField = new Field(this, boardX, height * 0.600, 0);
@@ -692,6 +701,8 @@ export class GameScene extends Phaser.Scene {
   private updateBattlePreviews(): void {
     if (this.battlePreviewBadges.length === 0) return;
     const unlocked = new Set(GameScene.getUnlockedLanes(this.turn));
+    const boardHasBattlePreview = this.turn >= 2 && Boolean(this.myLanes && this.opLanes);
+    this.updateBoardPressureSummary(boardHasBattlePreview);
     for (const laneIndex of LANE_INDICES) {
       const badge = this.battlePreviewBadges[laneIndex];
       const bg = badge.getByName('preview-bg') as Phaser.GameObjects.Rectangle | null;
@@ -725,6 +736,23 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  private updateBoardPressureSummary(hasBattlePreview: boolean): void {
+    if (!this.battlePressureTxt) return;
+    if (!hasBattlePreview || !this.myLanes || !this.opLanes) {
+      this.battlePressureTxt.setText(this.turn >= 2 ? 'BOARD QUIET' : 'BATTLE PREVIEW OPENS TURN 2');
+      this.battlePressureTxt.setColor('#aebbd0');
+      return;
+    }
+    const pressure = getBoardBattlePressure(this.myLanes, this.opLanes);
+    this.battlePressureTxt.setText(`${pressure.headline} - ${pressure.detail}`);
+    this.battlePressureTxt.setColor(this.getToneTextColor(pressure.tone));
+  }
+
+  private getToneTextColor(tone: BattlePreviewTone): string {
+    if (tone === 'advantage') return '#bfffe2';
+    if (tone === 'danger') return '#ffb3be';
+    return '#bde8ff';
+  }
   private getPreviewTitle(preview: LaneBattlePreview): string {
     if (preview.kind === 'empty') return 'QUIET';
     if (preview.kind === 'direct') return preview.attacker === 'player' ? 'YOU HIT LP' : 'LP DANGER';

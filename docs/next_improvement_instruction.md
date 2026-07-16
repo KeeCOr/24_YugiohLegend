@@ -25,3 +25,8 @@ Turn the current biggest project issue into a small, executable improvement batc
 - Completed the recommended visual duel-end overlay using existing LP 0 turn summary data.
 - Validation: `npm test` passed 7 files / 85 tests; `npm run build:all` and `npm run electron:build` passed.
 - Release target: `YugiohLegend_v0.7.0_portable.exe`.
+
+## 2026-07-16 v0.8.0 Completion Note
+- Completed Rival Pressure Preview: the shared battle preview layer now produces board-level LP risk and trade summaries.
+- The duel HUD shows the board pressure headline above lane badges so players can read danger/advantage faster.
+- Next recommended batch: resolve the IP/rebrand risk before adding new card content or expanding public-facing marketing material.

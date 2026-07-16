@@ -372,3 +372,9 @@ YugiohLegend → 오리지널 판타지 카드 배틀로 리브랜딩. Marvel Sn
 - [ ] 오리지널 세계관 확립
 - [ ] KPI 자기모순 수정 (선택 시간 재정의)
 - [ ] Marvel Snap과 차별화되는 메커닉 1개 추가
+
+## 2026-07-16 v0.8.0 Rival Pressure Preview
+- Added a shared board-level pressure summary that aggregates immediate LP risk, rival LP risk, winning trades, losing trades, and quiet lanes from existing lane battle previews.
+- GameScene now displays a compact pressure headline above the lane preview badges: `YOU PRESSURE`, `RIVAL PRESSURE`, or `BOARD QUIET`, with matching advantage/danger/neutral colors.
+- This improves board density without changing combat resolution rules or AI behavior.
+- Validation target: `npm test`, `npm run build:client`, `npm run build:all`, and `npm run electron:build`.

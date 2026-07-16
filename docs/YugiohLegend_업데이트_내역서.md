@@ -50,3 +50,9 @@
 - LP 0 ?? ? ?? turn summary ???? ???? ?? duel-end overlay? ????.
 - ????? ?? ????, LP 0 ??, ?? ?? ??? ResultScene ?? ?? ????.
 - ??: `npm test` 7 files / 85 tests ??, `npm run build:all` ??, `npm run electron:build`? `YugiohLegend_v0.7.0_portable.exe` ??.
+
+## 2026-07-16 v0.8.0 Rival Pressure Preview
+- Added a shared board-level pressure summary that aggregates immediate LP risk, rival LP risk, winning trades, losing trades, and quiet lanes from existing lane battle previews.
+- GameScene now displays a compact pressure headline above the lane preview badges: `YOU PRESSURE`, `RIVAL PRESSURE`, or `BOARD QUIET`, with matching advantage/danger/neutral colors.
+- This improves board density without changing combat resolution rules or AI behavior.
+- Validation target: `npm test`, `npm run build:client`, `npm run build:all`, and `npm run electron:build`.
