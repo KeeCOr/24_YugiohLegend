@@ -1,4 +1,4 @@
-import Phaser from 'phaser';
+﻿import Phaser from 'phaser';
 import { ART_KEYS, addSceneBackdrop, cardArtKey } from '../art/ProceduralArt';
 import { Field } from '../components/Field';
 import { HandArea } from '../components/HandArea';
@@ -1007,7 +1007,10 @@ export class GameScene extends Phaser.Scene {
       ease: 'Cubic.easeIn',
       onComplete: () => {
         this.cameras.main.shake(ev.finisher ? 420 : ev.type === 'direct_attack' ? 260 : 190, ev.finisher ? 0.012 : ev.negated ? 0.002 : 0.006);
-        if (ev.finisher) this.playFinisherImpact(x, impactY, attackerIsMine);
+        if (ev.finisher) {
+          this.statusTxt.setText('LP critical > Last attack > Victory declared');
+          this.playFinisherImpact(x, impactY, attackerIsMine);
+        }
         this.tweens.add({
           targets: slash,
           y: impactY,
@@ -1080,14 +1083,28 @@ export class GameScene extends Phaser.Scene {
     const ring = this.add.circle(x, impactY, 36, tint, 0)
       .setStrokeStyle(9, tint, 0)
       .setDepth(90);
-    const finishText = this.add.text(width / 2, height * 0.41, 'FINAL BLOW', {
+    const warningText = this.add.text(width / 2, height * 0.34, 'LP CRITICAL', {
+      fontSize: '36px',
+      color: '#ffdf7d',
+      fontStyle: 'bold',
+      stroke: '#19070b',
+      strokeThickness: 7,
+    }).setOrigin(0.5).setAlpha(0).setScale(0.72).setDepth(91);
+    const attackText = this.add.text(width / 2, height * 0.43, 'FINAL BLOW - LAST ATTACK', {
       fontSize: '58px',
       color: '#fff4c6',
       fontStyle: 'bold',
       stroke: '#19070b',
       strokeThickness: 9,
     }).setOrigin(0.5).setAlpha(0).setScale(0.72).setDepth(91);
-    const subText = this.add.text(width / 2, height * 0.50, 'LP 0', {
+    const victoryText = this.add.text(width / 2, height * 0.53, attackerIsMine ? 'VICTORY DECLARED' : 'RIVAL VICTORY', {
+      fontSize: '30px',
+      color: attackerIsMine ? '#8fffd2' : '#ff9bb0',
+      fontStyle: 'bold',
+      stroke: '#090b12',
+      strokeThickness: 6,
+    }).setOrigin(0.5).setAlpha(0).setScale(0.82).setDepth(91);
+    const subText = this.add.text(width / 2, height * 0.60, 'LP 0', {
       fontSize: '25px',
       color: attackerIsMine ? '#8fffd2' : '#ff9bb0',
       fontStyle: 'bold',
@@ -1122,30 +1139,44 @@ export class GameScene extends Phaser.Scene {
       ease: 'Expo.easeOut',
     });
     this.tweens.add({
-      targets: [finishText, subText],
+      targets: warningText,
+      alpha: { from: 0, to: 1 },
+      scaleX: { from: 0.72, to: 1.0 },
+      scaleY: { from: 0.72, to: 1.0 },
+      duration: 180,
+      ease: 'Back.easeOut',
+      onComplete: () => {
+        this.tweens.add({ targets: warningText, alpha: 0, y: '-=18', duration: 420, delay: 260, ease: 'Sine.easeIn' });
+      },
+    });
+    this.tweens.add({
+      targets: [attackText, victoryText, subText],
       alpha: { from: 0, to: 1 },
       scaleX: { from: 0.72, to: 1.0 },
       scaleY: { from: 0.72, to: 1.0 },
       duration: 240,
+      delay: 460,
       ease: 'Back.easeOut',
       onComplete: () => {
         this.tweens.add({
-          targets: [finishText, subText],
+          targets: [attackText, victoryText, subText],
           alpha: 0,
           y: '-=22',
           duration: 620,
-          delay: 720,
+          delay: 820,
           ease: 'Sine.easeIn',
         });
       },
     });
 
-    this.time.delayedCall(1800, () => {
+    this.time.delayedCall(2200, () => {
       flash.destroy();
       beam.destroy();
       ring.destroy();
-      finishText.destroy();
+      warningText.destroy();
+      attackText.destroy();
+      victoryText.destroy();
       subText.destroy();
     });
   }
-  }
+}
