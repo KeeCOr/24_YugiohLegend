@@ -13,6 +13,7 @@ export class ResultScene extends Phaser.Scene {
   constructor() { super('ResultScene'); }
 
   create(data: ResultData): void {
+    globalThis.__gameAudioRuntime?.playCue('result');
     const { width, height } = this.scale;
     const { winner, myIndex, finalLPs } = data;
     addSceneBackdrop(this);

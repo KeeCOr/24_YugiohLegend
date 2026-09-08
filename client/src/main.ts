@@ -5,6 +5,9 @@ import { DeckBuilderScene } from './scenes/DeckBuilderScene';
 import { GameScene } from './scenes/GameScene';
 import { ResultScene } from './scenes/ResultScene';
 import { OnboardingScene } from './scenes/OnboardingScene';
+import { installGameAudioRuntime } from './audio/GameAudioRuntime';
+
+installGameAudioRuntime('/assets/audio/original');
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,

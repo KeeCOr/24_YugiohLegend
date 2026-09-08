@@ -951,6 +951,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private playBattleImpactEvent(ev: BattleEvent): void {
+    globalThis.__gameAudioRuntime?.playCue(ev.attackerIndex === this.myIndex ? 'action' : 'danger');
     const x = this.myField.getLaneWorldX(ev.laneIndex);
     const attackerIsMine = ev.attackerIndex === this.myIndex;
     const startY = attackerIsMine ? this.myField.y - 52 : this.opField.y + 52;
