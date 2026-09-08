@@ -1,11 +1,9 @@
-import { createRequire } from 'node:module';
 import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import http, { type IncomingHttpHeaders } from 'node:http';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
-const require = createRequire(import.meta.url);
 const { createStaticServer } = require('../../electron/staticServer.cjs') as {
   createStaticServer: (rootDir: string) => Promise<ServerState>;
 };

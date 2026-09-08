@@ -369,8 +369,7 @@ YugiohLegend ???ㅻ━吏???먰?吏 移대뱶 諛고?濡?由щ툕?쒕뵫. Ma
 
 ## 오디오 레이어
 
-- **BGM**: 첫 사용자 인터랙션 이후 안전하게 시작되는 루프 배경음
-- **SFX**: 입력, 액션, 위험, 전환, 결과에 대응하는 개별 효과음
-- **볼륨 분리**: BGM과 SFX 음량을 독립적으로 조절하며 위험·결과 신호에서는 BGM을 일시적으로 낮춘다.
-- **음원 출처**: Kenney Music Loops(CC0)와 프로젝트 생성 스크립트로 결정론적으로 만든 독창적 PCM WAV 큐를 사용한다.
-- **런타임 원칙**: 핵심 오디오 레이어는 사전 생성된 음원을 사용하며 런타임 합성음에 의존하지 않는다.
+- <span style="color:#ff0000">첫 포인터/키 입력으로 BGM 하나를 시작하며, 화면 비가시 상태에서는 일시정지되고 사용자가 시작한 경우에만 다시 재개됩니다.</span>
+- <span style="color:#ff0000">BGM/SFX/음소거 설정은 각각 독립적으로 localStorage에 저장됩니다.</span>
+- <span style="color:#ff0000">실제 Kenney CC0 Music Loops BGM과 Interface/Impact/Digital OGG 표준 효과음을 사용하며 생성된 PCM 기본음은 없습니다. 위험/결과 덕킹은 0.55, 디코딩된 전체 tail 최소 1.0/0.8초, 최대 8보이스이며 누락/거부 시 안전하게 처리됩니다.</span>
+- <span style="color:#ff0000">Electron은 client/dist를 127.0.0.1의 임시 포트 HTTP로 서비스하며 MIME/경로 순회 방어와 안전한 종료를 갖추고, 별도의 임시 포트 WebSocket을 유지하며 file:// URL은 사용하지 않습니다.</span>
