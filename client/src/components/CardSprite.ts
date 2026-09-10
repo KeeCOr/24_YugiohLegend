@@ -1,7 +1,7 @@
 ﻿import Phaser from 'phaser';
 import type { Card } from '../data/CardTypes';
 import { getEffectConditionSummary, getEffectOutcomeSummary, getSpellEffectSummary, getSpellTimingSummary } from '../data/CardText';
-import { ART_KEYS, cardArtKey, cardTextureKey, typeTint } from '../art/ProceduralArt';
+import { ART_KEYS, cardArtKey, typeTint } from '../art/ProceduralArt';
 
 const CARD_ART_SLOT_W = 76;
 const CARD_ART_SLOT_H = 100;
@@ -29,11 +29,19 @@ export class CardSprite extends Phaser.GameObjects.Container {
     this.glow.setDisplaySize(CardSprite.W + 22, CardSprite.H + 22).setAlpha(0);
     this.add(this.glow);
 
+    const cardFrameIndex = faceDown
+      ? 0
+      : card.type === 'monster'
+        ? 1
+        : card.type === 'spell'
+          ? 2
+          : 3;
     const frame = new Phaser.GameObjects.Image(
       scene,
       0,
       0,
-      faceDown ? ART_KEYS.cardBack : cardTextureKey(card.type)
+      'yl_card_frames',
+      cardFrameIndex
     );
     frame.setDisplaySize(CardSprite.W, CardSprite.H);
     this.add(frame);

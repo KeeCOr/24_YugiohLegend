@@ -51,7 +51,7 @@ export class MenuScene extends Phaser.Scene {
   }
 
   private createButton(x: number, y: number, label: string, onClick: () => void): void {
-    const btn = this.add.image(x, y, ART_KEYS.buttonPrimary).setDisplaySize(320, 76).setInteractive();
+    const btn = this.add.nineslice(x, y, 'yl_button_states', 0, 320, 76, 40, 40, 20, 20).setInteractive();
     const txt = this.add.text(x, y, label, {
       fontSize: '18px',
       color: '#ffffff',
@@ -59,13 +59,17 @@ export class MenuScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     btn.on('pointerover', () => {
-      btn.setTint(0xffe29a);
+      btn.setFrame(1);
       txt.setColor('#fff3bf');
     });
     btn.on('pointerout', () => {
-      btn.clearTint();
+      btn.setFrame(0);
       txt.setColor('#ffffff');
     });
-    btn.on('pointerdown', onClick);
+    btn.on('pointerdown', () => {
+      btn.setFrame(2);
+      onClick();
+    });
+    btn.on('pointerup', () => btn.setFrame(1));
   }
 }

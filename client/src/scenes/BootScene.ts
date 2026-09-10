@@ -22,6 +22,10 @@ export class BootScene extends Phaser.Scene {
     this.load.image(ART_KEYS.hudFrame, 'assets/generated/art_hudFrame.png');
     this.load.image(ART_KEYS.handRail, 'assets/generated/art_handRail.png');
     this.load.image(ART_KEYS.laneFrame, 'assets/generated/art_laneFrame.png');
+    this.load.image('yl_surface_frame', 'assets/generated/yl-surface-frame-9s.png');
+    this.load.image('yl_lane_frame', 'assets/generated/yl-lane-frame.png');
+    this.load.spritesheet('yl_button_states', 'assets/generated/yl-button-states-atlas.png', { frameWidth: 384, frameHeight: 96 });
+    this.load.spritesheet('yl_card_frames', 'assets/generated/yl-card-frames-atlas.png', { frameWidth: 264, frameHeight: 376 });
     this.load.image(ART_KEYS.glow, 'assets/generated/art_glow.png');
     this.load.image(ART_KEYS.slash, 'assets/generated/art_slash.png');
     for (const card of ALL_CARDS) {

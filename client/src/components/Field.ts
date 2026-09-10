@@ -31,7 +31,7 @@ export class Field extends Phaser.GameObjects.Container {
     for (let i = 0; i < LANE_COUNT; i++) {
       const lx = this.getLaneLocalX(i);
       const glow = scene.add.image(lx, 0, ART_KEYS.glow).setDisplaySize(210, 252).setAlpha(0);
-      const laneFrame = scene.add.image(lx, 0, ART_KEYS.laneFrame).setDisplaySize(186, 238).setAlpha(0.9);
+      const laneFrame = scene.add.image(lx, 0, 'yl_lane_frame').setDisplaySize(186, 238).setAlpha(0.9);
       const lane = scene.add.image(lx, 0, this.playerIndex === 0 ? ART_KEYS.lane : ART_KEYS.laneEnemy);
       lane.setDisplaySize(LANE_W, LANE_H);
       this.add([glow, laneFrame, lane]);

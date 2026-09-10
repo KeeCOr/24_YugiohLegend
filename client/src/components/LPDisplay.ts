@@ -11,7 +11,7 @@ export class LPDisplay extends Phaser.GameObjects.Container {
     super(scene, x, y);
     scene.add.existing(this);
 
-    const panel = scene.add.image(112, 0, ART_KEYS.hudFrame).setDisplaySize(238, 62);
+    const panel = scene.add.nineslice(112, 0, 'yl_surface_frame', undefined, 238, 62, 32, 32, 20, 20);
     const barBg = scene.add.rectangle(16, 10, 188, 10, 0x090b12).setOrigin(0, 0.5);
     this.bar = scene.add.rectangle(16, 10, 188, 10, 0x28d76d).setOrigin(0, 0.5);
     this.label = scene.add.text(16, -8, `${playerName} LP ${this.lp}`, {
