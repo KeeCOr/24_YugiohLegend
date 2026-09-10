@@ -1,4 +1,4 @@
-﻿# YugiohLegend 湲고쉷??v0.11.0
+﻿# YugiohLegend 湲고쉷??v0.11.1
 
 > ?좑툘 **[IP 移⑦빐 寃쎄퀬 2026-07-01]** "?좏씗??Yu-Gi-Oh)" 紐낆묶쨌?뚯옱 吏곸젒 ?ъ슜?쇰줈 Konami IP 移⑦빐 ?꾪뿕. ???곹깭濡??ㅽ넗???깅줉 遺덇?. ?쇰쿁 ?꾧퉴吏 媛쒕컻 以묐떒 沅뚭퀬.
 
@@ -99,7 +99,7 @@ YugiohLegend???좏씗?뺤쓣 ?⑥닚?뷀븳 **4?덉씤 移대뱶 ?꾪닾 寃뚯�
 
 - **?ㅽ깮:** Phaser 3 ?대씪?댁뼵??+ Node.js WebSocket ?쒕쾭 + Electron ?섑띁
 - **?붾㈃ 湲곗? ?댁긽??** 900 횞 1600 (?몃줈??
-- **?꾩옱 踰꾩쟾:** 0.11.0
+- **?꾩옱 踰꾩쟾:** 0.11.1
 
 ---
 
@@ -217,7 +217,7 @@ YugiohLegend???좏씗?뺤쓣 ?⑥닚?뷀븳 **4?덉씤 移대뱶 ?꾪닾 寃뚯�
 
 ## 鍮뚮뱶 諛??뚯뒪??- **?뚯뒪??** `npm test`
 - **鍮뚮뱶:** `npm run build:all && npx electron-builder --win portable`
-- **?꾩옱 踰꾩쟾:** 0.11.0
+- **?꾩옱 踰꾩쟾:** 0.11.1
 
 ---
 
@@ -372,6 +372,12 @@ YugiohLegend ???ㅻ━吏???먰?吏 移대뱶 諛고?濡?由щ툕?쒕뵫. Ma
 - `LPDisplay`'s HUD panel and `MenuScene` buttons render through Phaser's `add.nineslice` on `yl-surface-frame-9s.png` / `yl-button-states-atlas.png`, so panels and buttons resize without corner or edge distortion.
 - `CardSprite.fitArtworkToSlot` computes a cover-scale from each card art's source dimensions and center-crops it, preserving the original aspect ratio in the card art slot without stretching.
 - Validation: source inspection of `client/src/scenes/BootScene.ts`, `client/src/components/LPDisplay.ts`, `client/src/components/CardSprite.ts`, `client/src/scenes/MenuScene.ts`, and `client/public/assets/generated/`.
+
+## 2026-09-10 v0.11.1 Nineslice Panels & Onboarding Overlap Fix
+- DeckBuilderScene's archive and deck panels now render through `add.nineslice(..., 'yl_surface_frame', undefined, W, H, 32, 32, 20, 20)` instead of a stretched `ART_KEYS.panel` image, so panel borders stay crisp at any archive/deck panel size instead of distorting.
+- OnboardingScene now derives the confirm button's Y position from `computeConfirmButtonY`, which guarantees at least `MIN_CONTENT_TO_BUTTON_CLEARANCE_PX` (24px) of clearance between the third rules section's content and the 72px confirm button, while keeping the modal panel fully inside the 1600x900 viewport.
+- Korean onboarding copy (title, section headings, body lines, confirm button) now declares `fontFamily: "'Noto Sans KR', 'Malgun Gothic', sans-serif"` so glyphs fall back cleanly on systems without Noto Sans KR installed.
+- Validation: source inspection of `client/src/scenes/DeckBuilderScene.ts` and `client/src/scenes/OnboardingScene.ts`; `npm run test --workspace=server` (`UIArtReferences.test.ts`).
 
 ## 오디오 레이어
 

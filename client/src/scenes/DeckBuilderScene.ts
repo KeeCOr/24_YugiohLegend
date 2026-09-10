@@ -58,8 +58,8 @@ export class DeckBuilderScene extends Phaser.Scene {
       color: '#b8c7e8',
     });
 
-    this.add.image(width * 0.36, height * 0.52, ART_KEYS.panel).setDisplaySize(1030, 720).setAlpha(0.78);
-    this.add.image(width * 0.82, height * 0.52, ART_KEYS.panel).setDisplaySize(450, 720).setAlpha(0.78);
+    this.add.nineslice(width * 0.36, height * 0.52, 'yl_surface_frame', undefined, 1030, 720, 32, 32, 20, 20).setAlpha(0.78);
+    this.add.nineslice(width * 0.82, height * 0.52, 'yl_surface_frame', undefined, 450, 720, 32, 32, 20, 20).setAlpha(0.78);
     this.add.text(48, 112, 'Card Archive', { fontSize: '18px', color: '#b8c7e8', fontStyle: 'bold' });
 
     ALL_CARDS.forEach((card, i) => {

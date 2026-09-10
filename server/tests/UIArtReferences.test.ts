@@ -227,4 +227,30 @@ describe('UI art references', () => {
     expect(cardSprite).toContain("'yl_card_frames',\n      cardFrameIndex");
   });
 
+  it('renders the deck builder archive and deck panels as nineslice surfaces instead of stretched images', () => {
+    const deckBuilder = readProjectFile('client/src/scenes/DeckBuilderScene.ts');
+
+    expect(deckBuilder).toContain("this.add.nineslice(width * 0.36, height * 0.52, 'yl_surface_frame'");
+    expect(deckBuilder).toContain('1030, 720');
+    expect(deckBuilder).toContain("this.add.nineslice(width * 0.82, height * 0.52, 'yl_surface_frame'");
+    expect(deckBuilder).toContain('450, 720');
+    expect(deckBuilder).not.toContain('this.add.image(width * 0.36, height * 0.52, ART_KEYS.panel).setDisplaySize(1030, 720)');
+    expect(deckBuilder).not.toContain('this.add.image(width * 0.82, height * 0.52, ART_KEYS.panel).setDisplaySize(450, 720)');
+  });
+
+  it('keeps at least 24px of clearance between the third onboarding section and the confirm button', () => {
+    const onboarding = readProjectFile('client/src/scenes/OnboardingScene.ts');
+
+    expect(onboarding).toContain('export const MIN_CONTENT_TO_BUTTON_CLEARANCE_PX = 24');
+    expect(onboarding).toContain('function computeConfirmButtonY(');
+    expect(onboarding).toContain('MIN_CONTENT_TO_BUTTON_CLEARANCE_PX');
+    expect(onboarding).toContain('const btnY = computeConfirmButtonY(');
+  });
+
+  it('falls back Korean onboarding copy to Noto Sans KR and Malgun Gothic', () => {
+    const onboarding = readProjectFile('client/src/scenes/OnboardingScene.ts');
+
+    expect(onboarding).toContain("const KOREAN_FONT_FAMILY = \"'Noto Sans KR', 'Malgun Gothic', sans-serif\"");
+    expect(onboarding).toContain('fontFamily: KOREAN_FONT_FAMILY');
+  });
 });

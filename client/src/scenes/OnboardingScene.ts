@@ -3,6 +3,20 @@ import { ART_KEYS } from '../art/ProceduralArt';
 
 const ONBOARDING_KEY = 'yugioh_legend_onboarding_v1';
 
+export const MIN_CONTENT_TO_BUTTON_CLEARANCE_PX = 24;
+const KOREAN_FONT_FAMILY = "'Noto Sans KR', 'Malgun Gothic', sans-serif";
+
+function computeConfirmButtonY(
+  contentBottomY: number,
+  panelBottomY: number,
+  buttonHeight: number,
+  bottomPadding: number,
+): number {
+  const minAllowedY = contentBottomY + MIN_CONTENT_TO_BUTTON_CLEARANCE_PX + buttonHeight / 2;
+  const maxAllowedY = panelBottomY - bottomPadding - buttonHeight / 2;
+  return Math.min(minAllowedY, maxAllowedY);
+}
+
 export function hasSeenOnboarding(): boolean {
   try {
     return localStorage.getItem(ONBOARDING_KEY) === 'done';
@@ -49,8 +63,10 @@ export class OnboardingScene extends Phaser.Scene {
 
     // ── Modal panel ──────────────────────────────────────────────────────────
     const panelW = 860;
-    const panelH = 700;
+    const panelH = 780;
     const panelY = height / 2;
+    const panelTop = panelY - panelH / 2;
+    const panelBottom = panelY + panelH / 2;
 
     // outer border
     this.add.rectangle(cx, panelY, panelW + 8, panelH + 8, 0xd8b56a, 1).setDepth(1);
@@ -67,6 +83,7 @@ export class OnboardingScene extends Phaser.Scene {
       fontSize: '32px',
       color: '#f2c86a',
       fontStyle: 'bold',
+      fontFamily: KOREAN_FONT_FAMILY,
       stroke: '#07090e',
       strokeThickness: 4,
     }).setOrigin(0.5).setDepth(10);
@@ -81,10 +98,10 @@ export class OnboardingScene extends Phaser.Scene {
     this.add.rectangle(cx, panelY - panelH / 2 + 104, panelW - 60, 2, 0xd8b56a, 0.4).setDepth(10);
 
     // ── Content sections ─────────────────────────────────────────────────────
-    const startY = panelY - panelH / 2 + 134;
-    const lineH = 23;
+    const startY = panelTop + 134;
+    const sectionGap = 20;
 
-    this.addSection(cx, startY, panelW,
+    const sec1Bottom = this.addSection(cx, startY, panelW,
       '① 페이즈 순서',
       [
         '드로우 → 스탠바이 → 메인1 → 배틀 → 메인2 → 엔드',
@@ -97,8 +114,8 @@ export class OnboardingScene extends Phaser.Scene {
       0xf2c86a,
     );
 
-    const sec2Y = startY + lineH * 8 + 12;
-    this.addSection(cx, sec2Y, panelW,
+    const sec2Y = sec1Bottom + sectionGap;
+    const sec2Bottom = this.addSection(cx, sec2Y, panelW,
       '② 공격 표시 / 수비 표시',
       [
         '· 공격 표시 (세로): ATK로 전투. 직접 공격 가능.',
@@ -110,8 +127,8 @@ export class OnboardingScene extends Phaser.Scene {
       0x6ebcff,
     );
 
-    const sec3Y = sec2Y + lineH * 7 + 12;
-    this.addSection(cx, sec3Y, panelW,
+    const sec3Y = sec2Bottom + sectionGap;
+    const sec3Bottom = this.addSection(cx, sec3Y, panelW,
       '③ 마법 / 함정 발동 타이밍',
       [
         '· 일반 마법: 자신 메인 페이즈에만 발동 가능',
@@ -124,15 +141,17 @@ export class OnboardingScene extends Phaser.Scene {
     );
 
     // ── Confirm button ────────────────────────────────────────────────────────
-    const btnY = panelY + panelH / 2 - 52;
+    const btnHeight = 72;
+    const btnY = computeConfirmButtonY(sec3Bottom, panelBottom, btnHeight, 40);
     const btn = this.add.image(cx, btnY, ART_KEYS.buttonPrimary)
-      .setDisplaySize(300, 72)
+      .setDisplaySize(300, btnHeight)
       .setInteractive()
       .setDepth(10);
     const btnTxt = this.add.text(cx, btnY, '이해했어요!', {
       fontSize: '22px',
       color: '#ffffff',
       fontStyle: 'bold',
+      fontFamily: KOREAN_FONT_FAMILY,
       stroke: '#07090e',
       strokeThickness: 3,
     }).setOrigin(0.5).setDepth(11);
@@ -169,7 +188,7 @@ export class OnboardingScene extends Phaser.Scene {
     title: string,
     lines: string[],
     accentColor: number,
-  ): void {
+  ): number {
     const leftX = cx - panelW / 2 + 48;
     const lineH = 23;
     const accentHex = '#' + accentColor.toString(16).padStart(6, '0');
@@ -181,13 +200,17 @@ export class OnboardingScene extends Phaser.Scene {
       fontSize: '17px',
       color: accentHex,
       fontStyle: 'bold',
+      fontFamily: KOREAN_FONT_FAMILY,
     }).setDepth(10);
 
     for (let i = 0; i < lines.length; i++) {
       this.add.text(leftX + 8, y + 28 + i * lineH, lines[i], {
         fontSize: '14px',
         color: '#d8e7ff',
+        fontFamily: KOREAN_FONT_FAMILY,
       }).setDepth(10);
     }
+
+    return y + 28 + lines.length * lineH;
   }
 }
