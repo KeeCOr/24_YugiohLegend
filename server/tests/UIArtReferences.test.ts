@@ -5,7 +5,7 @@ import { resolve } from 'node:path';
 const root = resolve(__dirname, '..', '..');
 
 function readProjectFile(path: string): string {
-  return readFileSync(resolve(root, path), 'utf8');
+  return readFileSync(resolve(root, path), 'utf8').replace(/\r\n/g, '\n');
 }
 
 describe('UI art references', () => {
@@ -30,8 +30,8 @@ describe('UI art references', () => {
 
     expect(gameScene).toContain('ART_KEYS.buttonPrimary');
     expect(gameScene).toContain('ART_KEYS.hudFrame');
-    expect(field).toContain('ART_KEYS.laneFrame');
-    expect(lpDisplay).toContain('ART_KEYS.hudFrame');
+    expect(field).toContain("scene.add.image(lx, 0, 'yl_lane_frame')");
+    expect(lpDisplay).toContain("scene.add.nineslice(112, 0, 'yl_surface_frame'");
   });
 
   it('keeps the battle UX affordances wired into the hand, field, and scene', () => {
@@ -159,6 +159,10 @@ describe('UI art references', () => {
     expect(boot).toContain("this.load.image(ART_KEYS.hudFrame, 'assets/generated/art_hudFrame.png')");
     expect(boot).not.toContain("this.load.image('art_cardBack'");
     expect(boot).not.toContain("this.load.image('art_buttonPrimary'");
+    expect(boot).toContain("this.load.image('yl_surface_frame', 'assets/generated/yl-surface-frame-9s.png')");
+    expect(boot).toContain("this.load.image('yl_lane_frame', 'assets/generated/yl-lane-frame.png')");
+    expect(boot).toContain("this.load.spritesheet('yl_button_states', 'assets/generated/yl-button-states-atlas.png', { frameWidth: 384, frameHeight: 96 })");
+    expect(boot).toContain("this.load.spritesheet('yl_card_frames', 'assets/generated/yl-card-frames-atlas.png', { frameWidth: 264, frameHeight: 376 })");
     expect(art).toContain('ensureTexture(scene, ART_KEYS.cardTrap');
     expect(art).not.toContain('if (scene.textures.exists(ART_KEYS.backdrop)) return;');
   });
@@ -195,6 +199,32 @@ describe('UI art references', () => {
     expect(gameScene).toContain('P2 LP 0');
     expect(gameScene).toContain('turnSummary.steps.slice(1)');
     expect(gameScene).toContain('ART_KEYS.hudFrame');
+  });
+
+  it('drives the menu button spritesheet through hover/out/down/up frame states', () => {
+    const menu = readProjectFile('client/src/scenes/MenuScene.ts');
+
+    expect(menu).toContain("this.add.nineslice(x, y, 'yl_button_states', 0, 320, 76, 40, 40, 20, 20)");
+    expect(menu).toContain("btn.on('pointerover', () => {");
+    expect(menu).toContain('btn.setFrame(1);');
+    expect(menu).toContain("btn.on('pointerout', () => {");
+    expect(menu).toContain('btn.setFrame(0);');
+    expect(menu).toContain("btn.on('pointerdown', () => {");
+    expect(menu).toContain('btn.setFrame(2);');
+    expect(menu).toContain("btn.on('pointerup', () => btn.setFrame(1));");
+  });
+
+  it('maps card sprite frames on yl_card_frames to faceDown/monster/spell/trap', () => {
+    const cardSprite = readProjectFile('client/src/components/CardSprite.ts');
+
+    expect(cardSprite).toContain('const cardFrameIndex = faceDown');
+    expect(cardSprite).toContain('? 0');
+    expect(cardSprite).toContain("card.type === 'monster'");
+    expect(cardSprite).toContain('? 1');
+    expect(cardSprite).toContain("card.type === 'spell'");
+    expect(cardSprite).toContain('? 2');
+    expect(cardSprite).toContain(': 3;');
+    expect(cardSprite).toContain("'yl_card_frames',\n      cardFrameIndex");
   });
 
 });
