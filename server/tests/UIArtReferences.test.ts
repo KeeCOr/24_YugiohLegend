@@ -163,7 +163,9 @@ describe('UI art references', () => {
     expect(boot).toContain("this.load.image('yl_lane_frame', 'assets/generated/yl-lane-frame.png')");
     expect(boot).toContain("this.load.spritesheet('yl_button_states', 'assets/generated/yl-button-states-atlas.png', { frameWidth: 384, frameHeight: 96 })");
     expect(boot).toContain("this.load.spritesheet('yl_card_frames', 'assets/generated/yl-card-frames-atlas.png', { frameWidth: 264, frameHeight: 376 })");
-    expect(art).toContain('ensureTexture(scene, ART_KEYS.cardTrap');
+    expect(art).toContain("cardPanel: 'yl_card_panel_9s'");
+    expect(art).toContain("artSlotFrame: 'yl_card_art_slot_frame'");
+    expect(art).not.toContain('createCardFrame(');
     expect(art).not.toContain('if (scene.textures.exists(ART_KEYS.backdrop)) return;');
   });
   it('renders conditional trigger cards as pink traps instead of green spells', () => {
@@ -174,10 +176,11 @@ describe('UI art references', () => {
     const field = readProjectFile('client/src/components/Field.ts');
 
     expect(art).toContain("cardTrap: 'art_card_trap'");
-    expect(art).toContain('createCardFrame(scene, ART_KEYS.cardTrap, 0x7a1d50, 0xff70bc, 0x2d1024)');
     expect(art).toContain("if (type === 'trap') return ART_KEYS.cardTrap");
     expect(art).toContain("if (type === 'trap') return 0xff70bc");
     expect(cardSprite).toContain("if (card.type === 'trap') return 'TRAP'");
+    expect(cardSprite).toContain('const tint = typeTint(card.type)');
+    expect(cardSprite).toContain('ART_KEYS.cardPanel');
     expect(cardText).toContain("return 'TRAP'");
     expect(gameScene).toContain('card.type === \'trap\'');
     expect(field).toContain('createTrapIndicator');

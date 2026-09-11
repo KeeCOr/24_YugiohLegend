@@ -6,6 +6,14 @@ import { ART_KEYS, cardArtKey, typeTint } from '../art/ProceduralArt';
 const CARD_ART_SLOT_W = 76;
 const CARD_ART_SLOT_H = 100;
 
+const CARD_PANEL_MARGIN_X = 40;
+const CARD_PANEL_MARGIN_Y = 56;
+
+const ART_SLOT_FRAME_W = 84;
+const ART_SLOT_FRAME_H = 108;
+const ART_SLOT_FRAME_MARGIN_X = 32;
+const ART_SLOT_FRAME_MARGIN_Y = 40;
+
 export class CardSprite extends Phaser.GameObjects.Container {
   card: Card;
   private glow: Phaser.GameObjects.Image;
@@ -55,6 +63,22 @@ export class CardSprite extends Phaser.GameObjects.Container {
       this.add(mark);
       return;
     }
+
+    const cardPanel = new Phaser.GameObjects.NineSlice(
+      scene,
+      0,
+      0,
+      ART_KEYS.cardPanel,
+      undefined,
+      CardSprite.W,
+      CardSprite.H,
+      CARD_PANEL_MARGIN_X,
+      CARD_PANEL_MARGIN_X,
+      CARD_PANEL_MARGIN_Y,
+      CARD_PANEL_MARGIN_Y
+    );
+    cardPanel.setAlpha(0.52);
+    this.add(cardPanel);
 
     this.addCardArtwork(scene, card);
 
@@ -280,18 +304,30 @@ export class CardSprite extends Phaser.GameObjects.Container {
 
   private addCardArtwork(scene: Phaser.Scene, card: Card): void {
     const key = cardArtKey(card.id);
-    const artFrame = new Phaser.GameObjects.Rectangle(scene, 0, -30, CARD_ART_SLOT_W, CARD_ART_SLOT_H, 0x05070c, 0.38);
-    artFrame.setStrokeStyle(2, typeTint(card.type), 0.58);
-    this.add(artFrame);
 
     if (scene.textures.exists(key)) {
       const art = new Phaser.GameObjects.Image(scene, 0, -30, key);
       this.fitArtworkToSlot(scene, art, key);
       this.add(art);
-      return;
+    } else {
+      this.add(this.createSymbol(scene, card.id, card.type));
     }
 
-    this.add(this.createSymbol(scene, card.id, card.type));
+    const artSlotFrame = new Phaser.GameObjects.NineSlice(
+      scene,
+      0,
+      -30,
+      ART_KEYS.artSlotFrame,
+      undefined,
+      ART_SLOT_FRAME_W,
+      ART_SLOT_FRAME_H,
+      ART_SLOT_FRAME_MARGIN_X,
+      ART_SLOT_FRAME_MARGIN_X,
+      ART_SLOT_FRAME_MARGIN_Y,
+      ART_SLOT_FRAME_MARGIN_Y
+    );
+    artSlotFrame.setAlpha(0.58);
+    this.add(artSlotFrame);
   }
 
   private fitArtworkToSlot(scene: Phaser.Scene, art: Phaser.GameObjects.Image, key: string): void {

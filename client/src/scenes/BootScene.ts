@@ -28,6 +28,8 @@ export class BootScene extends Phaser.Scene {
     this.load.spritesheet('yl_card_frames', 'assets/generated/yl-card-frames-atlas.png', { frameWidth: 264, frameHeight: 376 });
     this.load.image(ART_KEYS.glow, 'assets/generated/art_glow.png');
     this.load.image(ART_KEYS.slash, 'assets/generated/art_slash.png');
+    this.load.image(ART_KEYS.cardPanel, 'assets/generated/yl-card-panel-9s.png');
+    this.load.image(ART_KEYS.artSlotFrame, 'assets/generated/yl-card-art-slot-frame.png');
     for (const card of ALL_CARDS) {
       this.load.image(cardArtKey(card.id), `assets/cards/${card.id}.png`);
     }

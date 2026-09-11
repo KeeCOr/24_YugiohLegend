@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>YugiohLegend 湲고쉷??v0.11.1</title>
+  <title>YugiohLegend 湲고쉷??v0.11.2</title>
   <style>
     body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.65;max-width:980px;margin:0 auto;padding:40px 24px;color:#20242a;background:#fafafa}
     h1{font-size:34px;margin:0 0 8px} h2{font-size:24px;margin-top:34px;border-bottom:1px solid #ddd;padding-bottom:6px} h3{font-size:18px;margin-top:24px}
@@ -16,16 +16,17 @@
     hr{border:none;border-top:1px solid #ddd;margin:28px 0}
     blockquote{border-left:4px solid #ddd;margin:0;padding:8px 16px;color:#555;background:#f9f9f9;border-radius:0 8px 8px 0}
     code{background:#f0f0f0;border-radius:4px;padding:2px 5px;font-size:13px}
+    .rev-1{color:#ff0000}
   </style>
 </head>
 <body>
-<h1>YugiohLegend 湲고쉷??v0.11.1</h1>
+<h1>YugiohLegend 湲고쉷??<span class="rev-1">v0.11.2</span></h1>
 <p class="meta">?좑툘 <strong>[IP 移⑦빐 寃쎄퀬 2026-07-01]</strong> "?좏씗??Yu-Gi-Oh)" 紐낆묶쨌?뚯옱 吏곸젒 ?ъ슜?쇰줈 Konami IP 移⑦빐 ?꾪뿕. ???곹깭濡??ㅽ넗???깅줉 遺덇?. ?쇰쿁 ?꾧퉴吏 媛쒕컻 以묐떒 沅뚭퀬.</p>
 <blockquote>
 <p>?좑툘 <strong>[IP 移⑦빐 寃쎄퀬 2026-07-01]</strong> "?좏씗??Yu-Gi-Oh)" 紐낆묶쨌?뚯옱 吏곸젒 ?ъ슜?쇰줈 Konami IP 移⑦빐 ?꾪뿕. ???곹깭濡??ㅽ넗???깅줉 遺덇?. ?쇰쿁 ?꾧퉴吏 媛쒕컻 以묐떒 沅뚭퀬.</p>
 </blockquote>
 <blockquote>
-<p><strong>理쒖쥌 ?낅뜲?댄듃:</strong> 2026-09-10</p>
+<p><strong>理쒖쥌 ?낅뜲?댄듃:</strong> <span class="rev-1">2026-09-11</span></p>
 </blockquote>
 <hr>
 <h2>臾몄젣 ?뺤쓽</h2>
@@ -82,6 +83,16 @@
     <li>DeckBuilderScene의 아카이브/덱 패널은 늘어난 ART_KEYS.panel 이미지 대신 add.nineslice(..., 'yl_surface_frame', undefined, W, H, 32, 32, 20, 20)로 렌더링되어, 어떤 패널 크기에서도 테두리가 왜곡되지 않습니다.</li>
     <li>OnboardingScene은 computeConfirmButtonY로 확인 버튼의 Y 좌표를 계산하여, 세 번째 규칙 섹션 콘텐츠와 72px 확인 버튼 사이에 MIN_CONTENT_TO_BUTTON_CLEARANCE_PX(24px) 이상의 여백을 보장하며, 모달 패널은 1600x900 뷰포트 안에 유지됩니다.</li>
     <li>온보딩의 한글 문구(제목, 섹션 제목, 본문, 확인 버튼)는 fontFamily: "'Noto Sans KR', 'Malgun Gothic', sans-serif"를 지정해, Noto Sans KR이 없는 환경에서도 자연스럽게 대체 폰트로 표시됩니다.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>v0.11.2 ImageGen Card Chrome</h2>
+  <ul>
+    <li>1600x900 mockup is the source of truth for the card chrome layout.</li>
+    <li>yl-card-panel-9s.png and yl-card-art-slot-frame.png are RGBA PNGs applied as NineSlice.</li>
+    <li>Artwork keeps its Math.max focal-center cover crop and original card art/game logic, while ProceduralArt's createCardFrame and CardSprite's Rectangle art-slot chrome were removed.</li>
+    <li>A final runtime side-by-side found the chrome too dominant at hand scale; the sole correction set alpha to 0.52/0.58 without changing position, size, or layer order.</li>
   </ul>
 </section>
 </body>

@@ -7,6 +7,8 @@ export const ART_KEYS = {
   cardMonster: 'art_card_monster',
   cardSpell: 'art_card_spell',
   cardTrap: 'art_card_trap',
+  cardPanel: 'yl_card_panel_9s',
+  artSlotFrame: 'yl_card_art_slot_frame',
   lane: 'art_lane',
   laneEnemy: 'art_lane_enemy',
   panel: 'art_panel',
@@ -21,9 +23,6 @@ export const ART_KEYS = {
 
 export function registerProceduralArt(scene: Phaser.Scene): void {
   ensureTexture(scene, ART_KEYS.backdrop, () => createBackdrop(scene));
-  ensureTexture(scene, ART_KEYS.cardMonster, () => createCardFrame(scene, ART_KEYS.cardMonster, 0x7b2f18, 0xe2a34d, 0x2f1d17));
-  ensureTexture(scene, ART_KEYS.cardSpell, () => createCardFrame(scene, ART_KEYS.cardSpell, 0x145e46, 0x66d39f, 0x132820));
-  ensureTexture(scene, ART_KEYS.cardTrap, () => createCardFrame(scene, ART_KEYS.cardTrap, 0x7a1d50, 0xff70bc, 0x2d1024));
   ensureTexture(scene, ART_KEYS.cardBack, () => createCardBack(scene));
   ensureTexture(scene, ART_KEYS.lane, () => createLane(scene, ART_KEYS.lane, 0x132b3f, 0x4cb2ff));
   ensureTexture(scene, ART_KEYS.laneEnemy, () => createLane(scene, ART_KEYS.laneEnemy, 0x351d2c, 0xff6692));
@@ -86,32 +85,6 @@ function createBackdrop(scene: Phaser.Scene): void {
   g.lineStyle(1, 0x6ec6ff, 0.12);
   g.strokeRoundedRect(154, 106, 972, 508, 18);
   g.generateTexture(ART_KEYS.backdrop, 1280, 720);
-  g.destroy();
-}
-
-function createCardFrame(scene: Phaser.Scene, key: string, base: number, accent: number, inset: number): void {
-  const g = scene.make.graphics({ x: 0, y: 0 }, false);
-  g.fillStyle(0x0b0a12, 1);
-  g.fillRoundedRect(0, 0, 180, 260, 12);
-  g.fillGradientStyle(base, lighten(base, 34), darken(base, 42), base, 1);
-  g.fillRoundedRect(6, 6, 168, 248, 10);
-  g.lineStyle(3, accent, 0.9);
-  g.strokeRoundedRect(8, 8, 164, 244, 9);
-  g.lineStyle(1, 0xffffff, 0.22);
-  g.strokeRoundedRect(14, 14, 152, 232, 6);
-  g.fillGradientStyle(lighten(inset, 26), inset, darken(inset, 18), inset, 1);
-  g.fillRoundedRect(20, 48, 140, 96, 5);
-  g.lineStyle(2, accent, 0.55);
-  g.strokeRoundedRect(20, 48, 140, 96, 5);
-  g.fillStyle(0x06070c, 0.5);
-  g.fillRoundedRect(20, 154, 140, 56, 5);
-  g.lineStyle(1, 0xffffff, 0.12);
-  for (let i = 0; i < 5; i++) g.lineBetween(30, 166 + i * 9, 150, 166 + i * 9);
-  g.fillStyle(accent, 0.95);
-  g.fillCircle(142, 226, 15);
-  g.fillStyle(0x09090e, 0.9);
-  g.fillCircle(142, 226, 9);
-  g.generateTexture(key, 180, 260);
   g.destroy();
 }
 

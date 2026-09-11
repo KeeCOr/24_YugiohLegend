@@ -1,0 +1,168 @@
+{
+  "version": "0.11.2",
+  "viewport": {
+    "width": 1600,
+    "height": 900
+  },
+  "targetScreen": {
+    "name": "duel",
+    "elements": [
+      "hand",
+      "field"
+    ]
+  },
+  "reference": {
+    "source": "docs/assets/reference/YugiohLegend_duel_ui_mockup_v0.11.2_1600x900.png",
+    "authoritativeViewport": {
+      "width": 1600,
+      "height": 900
+    },
+    "target": {
+      "screen": "duel",
+      "elements": [
+        "opponentField",
+        "fiveLanes",
+        "playerField",
+        "hand"
+      ]
+    },
+    "measurements": {
+      "safeMarginPx": 32,
+      "opponentField": {
+        "bbox": { "x": 256, "y": 128, "w": 1088, "h": 176 }
+      },
+      "battleCenter": {
+        "bbox": { "x": 352, "y": 304, "w": 864, "h": 208 }
+      },
+      "playerField": {
+        "bbox": { "x": 224, "y": 512, "w": 1152, "h": 176 }
+      },
+      "hand": {
+        "bbox": { "x": 464, "y": 712, "w": 704, "h": 176 }
+      },
+      "playerLp": {
+        "bbox": { "x": 16, "y": 752, "w": 288, "h": 132 }
+      },
+      "opponentLp": {
+        "bbox": { "x": 16, "y": 8, "w": 288, "h": 112 }
+      },
+      "phasePanel": {
+        "bbox": { "x": 1424, "y": 16, "w": 160, "h": 352 }
+      },
+      "endTurn": {
+        "bbox": { "x": 1376, "y": 800, "w": 208, "h": 72 }
+      },
+      "spacingRhythmPx": 8,
+      "layers": [
+        "backdrop",
+        "fieldChrome",
+        "cardPanel",
+        "artwork",
+        "artSlotFrame",
+        "labels/status",
+        "interactionGlow"
+      ],
+      "typography": {
+        "display": 28,
+        "heading": 18,
+        "body": 14,
+        "micro": 11
+      },
+      "states": [
+        "normal",
+        "playable",
+        "selected",
+        "disabled"
+      ],
+      "constraints": [
+        "no same-layer overlap",
+        "panel corners preserved with NineSlice",
+        "card artwork focal-center cover without distortion",
+        "existing card originals and game logic retained"
+      ]
+    }
+  },
+  "comparison": {
+    "mockup": "docs/assets/reference/YugiohLegend_duel_ui_mockup_v0.11.2_1600x900.png",
+    "runtime": "docs/assets/reference/YugiohLegend_runtime_duel_v0.11.2_1600x900.png",
+    "sideBySide": "docs/assets/reference/YugiohLegend_duel_ui_comparison_v0.11.2.png",
+    "viewport": { "width": 1600, "height": 900 },
+    "observed": "layout/bbox/card cover/no same-layer overlap are sound but new gold panel and slot chrome are too dominant at hand scale",
+    "targetedCorrection": "alpha 0.52/0.58 only",
+    "iteration": { "current": 1, "total": 1 }
+  },
+  "planned": [
+    {
+      "path": "client/public/assets/generated/yl-card-panel-9s.png",
+      "width": 512,
+      "height": 512,
+      "format": "RGBA",
+      "transparent": true,
+      "textFree": true,
+      "type": "NineSlice",
+      "description": "card panel shell"
+    },
+    {
+      "path": "client/public/assets/generated/yl-card-art-slot-frame.png",
+      "width": 384,
+      "height": 512,
+      "format": "RGBA",
+      "transparent": true,
+      "textFree": true,
+      "type": "NineSlice",
+      "description": "art slot frame"
+    }
+  ],
+  "results": [
+    {
+      "path": "client/public/assets/generated/yl-card-panel-9s.png",
+      "fileSizeBytes": 156986,
+      "pixelDimensions": { "width": 512, "height": 512 },
+      "png": { "bitDepth": 8, "colorType": 6, "colorTypeName": "RGBA" },
+      "alpha": {
+        "min": 0,
+        "max": 255,
+        "fullyTransparentPct": 76.2,
+        "fullyOpaquePct": 0.97,
+        "partialAlphaPct": 22.82
+      },
+      "runtimeConsumers": [
+        "client/src/scenes/BootScene.ts (preload via ART_KEYS.cardPanel -> assets/generated/yl-card-panel-9s.png)",
+        "client/src/components/CardSprite.ts (face-up card panel: Phaser.GameObjects.NineSlice overlay under the artwork/art-slot-frame/text layers, sized 132x188)"
+      ],
+      "nineSlice": {
+        "displayWidth": 132,
+        "displayHeight": 188,
+        "leftWidth": 40,
+        "rightWidth": 40,
+        "topHeight": 56,
+        "bottomHeight": 56
+      }
+    },
+    {
+      "path": "client/public/assets/generated/yl-card-art-slot-frame.png",
+      "fileSizeBytes": 127798,
+      "pixelDimensions": { "width": 384, "height": 512 },
+      "png": { "bitDepth": 8, "colorType": 6, "colorTypeName": "RGBA" },
+      "alpha": {
+        "min": 0,
+        "max": 255,
+        "fullyTransparentPct": 71.33,
+        "fullyOpaquePct": 0.96,
+        "partialAlphaPct": 27.71
+      },
+      "runtimeConsumers": [
+        "client/src/scenes/BootScene.ts (preload via ART_KEYS.artSlotFrame -> assets/generated/yl-card-art-slot-frame.png)",
+        "client/src/components/CardSprite.ts (addCardArtwork: Phaser.GameObjects.NineSlice overlay on top of the existing artwork/fallback symbol, sized 84x108, centered at the CARD_ART_SLOT_W/H=76/100 art slot)"
+      ],
+      "nineSlice": {
+        "displayWidth": 84,
+        "displayHeight": 108,
+        "leftWidth": 32,
+        "rightWidth": 32,
+        "topHeight": 40,
+        "bottomHeight": 40
+      }
+    }
+  ]
+}

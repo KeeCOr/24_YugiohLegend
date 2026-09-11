@@ -1,8 +1,8 @@
-﻿# YugiohLegend 湲고쉷??v0.11.1
+﻿# YugiohLegend 湲고쉷??<span style="color:red">v0.11.2</span>
 
 > ?좑툘 **[IP 移⑦빐 寃쎄퀬 2026-07-01]** "?좏씗??Yu-Gi-Oh)" 紐낆묶쨌?뚯옱 吏곸젒 ?ъ슜?쇰줈 Konami IP 移⑦빐 ?꾪뿕. ???곹깭濡??ㅽ넗???깅줉 遺덇?. ?쇰쿁 ?꾧퉴吏 媛쒕컻 以묐떒 沅뚭퀬.
 
-> **理쒖쥌 ?낅뜲?댄듃:** 2026-09-10
+> **理쒖쥌 ?낅뜲?댄듃:** <span style="color:red">2026-09-11</span>
 
 ---
 
@@ -99,7 +99,7 @@ YugiohLegend???좏씗?뺤쓣 ?⑥닚?뷀븳 **4?덉씤 移대뱶 ?꾪닾 寃뚯�
 
 - **?ㅽ깮:** Phaser 3 ?대씪?댁뼵??+ Node.js WebSocket ?쒕쾭 + Electron ?섑띁
 - **?붾㈃ 湲곗? ?댁긽??** 900 횞 1600 (?몃줈??
-- **?꾩옱 踰꾩쟾:** 0.11.1
+- **?꾩옱 踰꾩쟾:** <span style="color:red">0.11.2</span>
 
 ---
 
@@ -217,7 +217,7 @@ YugiohLegend???좏씗?뺤쓣 ?⑥닚?뷀븳 **4?덉씤 移대뱶 ?꾪닾 寃뚯�
 
 ## 鍮뚮뱶 諛??뚯뒪??- **?뚯뒪??** `npm test`
 - **鍮뚮뱶:** `npm run build:all && npx electron-builder --win portable`
-- **?꾩옱 踰꾩쟾:** 0.11.1
+- **?꾩옱 踰꾩쟾:** <span style="color:red">0.11.2</span>
 
 ---
 
@@ -385,3 +385,12 @@ YugiohLegend ???ㅻ━吏???먰?吏 移대뱶 諛고?濡?由щ툕?쒕뵫. Ma
 - <span style="color:#ff0000">BGM/SFX/음소거 설정은 각각 독립적으로 localStorage에 저장됩니다.</span>
 - <span style="color:#ff0000">실제 Kenney CC0 Music Loops BGM과 Interface/Impact/Digital OGG 표준 효과음을 사용하며 생성된 PCM 기본음은 없습니다. 위험/결과 덕킹은 0.55, 디코딩된 전체 tail 최소 1.0/0.8초, 최대 8보이스이며 누락/거부 시 안전하게 처리됩니다.</span>
 - <span style="color:#ff0000">Electron은 client/dist를 127.0.0.1의 임시 포트 HTTP로 서비스하며 MIME/경로 순회 방어와 안전한 종료를 갖추고, 별도의 임시 포트 WebSocket을 유지하며 file:// URL은 사용하지 않습니다.</span>
+
+---
+
+## 2026-09-11 v0.11.2 ImageGen Card Chrome
+
+- 1600x900 듀얼 목업 기준으로, 카드 패널(yl-card-panel-9s.png)과 아트 슬롯 프레임(yl-card-art-slot-frame.png) 두 개의 RGBA PNG를 NineSlice로 적용해 카드 모서리를 유지한 채 렌더링합니다.
+- 카드 아트워크는 fitArtworkToSlot의 cover 크롭을 그대로 유지하며, 절차적 createCardFrame/Rectangle 프레임 생성 방식은 제거되었습니다.
+- 목업과 런타임 듀얼 화면을 side-by-side로 비교한 결과 레이아웃/좌표/카드 커버/레이어 순서는 정상이었으나, 손패 축소 크기에서 새 금색 패널과 슬롯 크롬이 원화/상태 텍스트보다 시각적으로 과도하게 우세했습니다.
+- 이를 보정하기 위해 CardSprite의 cardPanel NineSlice에 alpha 0.52, artSlotFrame NineSlice에 alpha 0.58을 단일 적용했습니다. 위치/크기/cover/레이어 순서는 변경하지 않았습니다.
