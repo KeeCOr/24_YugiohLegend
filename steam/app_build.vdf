@@ -1,0 +1,17 @@
+"AppBuild"
+{
+    "AppID"         "REPLACE_WITH_REAL_APP_ID"
+    "Desc"          "YugiohLegend v0.11.2"
+    "BuildOutput"   "../../steamcmd_output/"
+    "ContentRoot"   "..\release\"
+    "SetLive"       ""
+    "Preview"       "0"
+    "Depots"
+    {
+        "REPLACE_WITH_DEPOT_ID"
+        {
+            "FileMapping" { "LocalPath" "*" "DepotPath" "." "recursive" "1" }
+            "FileExclusion" "*.pdb"
+        }
+    }
+}
