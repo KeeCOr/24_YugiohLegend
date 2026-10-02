@@ -1,0 +1,68 @@
+# YugiohLegend ?낅뜲?댄듃 ?댁뿭??
+## 2026-06-24 臾몄꽌 援ъ“ ?뺣━
+- 湲고쉷?쒖? ?낅뜲?댄듃 ?댁뿭?쒕? 遺꾨━?덈떎.
+- 湲고쉷?쒕뒗 寃뚯엫 ?뚭컻, ?듭떖 猷⑦봽, MVP 媛?? KPI, UX ?먯튃 以묒떖?쇰줈 ?ъ옉?깊뻽??
+- 蹂寃??대젰, 援ы쁽 濡쒓렇, 寃利?湲곕줉? ??臾몄꽌?먯꽌 愿由ы븳??
+
+## 湲곗〈 臾몄꽌?먯꽌 遺꾨━???대젰 ?꾨낫
+- ?낅뜲?댄듃: 2026-06-23 / ?꾩옱 踰꾩쟾: v0.3.2
+- 蹂寃??대젰
+- v0.3.22026-06-23吏곸젒 怨듦꺽 ?쇳빐 ?쒖떆瑜??⑥닚??LP -?섏튂 ?쇰꺼濡??뺣━
+- v0.3.12026-06-23?꾨뱶? ?꾨뱶 移대뱶 ?ш린瑜?異뺤냼???섎떒 ?먰뙣? 寃뱀튂吏 ?딅룄濡??꾩옣 ?덉씠?꾩썐 議곗젙
+- v0.3.02026-06-22?꾪닾 ???쇱씤蹂??덉긽 ?쇳빐, ?앹〈 ?щ?, 吏곸젒 怨듦꺽 ?꾪뿕??以묒븰 諛곗?濡??쒖떆
+- v0.2.12026-06-17由щℓ移??쒖옉 ??吏곸쟾 ?깆쓣 ?ㅼ떆 ?꾨떖?섏? ?딆븘 ??移댁슫?곌? 0?쇰줈 ?⑤뜕 臾몄젣 ?섏젙
+- v0.2.02026-06-17?쒖텧 ??移대뱶 ?꾪닾瑜??뚯쭊, 異⑸룎, ?붾㈃ ?붾뱾由? ?쇳빐 ?レ옄 泥대쪟媛 ?덈뒗 湲??곗텧濡?媛뺥솕
+- v0.1.12026-06-17?곴툒 移대뱶 ?좏깮 ???쒕Ъ 紐ъ뒪???쇱씤??吏곸젒 ?대┃??媛숈? ?쇱씤?먯꽌 援먯껜 ?뚰솚?섎뒗 ?먮쫫 援ы쁽
+- v0.1.02026-06-09吏??留덈쾿 ?곗꽑 ?닿껐, 異붽? ?뚰솚 留덈쾿, 怨쇳솗??遺뺢눼 留덈쾿 異붽?
+- 理쒖떊 ?ㅽ뻾?뚯씪: C:\Development\24_YL\YugiohLegend_v0.3.2_portable.exe
+- ?낅뜲?댄듃: 2026-06-23
+- ?꾩옱 踰꾩쟾: v0.3.2
+- 泥????꾨즺??80% ?댁긽
+- `COMMIT` ???쒕쾭???쒕Ъ ?? 紐⑺몴 ?쇱씤 ?닿툑 ?щ?, ?먰뙣 移대뱶 ?щ?瑜?寃利앺븯怨??깃났 ???쒕Ъ 紐ъ뒪?곕? ?쒓굅?????곴툒 紐ъ뒪?곕? 諛곗튂?쒕떎.
+- | v0.3.2 | 2026-06-23 | 吏곸젒 怨듦꺽 ?쇳빐 ?쒖떆瑜??⑥닚??LP -?섏튂 ?쇰꺼濡??뺣━ |
+- | v0.3.1 | 2026-06-23 | ?꾨뱶? ?꾨뱶 移대뱶 ?ш린瑜?異뺤냼???섎떒 ?먰뙣? 寃뱀튂吏 ?딅룄濡??꾩옣 ?덉씠?꾩썐 議곗젙 |
+- | v0.3.0 | 2026-06-22 | ?꾪닾 ???쇱씤蹂??덉긽 ?쇳빐, ?앹〈 ?щ?, 吏곸젒 怨듦꺽 ?꾪뿕??以묒븰 諛곗?濡??쒖떆 |
+- | v0.2.1 | 2026-06-17 | 由щℓ移??쒖옉 ??吏곸쟾 ?깆쓣 ?ㅼ떆 ?꾨떖?섏? ?딆븘 ??移댁슫?곌? 0?쇰줈 ?⑤뜕 臾몄젣 ?섏젙 |
+
+## ?묒꽦 洹쒖튃
+- 湲곕뒫 異붽?, 諛몃윴??蹂寃? UI/UX ?섏젙, 由ъ냼??援먯껜, 鍮뚮뱶/諛고룷 蹂寃쎌? ?좎쭨? 踰꾩쟾???④퍡 湲곕줉?쒕떎.
+- 湲고쉷?쒖뿉??理쒖떊 ?뚭컻? ?꾩옱 ?ㅺ퀎 ?섎룄留??④린怨? 怨쇨굅 ?묒뾽 濡쒓렇????臾몄꽌濡??대룞?쒕떎.
+- MD? HTML? ??긽 ?④퍡 媛깆떊?쒕떎.
+
+## 2026-06-29 v0.5.0 Turn Flow Summary
+- Battle result messages now include `turnSummary`: turn number, setup flag, summon/action counts, LP delta, battle event count, and next-turn signal.
+- This supports clearer draw/choose -> summon/action -> LP change -> end-turn summary feedback in the duel flow.
+- LP 0 finish presentation remains pending; this batch exposes the data needed without locking final presentation direction.
+- Validation: `npm test`, focused GameRoom tests, and `npm run build:all` passed.
+---
+
+## 2026-06-30 v0.6.0 Turn Result Summary
+
+- Persona target: fast duel players now get a readable end-of-turn chain without rereading the board state.
+- Server `TurnSummary` now includes `headline` and `steps` so each battle result explains draw, action, LP change, and end state.
+- Client battle resolution status now prints the turn headline plus action/LP/end details after animations resolve.
+- LP 0 direction is explicit for this batch: the result summary calls out the defeated player and stops before the next draw. A richer final duel presentation remains a later visual/UI layer.
+- Validation: `npm exec vitest run server/tests/GameRoom.test.ts server/tests/UIArtReferences.test.ts` passed 47 tests; `npm test` passed 7 files / 84 tests.
+- Release target: `YugiohLegend_v0.6.0_portable.exe`.
+
+
+## 2026-07-01 / v0.7.0
+- LP 0 ?? ? ?? turn summary ???? ???? ?? duel-end overlay? ????.
+- ????? ?? ????, LP 0 ??, ?? ?? ??? ResultScene ?? ?? ????.
+- ??: `npm test` 7 files / 85 tests ??, `npm run build:all` ??, `npm run electron:build`? `YugiohLegend_v0.7.0_portable.exe` ??.
+
+## 2026-07-16 v0.8.0 Rival Pressure Preview
+- Added a shared board-level pressure summary that aggregates immediate LP risk, rival LP risk, winning trades, losing trades, and quiet lanes from existing lane battle previews.
+- GameScene now displays a compact pressure headline above the lane preview badges: `YOU PRESSURE`, `RIVAL PRESSURE`, or `BOARD QUIET`, with matching advantage/danger/neutral colors.
+- This improves board density without changing combat resolution rules or AI behavior.
+- Validation target: `npm test`, `npm run build:client`, `npm run build:all`, and `npm run electron:build`.
+
+## 2026-09-22 COMMIT 전 압박 예측
+
+- 구현 전에 `docs/design-references/2026-09-22-after-commit-pressure-preview.png`를 목표 화면으로 제작했다.
+- `getProjectedPlayerLanes`를 추가해 대기 소환과 공물 지불을 확정 보드의 복제본에 투영한다.
+- `GameScene`의 보드 압박과 레인 배지가 카드 배치 직후 투영 보드를 사용하도록 연결했다.
+- 예측에는 `AFTER COMMIT`과 상대 대응으로 달라질 수 있다는 안내를 함께 표시한다.
+- 서버 테스트 7파일/91테스트, 통합 빌드, Windows portable 패키징을 통과했다. 실제 듀얼 수동 화면 확인은 미검증이다.
+- `release/YugiohLegend_v0.9.0_portable.exe`가 갱신됐으며 루트 실행파일은 교체하지 않았다.
+- 알려진 경고: 대형 Vite 청크, CJS API 폐기 예정, package description/author 및 Electron 앱 아이콘 누락.
