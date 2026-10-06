@@ -24,6 +24,7 @@ export class BootScene extends Phaser.Scene {
     this.load.image(ART_KEYS.laneFrame, 'assets/generated/art_laneFrame.png');
     this.load.image(ART_KEYS.glow, 'assets/generated/art_glow.png');
     this.load.image(ART_KEYS.slash, 'assets/generated/art_slash.png');
+    this.load.image('title_logo', 'assets/brand/title-logo.png');
     for (const card of ALL_CARDS) {
       this.load.image(cardArtKey(card.id), `assets/cards/${card.id}.png`);
     }

@@ -10,13 +10,14 @@ export class MenuScene extends Phaser.Scene {
     const { width, height } = this.scale;
     addSceneBackdrop(this);
 
+    this.add.image(width / 2, height * 0.22, 'title_logo').setDisplaySize(460, 120);
     this.add.text(width / 2, height * 0.22, 'YUGIOH LEGEND', {
       fontSize: '56px',
       color: '#f2c86a',
       fontStyle: 'bold',
       stroke: '#170b0f',
       strokeThickness: 6,
-    }).setOrigin(0.5);
+    }).setOrigin(0.5).setVisible(false);
 
     this.add.text(width / 2, height * 0.31, 'Three lanes. One setup turn. Four turns total.', {
       fontSize: '18px',
