@@ -1,0 +1,13 @@
+{
+  "id": "bgm_main_loop",
+  "file": "bgm_main_loop.ogg",
+  "format": "OGG Vorbis, 44.1 kHz mono",
+  "bars": 8,
+  "bpm": 128,
+  "duration_seconds": 15.0,
+  "loop": "sample-accurate bar loop; no fade-out",
+  "visual_direction": "card-duel spectacle",
+  "preset": "arcade",
+  "license": "Original procedural synthesis generated for this project; no third-party samples used.",
+  "integration": "Asset only. Connect through the project's existing audio loader or scene audio source."
+}
