@@ -1,0 +1,13 @@
+{
+  "project": "24_YL",
+  "resources": [],
+  "bgmIntegration": {
+    "date": "2026-10-18",
+    "source": "assets/audio/bgm_main_loop.ogg",
+    "runtimeAsset": "client/src/audio/bgm_main_loop.ogg",
+    "runtime": "client/src/audio/bgm-player.js",
+    "entry": "client/index.html",
+    "license": "Existing project procedural synthesis; no new media",
+    "reason": "기존 미연결 BGM을 런타임에 연결. 원본 보존."
+  }
+}
